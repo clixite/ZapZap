@@ -29,7 +29,8 @@ const clients: ClientSocket[] = [];
 
 beforeEach(async () => {
   db = openDatabase(':memory:');
-  http = createServer(createApp(db));
+  // Accesseur paresseux, comme en production : l'application naît la première.
+  http = createServer(createApp(db, () => rooms));
   ioServer = new Server(http, { cors: { origin: false } });
   rooms = new RoomManager(ioServer, db, {
     // Les robots jouent tout de suite : on teste le protocole, pas la patience.
@@ -491,6 +492,118 @@ describe('limitation de débit', () => {
       expect(res.status).toBe(200);
     }
     expect(refused).toBe(true);
+  });
+});
+
+describe('mes parties en cours', () => {
+  it('liste la table où je suis assis, avec « c’est à moi » exact', async () => {
+    const alice = await join('alice');
+    const { code } = expectOk(await alice.emit<{ code: string }>('room:create'));
+    const res = await fetch(`${url}/api/me/games`, {
+      headers: { authorization: `Bearer ${signToken(alice.id)}` },
+    });
+    const body = (await res.json()) as { games: { code: string; phase: string }[] };
+    expect(body.games.map((g) => g.code)).toEqual([code]);
+    expect(body.games[0].phase).toBe('lobby');
+  });
+
+  it('exclut les parties terminées', async () => {
+    const alice = await join('alice');
+    expectOk(await alice.emit('room:create'));
+    const room = rooms.findRoomOf(alice.id)!;
+    room.state.phase = 'game-over';
+    const res = await fetch(`${url}/api/me/games`, {
+      headers: { authorization: `Bearer ${signToken(alice.id)}` },
+    });
+    expect(((await res.json()) as { games: unknown[] }).games).toHaveLength(0);
+  });
+
+  it('refuse sans jeton', async () => {
+    expect((await fetch(`${url}/api/me/games`)).status).toBe(401);
+  });
+});
+
+describe('revanche', () => {
+  it('bascule toute la table sur une nouvelle partie', async () => {
+    const alice = await join('alice');
+    const { code } = expectOk(await alice.emit<{ code: string }>('room:create'));
+    const bob = await join('bob');
+    expectOk(await bob.emit('room:join', { code }));
+    await alice.nextView((v) => v.players.length === 2);
+
+    // On force la fin de partie : la revanche ne se demande que de là.
+    const room = rooms.get(code)!;
+    room.state.phase = 'game-over';
+
+    const rematchSeen = new Promise<string>((resolve) => {
+      bob.socket.on('game:event', (event: TransientEvent) => {
+        if (event.type === 'rematch') resolve(event.code);
+      });
+    });
+
+    const ack = expectOk(await alice.emit<{ code: string }>('room:rematch'));
+    expect(ack.code).not.toBe(code);
+
+    // Bob entend l'événement et rejoint de lui-même, comme le fait le client.
+    const nextCode = await rematchSeen;
+    expect(nextCode).toBe(ack.code);
+    expectOk(await bob.emit('room:join', { code: nextCode }));
+    const view = await bob.nextView((v) => v.code === nextCode && v.players.length === 2);
+    expect(view.phase).toBe('lobby');
+    expect(view.players.map((p) => p.pseudo).sort()).toEqual(['alice', 'bob']);
+  });
+
+  it('est réservée à l’hôte, et à une partie finie', async () => {
+    const alice = await join('alice');
+    const { code } = expectOk(await alice.emit<{ code: string }>('room:create'));
+    const bob = await join('bob');
+    expectOk(await bob.emit('room:join', { code }));
+
+    const early = await alice.emit('room:rematch');
+    expect(early.ok).toBe(false);
+    if (!early.ok) expect(early.error.code).toBe('BAD_PHASE');
+
+    rooms.get(code)!.state.phase = 'game-over';
+    const notHost = await bob.emit('room:rematch');
+    expect(notHost.ok).toBe(false);
+    if (!notHost.ok) expect(notHost.error.code).toBe('NOT_HOST');
+  });
+});
+
+describe('fin de partie enregistrée', () => {
+  it('crédite stats et historique des humains, pas des robots', async () => {
+    const users = new UsersRepo(db);
+    const recorded: string[] = [];
+    const manager = new RoomManager(ioServer, db, { botDelayMs: 1 }, (room) => {
+      for (const p of room.state.players) recorded.push(p.id);
+    });
+
+    const alice = await join('alice');
+    // Une table pilotée en direct : deux joueurs, l'un éliminé d'office.
+    const room = manager.create({ id: alice.id, pseudo: 'alice', avatar: '⚡' });
+    room.apply({ type: 'ADD_PLAYER', player: { id: 'u_bob', pseudo: 'bob', avatar: '⚡' } });
+    users.create('u_bob', 'bob', '⚡');
+    room.apply({ type: 'START_GAME', playerId: alice.id });
+    const dealer = room.state.players.find((p) => p.seat === room.state.round!.dealerSeat)!;
+    room.apply({ type: 'DEAL', playerId: dealer.id, handSize: 3 });
+
+    // Fin expéditive : Bob dépasse 100, la manche se clôt, la partie aussi.
+    room.state.players.find((p) => p.id === 'u_bob')!.totalScore = 95;
+    const current = room.state.players.find((p) => p.seat === room.state.round!.currentSeat)!;
+    room.state.round!.hands[current.id] = [{ suit: 'S', rank: 1 }];
+    room.state.round!.hands[current.id === alice.id ? 'u_bob' : alice.id] = [
+      { suit: 'H', rank: 13 },
+      { suit: 'D', rank: 12 },
+    ];
+    room.apply({ type: 'CALL_ZAP', playerId: current.id });
+    room.apply({ type: 'NEXT_ROUND', playerId: room.state.hostId });
+
+    expect(room.state.phase).toBe('game-over');
+    expect(recorded).toContain(alice.id);
+    // L'accumulateur d'annonces a suivi la manche : l'As (1 point) bat le
+    // Roi-Dame (20 points), l'annonce est réussie.
+    expect(room.zapStats[current.id]).toEqual({ called: 1, won: 1 });
+    manager.stop();
   });
 });
 

@@ -54,6 +54,18 @@ export class Room {
   private lastTurnKey: string | null = null;
   private disposed = false;
 
+  /**
+   * Statistiques de session, accumulées manche après manche.
+   *
+   * Le journal d'une manche est remis à zéro à la suivante : ce qui doit
+   * survivre à la partie — qui a annoncé, qui a réussi, la meilleure manche de
+   * chacun — s'accumule donc ici, au fil des passages en décompte. Jamais
+   * persisté : après un redémarrage serveur, une partie reprise repart avec des
+   * compteurs vides, ce qui ampute au pire une ligne de statistiques annexes.
+   */
+  readonly zapStats: Record<string, { called: number; won: number }> = {};
+  readonly bestRounds: Record<string, number> = {};
+
   updatedAt: number;
 
   constructor(
@@ -66,7 +78,12 @@ export class Room {
   ) {
     this.state = restored ?? createGame(code, `${code}:${Date.now()}:${Math.random()}`, Date.now(), host);
     this.updatedAt = Date.now();
-    if (restored) this.afterChange();
+    if (restored) {
+      // Une partie ressuscitée déjà finie a déjà été comptée avant le
+      // redémarrage : la notifier à nouveau doublerait les statistiques.
+      this.gameOverNotified = restored.phase === 'game-over';
+      this.afterChange();
+    }
   }
 
   get code(): string {
@@ -79,16 +96,42 @@ export class Room {
 
   apply(action: GameAction): EngineResult {
     const eliminatedBefore = new Set(this.state.players.filter((p) => p.eliminated).map((p) => p.id));
+    const phaseBefore = this.state.phase;
     const result = applyAction(this.state, action);
     if (!result.ok) return result;
     this.state = result.state;
     this.updatedAt = Date.now();
+    if (phaseBefore !== 'round-scoring' && this.state.phase === 'round-scoring') {
+      this.accumulateRoundStats();
+    }
     this.afterChange();
     // Ici et pas dans les gestionnaires : une élimination peut sortir d'une
     // annonce comme d'une manche bloquée qui se clôt sur une simple pioche.
     // Le point de passage unique est le seul endroit qui les voit toutes.
     this.emitNewEliminations(eliminatedBefore);
     return result;
+  }
+
+  /** Au passage en décompte — le seul moment où la manche est à la fois finie et lisible. */
+  private accumulateRoundStats(): void {
+    const round = this.state.round;
+    if (!round) return;
+    if (round.zapCall) {
+      const stat = (this.zapStats[round.zapCall.playerId] ??= { called: 0, won: 0 });
+      stat.called += 1;
+      if (round.zapCall.success) stat.won += 1;
+    }
+    // La « meilleure manche » d'un jeu où l'on fuit les points est celle où
+    // l'on en prend le moins... mais 0 est banal. On retient la plus grosse
+    // annonce réussie n'aurait de sens que pour l'annonceur ; on garde donc le
+    // plus haut score infligé aux autres par une annonce réussie.
+    if (round.zapCall?.success && round.roundScores) {
+      const inflicted = Object.entries(round.roundScores)
+        .filter(([id]) => id !== round.zapCall!.playerId)
+        .reduce((sum, [, score]) => sum + score, 0);
+      const caller = round.zapCall.playerId;
+      this.bestRounds[caller] = Math.max(this.bestRounds[caller] ?? 0, inflicted);
+    }
   }
 
   /** Diffusion, minuteur, robots, sauvegarde : dans cet ordre, après chaque coup. */
@@ -98,8 +141,15 @@ export class Room {
     this.broadcastViews();
     this.scheduleAutoplay();
     this.callbacks.onChanged?.(this);
-    if (this.state.phase === 'game-over') this.callbacks.onGameOver?.(this);
+    // Sur le front montant uniquement : après la fin, une simple reconnexion
+    // passe encore par apply (SET_CONNECTED) et aurait recompté la partie.
+    if (this.state.phase === 'game-over' && !this.gameOverNotified) {
+      this.gameOverNotified = true;
+      this.callbacks.onGameOver?.(this);
+    }
   }
+
+  private gameOverNotified = false;
 
   /* ---------------------------------------------------------------- */
   /* Diffusion                                                         */

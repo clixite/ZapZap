@@ -35,7 +35,12 @@ export const useGame = create<GameStore>((set, get) => ({
     if (!socket) return () => {};
 
     const onView = (view: GameView) => set({ view });
-    const onEvent = (event: TransientEvent) => set({ lastEvent: event });
+    const onEvent = (event: TransientEvent) => {
+      set({ lastEvent: event });
+      // La revanche bascule toute la table : l'hôte a ouvert une nouvelle
+      // partie, chacun la rejoint de lui-même en entendant l'événement.
+      if (event.type === 'rematch') void get().send('room:join', { code: event.code });
+    };
     const onClosed = ({ reason }: { reason: string }) => set({ view: null, error: reason });
     /**
      * Reconnexion : on se rassoit d'office à la table.

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import type { OpenTable } from '@zapzap/shared';
+import { Link, useNavigate } from 'react-router-dom';
+import type { ActiveGame, OpenTable } from '@zapzap/shared';
+import { fetchActiveGames } from '../api';
 import { request } from '../socket';
 import { useGame } from '../store/game';
 import { AVATAR_CHOICES, randomAvatar, useSession } from '../store/session';
@@ -21,6 +22,7 @@ export function Home() {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [tables, setTables] = useState<OpenTable[]>([]);
+  const [myGames, setMyGames] = useState<ActiveGame[] | null>(null);
 
   useEffect(() => clear(), [clear]);
 
@@ -36,6 +38,26 @@ export function Home() {
     return () => {
       alive = false;
       clearInterval(timer);
+    };
+  }, [user]);
+
+  // Mes parties en cours : rafraîchies au montage et à chaque retour au premier
+  // plan — c'est en rouvrant l'application qu'on veut savoir qui nous attend.
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    const refresh = async () => {
+      const games = await fetchActiveGames();
+      if (alive && games !== null) setMyGames(games);
+    };
+    void refresh();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refresh();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      alive = false;
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [user]);
 
@@ -70,6 +92,42 @@ export function Home() {
           Défaussez, annoncez, le plus bas gagne. Bonjour {user.pseudo}&nbsp;{user.avatar}
         </p>
       </header>
+
+      {myGames !== null && myGames.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-xs font-medium tracking-wide text-paper-300 uppercase">Mes parties en cours</h2>
+          {myGames.map((game) => (
+            <button
+              key={game.code}
+              type="button"
+              onClick={() => navigate(game.phase === 'lobby' ? `/salon/${game.code}` : `/table/${game.code}`)}
+              className={`flex items-center justify-between rounded-xl px-4 py-3 text-left transition-transform active:scale-[0.99] ${
+                game.myTurn ? 'zz-turn bg-storm-700' : 'bg-storm-800'
+              }`}
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium">
+                  {game.myTurn ? (
+                    <span className="text-volt-300">⚡ À vous de jouer</span>
+                  ) : game.waitingFor ? (
+                    `En attente de ${game.waitingFor}`
+                  ) : game.phase === 'lobby' ? (
+                    'Au salon'
+                  ) : (
+                    'Manche terminée'
+                  )}
+                </span>
+                <span className="block text-xs text-paper-300">
+                  Manche {game.round} · {game.playersCount} joueurs · {game.myScore}/100 pt
+                </span>
+              </span>
+              <span className="shrink-0 font-display text-sm font-bold tracking-widest text-paper-300">
+                {game.code}
+              </span>
+            </button>
+          ))}
+        </section>
+      )}
 
       <button
         type="button"
@@ -143,9 +201,15 @@ export function Home() {
       )}
 
       <nav className="mt-auto flex justify-center gap-4 pt-4 text-sm text-paper-300">
-        <a href="/regles" className="underline underline-offset-4">
+        <Link to="/regles" className="underline underline-offset-4">
           Comment on joue
-        </a>
+        </Link>
+        <Link to="/historique" className="underline underline-offset-4">
+          Historique
+        </Link>
+        <Link to="/profil" className="underline underline-offset-4">
+          Profil
+        </Link>
       </nav>
       <p className="text-center text-[10px] text-paper-300/60">{__APP_VERSION__}</p>
     </div>

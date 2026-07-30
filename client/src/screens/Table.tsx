@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { EMOTES, handValue, type EmoteId, type GameView } from '@zapzap/shared';
+import { isMuted, play, setMuted } from '../audio';
 import { DealPicker, DealWaiting } from '../components/DealPicker';
 import { HandFan } from '../components/HandFan';
 import { EMOTE_GLYPHS, EventTicker, TurnCountdown, useEmoteBubbles } from '../components/LiveFeedback';
@@ -9,6 +10,8 @@ import { PlayerSeats } from '../components/PlayerSeats';
 import { RoundRecap } from '../components/RoundRecap';
 import { TableCentre } from '../components/TableCentre';
 import { STATUS_H, useFeltLayout } from '../components/tableLayout';
+import { vibrate } from '../haptics';
+import { useWakeLock } from '../hooks/useWakeLock';
 import { useGame } from '../store/game';
 import { useSession } from '../store/session';
 
@@ -30,9 +33,47 @@ export function Table() {
   const [zapArmed, setZapArmed] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [showEmotes, setShowEmotes] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [muted, setMutedState] = useState(isMuted);
   const bubbles = useEmoteBubbles(lastEvent);
 
   useEffect(() => listen(), [listen]);
+
+  // L'écran reste allumé tant qu'on est à table : regarder les autres jouer,
+  // c'est ne pas toucher son téléphone.
+  useWakeLock(view !== null && view.phase !== 'game-over');
+
+  // La bande-son de la table : chaque événement s'entend, l'haptique suit.
+  useEffect(() => {
+    if (!lastEvent || !view) return;
+    switch (lastEvent.type) {
+      case 'dealt':
+        play('deal');
+        break;
+      case 'discarded':
+        if (lastEvent.playerId !== view.you) play('discard');
+        break;
+      case 'drew-stock':
+      case 'drew-discard':
+        if (lastEvent.playerId !== view.you) play('draw');
+        break;
+      case 'zap-called':
+        play(lastEvent.success ? 'zapWin' : 'zapFail');
+        vibrate(lastEvent.success ? 'success' : 'failure');
+        break;
+      case 'player-eliminated':
+        play('eliminated');
+        if (lastEvent.playerId === view.you) vibrate('failure');
+        break;
+      case 'player-joined':
+        play('join');
+        break;
+      default:
+        break;
+    }
+    // Réagir à l'événement seul : la vue change à chaque diffusion d'état.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastEvent]);
 
   useEffect(() => {
     if (code && !view) void send('room:join', { code });
@@ -47,6 +88,17 @@ export function Table() {
     setSelected([]);
     setZapArmed(false);
   }, [step, seat, view?.phase]);
+
+  // « C'est à toi » s'entend : le joueur a souvent l'écran dans la poche.
+  const pendingSeatNow = view?.phase === 'dealing' ? view.round?.dealerSeat : view?.round?.currentSeat;
+  const pendingIsMe =
+    view !== null && view.players.find((p) => p.seat === pendingSeatNow)?.id === view.you;
+  useEffect(() => {
+    if (pendingIsMe) {
+      play('yourTurn');
+      vibrate('nudge');
+    }
+  }, [pendingIsMe]);
 
   useEffect(() => {
     if (!zapArmed) return;
@@ -73,13 +125,19 @@ export function Table() {
   const hand = round?.myHand ?? [];
   const total = handValue(hand);
 
-  const toggle = (id: string) =>
+  const toggle = (id: string) => {
+    vibrate('tap');
     setSelected((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
+  };
 
   const discard = async () => {
     if (selected.length === 0) return;
     const done = await send('game:discard', { cardIds: selected });
-    if (done) setSelected([]);
+    if (done) {
+      setSelected([]);
+      play('discard');
+      vibrate('play');
+    }
   };
 
   const zap = async () => {
@@ -100,6 +158,40 @@ export function Table() {
     <div className="flex h-full flex-col">
       {/* Le tapis */}
       <div ref={feltRef} className="relative min-h-0 flex-1">
+        {/* Sortie de partie : discrète, en deux temps — elle affecte toute la table. */}
+        <div className="absolute top-1 left-1 z-20">
+          {confirmLeave ? (
+            <div className="zz-fade-up flex items-center gap-1 rounded-xl bg-storm-950/95 p-1">
+              <button
+                type="button"
+                onClick={async () => {
+                  await send('room:leave');
+                  setError(null);
+                  navigate('/');
+                }}
+                className="flex h-11 items-center rounded-lg bg-danger px-3 text-xs font-bold text-white"
+              >
+                Quitter la table
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmLeave(false)}
+                className="flex h-11 items-center rounded-lg px-3 text-xs text-paper-300"
+              >
+                Rester
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmLeave(true)}
+              aria-label="Quitter la partie"
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-storm-950/60 text-lg text-paper-300"
+            >
+              ←
+            </button>
+          )}
+        </div>
         {round && view.phase !== 'dealing' && <PlayerSeats view={view} layout={layout} bubbles={bubbles} />}
         {round && view.phase === 'playing' && (
           <TableCentre
@@ -197,6 +289,20 @@ export function Table() {
                 {EMOTE_GLYPHS[id]}
               </button>
             ))}
+            {/* Le silence se décide d'un geste, sans quitter la table. */}
+            <button
+              type="button"
+              onClick={() => {
+                const next = !muted;
+                setMuted(next);
+                setMutedState(next);
+              }}
+              aria-label={muted ? 'Réactiver le son' : 'Couper le son'}
+              aria-pressed={muted}
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-storm-800 text-xl"
+            >
+              {muted ? '🔇' : '🔊'}
+            </button>
           </div>
         )}
       </div>

@@ -55,6 +55,24 @@ export function openDatabase(path = config.dbPath): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_game_history_user ON game_history(user_id, played_at DESC);
 
     /*
+     * Liens magiques : connexion sans mot de passe, par e-mail.
+     *
+     * On ne stocke que le condensat du jeton — un vol de base ne donne aucun
+     * lien utilisable — et une échéance courte : un lien magique est un geste,
+     * pas un mot de passe de secours.
+     */
+    CREATE TABLE IF NOT EXISTS magic_links (
+      token_hash TEXT PRIMARY KEY,
+      /* Invité connecté au moment de la demande : celui qu'on promeut. */
+      user_id    TEXT,
+      email      TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      used_at    INTEGER
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_magic_links_email ON magic_links(email);
+
+    /*
      * Les parties en cours.
      *
      * Une partie asynchrone peut durer des jours : elle doit survivre à un

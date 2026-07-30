@@ -23,6 +23,8 @@ export class RoomManager {
     private io: Server,
     private db: Db | null = null,
     private roomOptions: RoomOptions = {},
+    /** Appelé une fois par partie, au passage en fin de partie : stats, historique. */
+    private onGameOver?: (room: Room) => void,
   ) {
     this.restore();
     this.sweepTimer = setInterval(() => this.sweep(), 60_000);
@@ -87,7 +89,16 @@ export class RoomManager {
   private callbacks() {
     return {
       onChanged: (room: Room) => this.persist(room),
-      onGameOver: (room: Room) => this.persist(room),
+      onGameOver: (room: Room) => {
+        this.persist(room);
+        try {
+          this.onGameOver?.(room);
+        } catch (error) {
+          // L'enregistrement des statistiques ne doit jamais faire tomber la
+          // table : la partie est finie, les joueurs regardent le classement.
+          console.error('onGameOver a échoué :', error);
+        }
+      },
       onEmpty: (room: Room) => {
         // Une table vide n'est pas fermée sur-le-champ : quelqu'un peut revenir,
         // et une partie asynchrone est vide par nature. Le balayage tranchera.
@@ -110,6 +121,20 @@ export class RoomManager {
 
   get(code: string): Room | undefined {
     return this.rooms.get(code);
+  }
+
+  /**
+   * La table où ce joueur est assis — partie finie comprise.
+   *
+   * `gamesOf` exclut les parties terminées (elles n'ont rien à faire dans
+   * « mes parties en cours »), mais la revanche se demande précisément depuis
+   * l'écran de fin : il faut pouvoir retrouver cette table-là.
+   */
+  findRoomOf(userId: string): Room | undefined {
+    for (const room of this.rooms.values()) {
+      if (room.isMember(userId)) return room;
+    }
+    return undefined;
   }
 
   remove(code: string, reason: string): void {

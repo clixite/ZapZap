@@ -126,14 +126,8 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     const limited = <T,>(ack: unknown, produce: () => Ack<T>): void =>
       reply(ack, () => (actionLimiter.allow(userId) ? produce() : (fail('RATE_LIMITED') as Ack<T>)));
 
-    /** La table où ce joueur est assis, s'il y en a une. */
-    const myRoom = (): Room | undefined => {
-      for (const game of rooms.gamesOf(userId)) {
-        const room = rooms.get(game.code);
-        if (room) return room;
-      }
-      return undefined;
-    };
+    /** La table où ce joueur est assis, s'il y en a une — partie finie comprise. */
+    const myRoom = (): Room | undefined => rooms.findRoomOf(userId);
 
     const profile = (): Pick<Player, 'id' | 'pseudo' | 'avatar'> & { photo?: string | null } => {
       const user = users.get(userId)!;
@@ -232,6 +226,24 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
         // rien, et l'hôte doit le savoir plutôt que de croire le joueur parti.
         const result = room.removePlayer(playerId);
         return result.ok ? { ok: true } : fail(result.error);
+      }),
+    );
+
+    socket.on('room:rematch', (ack) =>
+      limited(ack, () => {
+        const room = myRoom();
+        if (!room) return fail('NOT_IN_ROOM');
+        if (room.state.hostId !== userId) return fail('NOT_HOST');
+        if (room.state.phase !== 'game-over') return fail('BAD_PHASE');
+
+        // Une toute nouvelle table, avec l'hôte seul dedans. L'événement
+        // `rematch` est diffusé à l'ancienne : chaque client encore connecté
+        // rejoint la nouvelle de lui-même — c'est ce qui fait basculer toute
+        // la tablée sans que personne n'ait à retaper un code.
+        const next = rooms.create(profile());
+        room.emitEvent({ type: 'rematch', code: next.code });
+        next.attach(userId, socket);
+        return { ok: true, code: next.code };
       }),
     );
 

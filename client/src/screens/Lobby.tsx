@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MAX_PLAYERS, MIN_PLAYERS, isBotId, type ZapVariants } from '@zapzap/shared';
+import { InviteButtons } from '../components/InviteButtons';
 import { useGame } from '../store/game';
 import { useSession } from '../store/session';
 
@@ -17,7 +18,6 @@ export function Lobby() {
   const navigate = useNavigate();
   const { view, error, busy, send, setError, listen } = useGame();
   const user = useSession((s) => s.user);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => listen(), [listen]);
 
@@ -33,20 +33,6 @@ export function Lobby() {
 
   const isHost = view.hostId === view.you;
   const enough = view.players.length >= MIN_PLAYERS;
-  const inviteUrl = `${location.origin}/j/${view.code}`;
-
-  const share = async () => {
-    const text = `Rejoins ma partie de ZapZap : ${inviteUrl}`;
-    if (navigator.share) {
-      // Le partage natif ouvre WhatsApp, SMS et le reste sans qu'on ait à
-      // choisir pour le joueur.
-      await navigator.share({ title: 'ZapZap', text, url: inviteUrl }).catch(() => {});
-      return;
-    }
-    await navigator.clipboard?.writeText(inviteUrl).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const setVariants = (patch: Partial<ZapVariants>) =>
     void send('room:setVariants', { variants: { ...view.variants, ...patch } });
@@ -56,13 +42,9 @@ export function Lobby() {
       <header className="text-center">
         <p className="text-xs tracking-wide text-paper-300 uppercase">Code de la partie</p>
         <p className="font-display text-5xl font-bold tracking-[0.2em] text-volt-300">{view.code}</p>
-        <button
-          type="button"
-          onClick={() => void share()}
-          className="mt-2 min-h-11 rounded-xl bg-storm-700 px-6 py-3 text-sm font-medium"
-        >
-          {copied ? 'Lien copié' : 'Inviter'}
-        </button>
+        <div className="mt-3">
+          <InviteButtons code={view.code} />
+        </div>
       </header>
 
       <section className="flex flex-col gap-2">

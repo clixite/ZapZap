@@ -18,6 +18,9 @@ interface SessionState {
   connected: boolean;
   restore: () => Promise<void>;
   signIn: (pseudo: string, avatar: string) => Promise<void>;
+  /** Adoption d'une identité venue d'ailleurs — le lien magique vérifié. */
+  adopt: (token: string, user: PublicUser) => void;
+  setUser: (user: PublicUser | null) => void;
   setConnected: (connected: boolean) => void;
 }
 
@@ -39,8 +42,8 @@ export const useSession = create<SessionState>((set, get) => ({
       set({ loading: false });
       return;
     }
-    const user = await fetchMe(token).catch(() => null);
-    if (!user) {
+    const me = await fetchMe(token).catch(() => null);
+    if (!me) {
       // Jeton expiré ou base repartie de zéro : on repart proprement plutôt que
       // de laisser l'application dans un état à moitié connecté.
       clearToken();
@@ -48,7 +51,7 @@ export const useSession = create<SessionState>((set, get) => ({
       return;
     }
     attach(token, set);
-    set({ user, loading: false });
+    set({ user: me.user, loading: false });
   },
 
   signIn: async (pseudo, avatar) => {
@@ -57,6 +60,14 @@ export const useSession = create<SessionState>((set, get) => ({
     attach(token, set);
     set({ user, loading: false });
   },
+
+  adopt: (token, user) => {
+    storeToken(token);
+    attach(token, set);
+    set({ user, loading: false });
+  },
+
+  setUser: (user) => set({ user }),
 
   setConnected: (connected) => {
     if (get().connected !== connected) set({ connected });

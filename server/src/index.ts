@@ -1,15 +1,53 @@
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
+import { isBotId } from '@zapzap/shared';
+import { magicLinkRoutes } from './auth/magicLink';
 import { createApp } from './app';
 import { config } from './config';
 import { openDatabase } from './db/db';
 import { UsersRepo } from './db/users.repo';
+import { createMailer } from './mail/mailer';
+import type { Room } from './rooms/Room';
 import { RoomManager } from './rooms/RoomManager';
 import { registerHandlers } from './sockets/handlers';
 
 const db = openDatabase();
-const app = createApp(db);
+const users = new UsersRepo(db);
+// Accesseur paresseux : l'application naît avant le gestionnaire de tables.
+let rooms: RoomManager | null = null;
+const app = createApp(db, () => rooms);
+app.use('/api', magicLinkRoutes(db, users, createMailer(config)));
 const http = createServer(app);
+
+/**
+ * Fin de partie : chaque humain repart avec sa ligne d'historique et ses
+ * statistiques. Les robots ne comptent pas — personne ne consulte le palmarès
+ * de Volt.
+ */
+function recordGameOver(room: Room): void {
+  const state = room.state;
+  const playedAt = Date.now();
+  const ranked = [...state.players].sort(
+    (a, b) => (a.finishRank ?? 99) - (b.finishRank ?? 99) || a.totalScore - b.totalScore,
+  );
+  const standings = ranked.map((p) => ({ pseudo: p.pseudo, avatar: p.avatar, score: p.totalScore }));
+
+  for (const player of state.players) {
+    if (isBotId(player.id) || !users.get(player.id)) continue;
+    const rank = player.finishRank ?? ranked.findIndex((p) => p.id === player.id) + 1;
+    const zaps = room.zapStats[player.id] ?? { called: 0, won: 0 };
+    users.recordGameResult(player.id, rank === 1, zaps.called, zaps.won, room.bestRounds[player.id] ?? 0);
+    users.addHistoryEntry(player.id, {
+      code: state.code,
+      playedAt,
+      playersCount: state.players.length,
+      myScore: player.totalScore,
+      myRank: rank,
+      won: rank === 1,
+      standings,
+    });
+  }
+}
 const io = new Server(http, {
   // Le client est servi par le même processus : aucune origine tierce à
   // autoriser. En développement, Vite fait proxy, donc même origine également.
@@ -19,8 +57,8 @@ const io = new Server(http, {
   connectionStateRecovery: { maxDisconnectionDuration: 120_000 },
 });
 
-const rooms = new RoomManager(io, db);
-registerHandlers({ io, rooms, users: new UsersRepo(db) });
+rooms = new RoomManager(io, db, {}, recordGameOver);
+registerHandlers({ io, rooms, users });
 
 http.listen(config.port, () => {
   console.log(`ZapZap écoute sur le port ${config.port} — ${config.publicUrl}`);
@@ -28,7 +66,7 @@ http.listen(config.port, () => {
 
 function shutdown(signal: string): void {
   console.log(`${signal} reçu, arrêt.`);
-  rooms.stop();
+  rooms?.stop();
   io.close();
   http.close(() => {
     db.close();
