@@ -29,8 +29,11 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      // `prompt` : la nouvelle version attend qu'on la déclenche. En
+      // `autoUpdate`, les fichiers basculaient silencieusement au milieu d'une
+      // manche — voir client/src/pwa.ts.
+      registerType: 'prompt',
+      injectRegister: false,
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
         name: 'ZapZap — le jeu de cartes entre amis',

@@ -1,0 +1,20 @@
+# Surcouche Traefik.
+#
+# Sur le VPS, le proxy est un Traefik en file provider : il joint les services
+# par le réseau `proxy` et les publie d'après les fichiers déposés dans son
+# dossier /config (voir deploy/traefik-zapzap.yml). Cette surcouche ne fait
+# qu'ajouter le réseau — un `docker network connect` à la main ne survivrait
+# pas à la recréation du conteneur.
+#
+# Usage (install.sh le fait tout seul quand il détecte Traefik) :
+#   docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.traefik.yml up -d
+
+services:
+  zapzap:
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    external: true

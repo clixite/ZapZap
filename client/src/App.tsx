@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Navigate, Route, BrowserRouter as Router, Routes, useParams } from 'react-router-dom';
+import { usePwa } from './pwa';
 import { GameOver } from './screens/GameOver';
 import { Home } from './screens/Home';
 import { Lobby } from './screens/Lobby';
@@ -11,6 +12,8 @@ export function App() {
   const restore = useSession((s) => s.restore);
   const connected = useSession((s) => s.connected);
   const user = useSession((s) => s.user);
+  const updateReady = usePwa((s) => s.updateReady);
+  const applyUpdate = usePwa((s) => s.apply);
 
   useEffect(() => {
     void restore();
@@ -30,6 +33,16 @@ export function App() {
         >
           Reconnexion…
         </div>
+      )}
+      {/* La nouvelle version attend le geste du joueur — jamais en plein tour. */}
+      {updateReady && (
+        <button
+          type="button"
+          onClick={applyUpdate}
+          className="fixed inset-x-4 top-2 z-50 rounded-xl bg-volt-500 px-4 py-3 text-sm font-bold text-storm-950 shadow-lg"
+        >
+          Nouvelle version disponible — toucher pour recharger
+        </button>
       )}
       <Routes>
         <Route path="/" element={<Home />} />

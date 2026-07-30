@@ -69,11 +69,31 @@ EOF
 fi
 
 # ---------------------------------------------------------------------------
+info "Reverse proxy en place"
+# ---------------------------------------------------------------------------
+# Sur le VPS, c'est un Traefik en file provider qui tient les ports 80/443 : on
+# le détecte avant de construire, pour attacher le conteneur au réseau `proxy`
+# dès son démarrage plutôt qu'après coup.
+TRAEFIK_CONFIG_DIR=""
+COMPOSE_FILES=(-f deploy/docker-compose.yml)
+if docker ps --format '{{.Names}}' | grep -qx traefik; then
+  TRAEFIK_CONFIG_DIR="$(docker inspect traefik \
+    --format '{{range .Mounts}}{{if eq .Destination "/config"}}{{.Source}}{{end}}{{end}}' 2>/dev/null || true)"
+fi
+if [[ -n "$TRAEFIK_CONFIG_DIR" ]]; then
+  echo "  Traefik détecté (config : ${TRAEFIK_CONFIG_DIR})."
+  docker network inspect proxy >/dev/null 2>&1 || die "Traefik présent mais pas de réseau « proxy »."
+  COMPOSE_FILES+=(-f deploy/docker-compose.traefik.yml)
+else
+  echo "  Pas de Traefik : on tentera nginx plus loin."
+fi
+
+# ---------------------------------------------------------------------------
 info "Construction et démarrage"
 # ---------------------------------------------------------------------------
 cd "$APP_DIR"
 PORT_BINDING="127.0.0.1:${PORT}:3000" \
-  docker compose -f deploy/docker-compose.yml --env-file "$ENV_FILE" up -d --build
+  docker compose "${COMPOSE_FILES[@]}" --env-file "$ENV_FILE" up -d --build
 
 info "Attente du serveur"
 for _ in $(seq 1 60); do
@@ -87,10 +107,35 @@ curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null 2>&1 \
   || die "Le serveur ne répond pas. Voir : docker compose -f deploy/docker-compose.yml logs"
 
 # ---------------------------------------------------------------------------
-info "Reverse proxy"
+info "Publication"
 # ---------------------------------------------------------------------------
-if ! command -v nginx >/dev/null 2>&1; then
-  warn "nginx introuvable. Le service tourne sur http://127.0.0.1:${PORT}."
+if [[ -n "$TRAEFIK_CONFIG_DIR" ]]; then
+  # Traefik recharge son dossier /config à chaud : déposer le routeur suffit.
+  # On ne remplace jamais un fichier existant — il peut avoir été ajusté à la
+  # main, et c'est lui qui fait foi.
+  if [[ -f "${TRAEFIK_CONFIG_DIR}/zapzap.yml" ]]; then
+    echo "  ${TRAEFIK_CONFIG_DIR}/zapzap.yml existe déjà : conservé tel quel."
+  else
+    cp deploy/traefik-zapzap.yml "${TRAEFIK_CONFIG_DIR}/zapzap.yml"
+    echo "  Routeur déposé : ${TRAEFIK_CONFIG_DIR}/zapzap.yml"
+  fi
+  info "Vérification"
+  sleep 5
+  if curl -fsS "https://${DOMAIN}/api/health" >/dev/null 2>&1; then
+    echo "  https://${DOMAIN} répond."
+  else
+    warn "https://${DOMAIN} ne répond pas encore — le certificat peut prendre"
+    warn "quelques secondes. Réessayez : curl https://${DOMAIN}/api/health"
+  fi
+  info "Terminé"
+  echo "  https://${DOMAIN}"
+  echo "  Journal : docker compose ${COMPOSE_FILES[*]} logs -f"
+  echo "  Mise à jour : git pull && bash deploy/install.sh"
+  exit 0
+fi
+
+if ! command -v nginx >/dev/null 2>&1 || ! systemctl is-active --quiet nginx 2>/dev/null; then
+  warn "Ni Traefik ni nginx actif. Le service tourne sur http://127.0.0.1:${PORT}."
   warn "Branchez-le à votre proxy et arrêtez-vous là."
   exit 0
 fi

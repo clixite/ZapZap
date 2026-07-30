@@ -1,9 +1,19 @@
 # Mettre ZapZap en ligne
 
 Le service tourne sur le VPS `srv1352234.hstgr.cloud` (`76.13.46.55`), qui héberge
-déjà d'autres applications derrière nginx — dont Rikiki. Tout ce qui suit est
+déjà d'autres applications derrière Traefik — dont Rikiki. Tout ce qui suit est
 conçu pour **cohabiter sans rien toucher** : port interne dédié, conteneur et
-volume nommés à part, et un seul fichier de site nginx ajouté.
+volume nommés à part, et un seul fichier de routeur ajouté à la configuration du proxy.
+
+## Le proxy de la machine : Traefik
+
+Les ports 80/443 sont tenus par un **Traefik v3 en file provider** (pas de labels
+Docker) : les services le rejoignent par le réseau `proxy`, et il publie ce que
+décrivent les fichiers déposés dans son dossier `/config`, rechargé à chaud.
+`install.sh` détecte ce Traefik, attache le conteneur au réseau via
+`deploy/docker-compose.traefik.yml`, et dépose `deploy/traefik-zapzap.yml` dans
+sa configuration. Le fichier nginx n'est utilisé que si un nginx actif est le
+proxy — pas sur ce VPS.
 
 ## Ce qui est déjà en place
 

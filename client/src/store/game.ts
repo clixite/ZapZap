@@ -24,7 +24,7 @@ interface GameStore {
  * serveur arbitre déjà, c'est se garantir deux vérités qui finiront par diverger
  * — et donner au joueur l'impression d'un coup refusé sans raison.
  */
-export const useGame = create<GameStore>((set) => ({
+export const useGame = create<GameStore>((set, get) => ({
   view: null,
   error: null,
   busy: false,
@@ -37,14 +37,29 @@ export const useGame = create<GameStore>((set) => ({
     const onView = (view: GameView) => set({ view });
     const onEvent = (event: TransientEvent) => set({ lastEvent: event });
     const onClosed = ({ reason }: { reason: string }) => set({ view: null, error: reason });
+    /**
+     * Reconnexion : on se rassoit d'office à la table.
+     *
+     * Sans cet appel, une coupure réseau laissait l'écran figé sur la dernière
+     * vue reçue — la vue n'étant jamais remise à zéro, l'effet « rejoindre si
+     * pas de vue » des écrans ne se redéclenchait pas, et le serveur ne nous
+     * comptait plus à la table. Rejoindre est idempotent côté serveur : membre,
+     * on est simplement rattaché et on reçoit une vue fraîche.
+     */
+    const onReconnect = () => {
+      const view = get().view;
+      if (view) void get().send('room:join', { code: view.code });
+    };
 
     socket.on('game:view', onView);
     socket.on('game:event', onEvent);
     socket.on('room:closed', onClosed);
+    socket.on('connect', onReconnect);
     return () => {
       socket.off('game:view', onView);
       socket.off('game:event', onEvent);
       socket.off('room:closed', onClosed);
+      socket.off('connect', onReconnect);
     };
   },
 

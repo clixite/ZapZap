@@ -1,0 +1,25 @@
+# Routeur ZapZap pour le Traefik du VPS (file provider, rechargé à chaud).
+#
+# À déposer dans le dossier /config monté du conteneur Traefik — install.sh le
+# fait tout seul. Les noms d'entrypoint (`websecure`) et de résolveur (`le`)
+# sont ceux de la configuration statique du Traefik en place ; ils se lisent
+# dans `docker inspect traefik --format '{{join .Args " "}}'`.
+#
+# Rien à prévoir pour les WebSockets : Traefik relaie l'Upgrade HTTP/1.1 sans
+# configuration.
+
+http:
+  routers:
+    zapzap:
+      rule: Host(`zapzap.clixite-prod.cloud`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: le
+      service: zapzap
+
+  services:
+    zapzap:
+      loadBalancer:
+        servers:
+          - url: http://zapzap:3000

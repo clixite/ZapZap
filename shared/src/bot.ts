@@ -1,4 +1,4 @@
-import { cardId, cardValue, handValue, isJoker } from './cards';
+import { cardId, cardValue, handValue } from './cards';
 import { findCombos, pickableFrom, type ComboOptions } from './combos';
 import { DEAL_CHOICES, comboOptions, type ZapVariants } from './rules';
 import type { Card, Combo, GameState, RoundEvent } from './types';
@@ -138,15 +138,38 @@ export function chooseHandSize(state: GameState, playerId: string): number {
 const SHRINK_BONUS = 8;
 
 /**
+ * Prime écrasante pour une pose qui met la main sous le seuil d'annonce.
+ *
+ * Elle domine volontairement tout le barème ordinaire (qui plafonne vers 80) :
+ * pouvoir annoncer au prochain tour vaut plus que n'importe quel délestage.
+ * Sans elle, le robot posait mécaniquement sa plus grosse combinaison — avec
+ * As-As-As-Roi il lâchait le brelan d'As et gardait dix points en main, alors
+ * que poser le Roi seul le laissait à trois points, prêt à annoncer.
+ */
+const ZAP_SETUP_BONUS = 1000;
+
+/**
  * La défausse.
  *
  * On ne garde jamais une combinaison pour plus tard (§9.4) : une paire de Rois
  * en main, ce sont vingt points qui dorment. Entre deux poses, on arbitre entre
- * les points lâchés et les cartes dont on se débarrasse.
+ * les points lâchés et les cartes dont on se débarrasse — sauf quand une pose
+ * ouvre la porte de l'annonce, auquel cas elle gagne d'office.
+ *
+ * `zapThreshold` vaut -1 par défaut : la prime ne se déclenche jamais, et les
+ * appels existants gardent leur comportement.
  */
-export function chooseDiscard(hand: readonly Card[], opts: ComboOptions): Combo {
+export function chooseDiscard(hand: readonly Card[], opts: ComboOptions, zapThreshold = -1): Combo {
   const combos = findCombos(hand, opts);
-  return combos.reduce((best, combo) => (comboScore(combo) > comboScore(best) ? combo : best), combos[0]);
+  const total = handValue(hand);
+  const score = (combo: Combo): number => {
+    const remaining = total - handValue(combo.cards);
+    const base = comboScore(combo);
+    // À plusieurs poses qualifiantes, on préfère celle qui laisse le moins de
+    // points : l'égalité profitant au contre-attaquant, chaque point compte.
+    return remaining <= zapThreshold ? base + ZAP_SETUP_BONUS + (zapThreshold - remaining) : base;
+  };
+  return combos.reduce((best, combo) => (score(combo) > score(best) ? combo : best), combos[0]);
 }
 
 function comboScore(combo: Combo): number {
@@ -181,9 +204,11 @@ export function chooseDraw(
   const before = bestComboScore(hand, opts);
 
   for (const card of candidates) {
-    if (isJoker(card)) continue;
-    // Le gain est ce que la carte débloque, moins ce qu'elle coûte à porter si
-    // la combinaison ne se fait finalement pas.
+    // Le joker est évalué comme les autres : il vaut 0, donc il passe toujours
+    // le critère « quasi gratuite » — à raison. Le porter ne coûte rien, et il
+    // offre une défausse de secours pour un tour sans combinaison. L'ignorer
+    // (comme le faisait une première version) laissait traîner sur la table la
+    // seule carte du paquet qui ne présente aucun risque.
     const gain = bestComboScore([...hand, card], opts) - before - cardValue(card);
     if (!best || gain > best.gain) best = { card, gain };
   }
@@ -284,7 +309,7 @@ export function botMove(state: GameState, playerId: string): BotMove | null {
       .filter((p) => !p.eliminated && p.id !== playerId)
       .map((p) => (round.hands[p.id] ?? []).length);
     if (shouldCallZap(hand, state.variants, opponentCounts)) return { kind: 'zap' };
-    const combo = chooseDiscard(hand, opts);
+    const combo = chooseDiscard(hand, opts, state.variants.zapThreshold);
     return { kind: 'discard', cardIds: combo.cards.map(cardId) };
   }
 

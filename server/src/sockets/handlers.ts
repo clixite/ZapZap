@@ -13,6 +13,7 @@ import {
   type Player,
 } from '@zapzap/shared';
 import type { UsersRepo } from '../db/users.repo';
+import { RateLimiter } from '../rateLimit';
 import { normalizeCode } from '../rooms/roomCodes';
 import type { RoomManager } from '../rooms/RoomManager';
 import type { Room } from '../rooms/Room';
@@ -51,6 +52,8 @@ const MESSAGES: Record<ErrorCode, string> = {
   ALREADY_IN_ROOM: 'Vous êtes déjà à une table.',
   NOT_IN_ROOM: 'Vous n’êtes à aucune table.',
   NO_OPEN_TABLE: 'Aucune table ouverte pour le moment.',
+  TOO_MANY_ROOMS: 'Vous avez déjà plusieurs parties en cours. Finissez-en une d’abord.',
+  RATE_LIMITED: 'Doucement ! Réessayez dans un instant.',
   INVALID_TOKEN: 'Session expirée, rechargez la page.',
   INVALID_PAYLOAD: 'Requête invalide.',
 };
@@ -84,6 +87,9 @@ const profileSchema = z.object({
   avatar: z.string().trim().min(1).max(8),
 });
 
+/** Parties simultanées par joueur : au-delà, il sème des tables sans les jouer. */
+const MAX_ACTIVE_ROOMS = 5;
+
 export interface HandlerDeps {
   io: Server;
   rooms: RoomManager;
@@ -91,6 +97,17 @@ export interface HandlerDeps {
 }
 
 export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
+  /**
+   * Débit par joueur sur les événements qui mutent quelque chose.
+   *
+   * Trente d'un coup puis huit par seconde : très au-dessus du rythme d'un
+   * humain — même pressé, on joue deux actions par tour — mais assez bas pour
+   * qu'un script en boucle n'occupe pas le serveur. Les émotes ont leur propre
+   * seau, plus strict : c'est le seul événement qui se diffuse à toute la
+   * table sans limite naturelle de tour.
+   */
+  const actionLimiter = new RateLimiter(30, 8);
+  const emoteLimiter = new RateLimiter(5, 0.5);
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token as string | undefined;
     const userId = token ? verifyToken(token) : null;
@@ -104,6 +121,10 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
   io.on('connection', (socket) => {
     const userId = socket.data.userId as string;
     users.touch(userId);
+
+    /** Comme `reply`, avec le seau de jetons devant : un flot d'appels est rejeté, pas traité. */
+    const limited = <T,>(ack: unknown, produce: () => Ack<T>): void =>
+      reply(ack, () => (actionLimiter.allow(userId) ? produce() : (fail('RATE_LIMITED') as Ack<T>)));
 
     /** La table où ce joueur est assis, s'il y en a une. */
     const myRoom = (): Room | undefined => {
@@ -124,7 +145,8 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     /* -------------------------------------------------------------- */
 
     socket.on('room:create', (ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
+        if (rooms.gamesOf(userId).length >= MAX_ACTIVE_ROOMS) return fail('TOO_MANY_ROOMS');
         const room = rooms.create(profile());
         room.attach(userId, socket);
         return { ok: true, code: room.code };
@@ -132,7 +154,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     );
 
     socket.on('room:join', (payload, ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const parsed = joinSchema.safeParse(payload);
         if (!parsed.success) return fail('INVALID_PAYLOAD');
         const room = rooms.get(normalizeCode(parsed.data.code));
@@ -150,12 +172,13 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     );
 
     socket.on('room:quickMatch', (ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const existing = myRoom();
         if (existing) {
           existing.attach(userId, socket);
           return { ok: true, code: existing.code, created: false };
         }
+        if (rooms.gamesOf(userId).length >= MAX_ACTIVE_ROOMS) return fail('TOO_MANY_ROOMS');
         const { room, created } = rooms.quickMatch(profile());
         if (!created) room.emitEvent({ type: 'player-joined', playerId: userId, pseudo: profile().pseudo });
         room.attach(userId, socket);
@@ -166,7 +189,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     socket.on('room:openTables', (ack) => reply(ack, () => ({ ok: true, tables: rooms.openTables() })));
 
     socket.on('room:leave', (ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         room.leave(userId, socket);
@@ -175,7 +198,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     );
 
     socket.on('room:addBot', (ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         if (room.state.hostId !== userId) return fail('NOT_HOST');
@@ -187,26 +210,28 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     );
 
     socket.on('room:removeBot', (payload, ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         if (room.state.hostId !== userId) return fail('NOT_HOST');
         const playerId = (payload as { playerId?: unknown } | undefined)?.playerId;
         if (typeof playerId !== 'string') return fail('INVALID_PAYLOAD');
-        room.removePlayer(playerId);
-        return { ok: true };
+        const result = room.removePlayer(playerId);
+        return result.ok ? { ok: true } : fail(result.error);
       }),
     );
 
     socket.on('room:kick', (payload, ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         if (room.state.hostId !== userId) return fail('NOT_HOST');
         const playerId = (payload as { playerId?: unknown } | undefined)?.playerId;
         if (typeof playerId !== 'string' || playerId === userId) return fail('INVALID_PAYLOAD');
-        room.removePlayer(playerId);
-        return { ok: true };
+        // L'échec remonte tel quel : hors salon, retirer quelqu'un ne fait
+        // rien, et l'hôte doit le savoir plutôt que de croire le joueur parti.
+        const result = room.removePlayer(playerId);
+        return result.ok ? { ok: true } : fail(result.error);
       }),
     );
 
@@ -215,7 +240,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     /* -------------------------------------------------------------- */
 
     socket.on('room:setVariants', (payload, ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         const variants = (payload as { variants?: unknown } | undefined)?.variants;
@@ -226,7 +251,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     );
 
     socket.on('room:setPace', (payload, ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         const pace = (payload as { pace?: unknown } | undefined)?.pace;
@@ -237,7 +262,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     );
 
     socket.on('room:setVisibility', (payload, ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         const visibility = (payload as { visibility?: unknown } | undefined)?.visibility;
@@ -252,7 +277,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     /* -------------------------------------------------------------- */
 
     socket.on('game:start', (ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         const result = room.apply({ type: 'START_GAME', playerId: userId });
@@ -261,7 +286,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     );
 
     socket.on('game:deal', (payload, ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         const handSize = (payload as { handSize?: unknown } | undefined)?.handSize;
@@ -274,7 +299,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     );
 
     socket.on('game:discard', (payload, ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         const parsed = discardSchema.safeParse(payload);
@@ -287,7 +312,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     );
 
     socket.on('game:draw', (payload, ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         const parsed = drawSchema.safeParse(payload);
@@ -310,7 +335,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     );
 
     socket.on('game:zap', (ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         const result = room.apply({ type: 'CALL_ZAP', playerId: userId });
@@ -325,7 +350,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     );
 
     socket.on('game:nextRound', (ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         const result = room.apply({ type: 'NEXT_ROUND', playerId: userId });
@@ -335,6 +360,9 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
 
     socket.on('game:emote', (payload, ack) =>
       reply(ack, () => {
+        // Seau dédié, plus strict : l'émote se diffuse à toute la table sans
+        // limite naturelle de tour, c'est la seule voie de spam possible.
+        if (!emoteLimiter.allow(userId)) return fail('RATE_LIMITED');
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         const emote = (payload as { emote?: unknown } | undefined)?.emote;
@@ -349,7 +377,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     /* -------------------------------------------------------------- */
 
     socket.on('profile:update', (payload, ack) =>
-      reply(ack, () => {
+      limited(ack, () => {
         const parsed = profileSchema.safeParse(payload);
         if (!parsed.success) return fail('INVALID_PAYLOAD');
         users.updateProfile(userId, parsed.data.pseudo, parsed.data.avatar);

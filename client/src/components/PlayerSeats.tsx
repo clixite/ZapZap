@@ -1,4 +1,5 @@
-import { isBotId, type GameView, type Player } from '@zapzap/shared';
+import { isBotId, type EmoteId, type GameView, type Player } from '@zapzap/shared';
+import { EMOTE_GLYPHS } from './LiveFeedback';
 import type { FeltLayout } from './tableLayout';
 
 /**
@@ -14,9 +15,11 @@ import type { FeltLayout } from './tableLayout';
 export interface PlayerSeatsProps {
   view: GameView;
   layout: FeltLayout;
+  /** Émote en cours par joueur — rendue en bulle au-dessus du siège. */
+  bubbles?: Record<string, EmoteId>;
 }
 
-export function PlayerSeats({ view, layout }: PlayerSeatsProps) {
+export function PlayerSeats({ view, layout, bubbles = {} }: PlayerSeatsProps) {
   const opponents = orderedOpponents(view);
 
   return (
@@ -33,6 +36,7 @@ export function PlayerSeats({ view, layout }: PlayerSeatsProps) {
             x={seat.x}
             y={seat.y}
             cards={view.round?.handCounts[player.id] ?? 0}
+            bubble={bubbles[player.id] ?? null}
           />
         );
       })}
@@ -66,6 +70,7 @@ function Seat({
   x,
   y,
   cards,
+  bubble,
 }: {
   player: Player;
   view: GameView;
@@ -73,6 +78,7 @@ function Seat({
   x: number;
   y: number;
   cards: number;
+  bubble: EmoteId | null;
 }) {
   const round = view.round;
   const isPending =
@@ -87,6 +93,15 @@ function Seat({
       style={{ left: x, top: y, width: layout.seatW, transform: 'translate(-50%, -50%)' }}
     >
       <div className="relative">
+        {bubble && (
+          <span
+            className="zz-zap absolute -top-6 left-1/2 z-10 -translate-x-1/2 rounded-full bg-paper-50 px-1.5 py-0.5 text-base shadow-lg"
+            role="img"
+            aria-label={`${player.pseudo} réagit`}
+          >
+            {EMOTE_GLYPHS[bubble]}
+          </span>
+        )}
         <div
           className={`flex items-center justify-center rounded-full bg-storm-700 ${isPending ? 'zz-turn' : ''}`}
           style={{

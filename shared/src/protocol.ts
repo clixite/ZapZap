@@ -9,6 +9,8 @@ export type ErrorCode =
   | 'ALREADY_IN_ROOM'
   | 'NOT_IN_ROOM'
   | 'NO_OPEN_TABLE'
+  | 'TOO_MANY_ROOMS'
+  | 'RATE_LIMITED'
   | 'INVALID_TOKEN'
   | 'INVALID_PAYLOAD';
 

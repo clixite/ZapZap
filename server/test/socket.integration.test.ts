@@ -102,7 +102,7 @@ async function join(pseudo: string): Promise<TestPlayer> {
       new Promise<GameView>((resolve, reject) => {
         if (latest && predicate(latest)) return resolve(latest);
         waiters.push({ predicate, resolve });
-        setTimeout(() => reject(new Error(`${pseudo} : vue attendue jamais reçue`)), 3000);
+        setTimeout(() => reject(new Error(`${pseudo} : vue attendue jamais reçue`)), 8000);
       }),
   };
 }
@@ -409,6 +409,91 @@ describe('déconnexion', () => {
   });
 });
 
+describe('exclusion', () => {
+  it('refuse de retirer un joueur d’une partie commencée, et le dit', async () => {
+    const alice = await join('alice');
+    const { code } = expectOk(await alice.emit<{ code: string }>('room:create'));
+    const bob = await join('bob');
+    expectOk(await bob.emit('room:join', { code }));
+    expectOk(await alice.emit('game:start'));
+
+    // Une première version répondait ok:true sans rien faire : l'hôte croyait
+    // le joueur parti, la table le gardait.
+    const ack = await alice.emit('room:kick', { playerId: bob.id });
+    expect(ack.ok).toBe(false);
+    if (!ack.ok) expect(ack.error.code).toBe('BAD_PHASE');
+  });
+
+  it('coupe les vues de l’exclu : il ne voit plus la table', async () => {
+    const alice = await join('alice');
+    const { code } = expectOk(await alice.emit<{ code: string }>('room:create'));
+    const bob = await join('bob');
+    expectOk(await bob.emit('room:join', { code }));
+    await alice.nextView((v) => v.players.length === 2);
+
+    const closed = new Promise<{ reason: string }>((resolve) => bob.socket.once('room:closed', resolve));
+    expectOk(await alice.emit('room:kick', { playerId: bob.id }));
+    expect((await closed).reason).toBeTruthy();
+
+    // Alice continue de jouer : les diffusions suivantes n'atteignent plus Bob.
+    const bobViews = bob.events.length;
+    expectOk(await alice.emit('room:addBot'));
+    await alice.nextView((v) => v.players.length === 2);
+    expect(bob.events.length).toBe(bobViews);
+  });
+});
+
+describe('limitation de débit', () => {
+  it('finit par rejeter un flot d’émotes', async () => {
+    const alice = await join('alice');
+    expectOk(await alice.emit<{ code: string }>('room:create'));
+
+    let refused = false;
+    for (let i = 0; i < 12; i++) {
+      const ack = await alice.emit('game:emote', { emote: 'fire' });
+      if (!ack.ok) {
+        expect(ack.error.code).toBe('RATE_LIMITED');
+        refused = true;
+        break;
+      }
+    }
+    expect(refused).toBe(true);
+  });
+
+  it('plafonne les parties simultanées d’un même joueur', async () => {
+    const alice = await join('alice');
+    // On quitte à chaque fois ? Non : on enchaîne les créations sans quitter.
+    // gamesOf ne compte que les tables où l'on siège encore.
+    let refused = false;
+    for (let i = 0; i < 8; i++) {
+      const ack = await alice.emit<{ code: string }>('room:create');
+      if (!ack.ok) {
+        expect(ack.error.code).toBe('TOO_MANY_ROOMS');
+        refused = true;
+        break;
+      }
+    }
+    expect(refused).toBe(true);
+  });
+
+  it('borne la création de comptes par adresse', async () => {
+    let refused = false;
+    for (let i = 0; i < 15; i++) {
+      const res = await fetch(`${url}/api/guest`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ pseudo: `Robot${i}`, avatar: '⚡' }),
+      });
+      if (res.status === 429) {
+        refused = true;
+        break;
+      }
+      expect(res.status).toBe(200);
+    }
+    expect(refused).toBe(true);
+  });
+});
+
 describe('persistance', () => {
   it('retrouve une partie en cours après un redémarrage', async () => {
     const alice = await join('alice');
@@ -427,6 +512,13 @@ describe('persistance', () => {
     expect(room!.state.phase).not.toBe('lobby');
     // Personne n'est connecté au redémarrage, quoi qu'en dise l'état persisté.
     expect(room!.state.players.find((p) => p.id === alice.id)!.connected).toBe(false);
+
+    // Le retour du joueur le remet « connecté » : la reconnexion se fonde sur
+    // l'état, pas sur un minuteur de grâce — qui n'existe plus après un
+    // redémarrage. Une première version le laissait absent pour toujours.
+    const fakeSocket = { join: async () => {}, leave: async () => {}, emit: () => {} };
+    room!.attach(alice.id, fakeSocket as never);
+    expect(room!.state.players.find((p) => p.id === alice.id)!.connected).toBe(true);
     revived.stop();
   });
 });

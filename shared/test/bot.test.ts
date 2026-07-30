@@ -119,6 +119,26 @@ describe('choix de la défausse', () => {
     const combo = chooseDiscard(hand, DEFAULT_COMBO_OPTIONS);
     expect(combo.cards.every((card) => hand.some((h) => cardId(h) === cardId(card)))).toBe(true);
   });
+
+  it('sacrifie la grosse pose quand une petite met la main sous le seuil', () => {
+    // As-As-As-Roi, seuil 5 : le brelan d'As rapporte plus, mais laisse dix
+    // points en main. Le Roi seul laisse trois points — l'annonce est ouverte
+    // au prochain tour, et ça vaut plus que n'importe quel délestage.
+    const hand = [c('S', 1), c('H', 1), c('D', 1), c('C', 13)];
+    const greedy = chooseDiscard(hand, DEFAULT_COMBO_OPTIONS);
+    expect(greedy.cards).toHaveLength(3); // sans seuil : le brelan, comme avant
+
+    const aimed = chooseDiscard(hand, DEFAULT_COMBO_OPTIONS, 5);
+    expect(aimed.cards).toEqual([c('C', 13)]);
+  });
+
+  it('entre plusieurs poses qualifiantes, laisse le moins de points possible', () => {
+    // 5-5 et 3 : poser le 3 laisse 10 (> 5), poser la paire laisse 3 (≤ 5).
+    const hand = [c('S', 5), c('H', 5), c('D', 3)];
+    const combo = chooseDiscard(hand, DEFAULT_COMBO_OPTIONS, 5);
+    expect(combo.cards).toHaveLength(2);
+    expect(handValue(combo.cards)).toBe(10);
+  });
 });
 
 describe('choix de la pioche', () => {
@@ -151,6 +171,15 @@ describe('choix de la pioche', () => {
 
   it('ne ramasse jamais dans une défausse inexistante', () => {
     expect(chooseDraw([c('S', 2)], null, DEFAULT_COMBO_OPTIONS, true).source).toBe('stock');
+  });
+
+  it('ramasse un joker qui traîne : la seule carte sans aucun risque', () => {
+    // Une première version l'ignorait d'office — le joker restait sur la table
+    // alors qu'il vaut 0 point et offre une défausse de secours.
+    const hand = [c('S', 9), c('H', 4)];
+    const choice = chooseDraw(hand, single(c('X', 0)), DEFAULT_COMBO_OPTIONS, true);
+    expect(choice.source).toBe('discard');
+    expect(choice.card).toEqual(c('X', 0));
   });
 
   it('ramasse le 2 qui fait la paire, même s’il rapporte peu', () => {

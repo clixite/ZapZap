@@ -78,11 +78,16 @@ export class Room {
   /* ---------------------------------------------------------------- */
 
   apply(action: GameAction): EngineResult {
+    const eliminatedBefore = new Set(this.state.players.filter((p) => p.eliminated).map((p) => p.id));
     const result = applyAction(this.state, action);
     if (!result.ok) return result;
     this.state = result.state;
     this.updatedAt = Date.now();
     this.afterChange();
+    // Ici et pas dans les gestionnaires : une élimination peut sortir d'une
+    // annonce comme d'une manche bloquée qui se clôt sur une simple pioche.
+    // Le point de passage unique est le seul endroit qui les voit toutes.
+    this.emitNewEliminations(eliminatedBefore);
     return result;
   }
 
@@ -225,7 +230,6 @@ export class Room {
         this.emitEvent({ type: 'dealt', dealerId: pending.id, handSize: move.handSize });
         break;
       case 'zap': {
-        const before = this.state.round!.hands[pending.id] ?? [];
         const result = this.apply({ type: 'CALL_ZAP', playerId: pending.id });
         if (result.ok) {
           this.emitEvent({
@@ -234,7 +238,6 @@ export class Room {
             success: this.state.round!.zapCall?.success ?? false,
           });
         }
-        void before;
         break;
       }
       case 'discard': {
@@ -255,6 +258,19 @@ export class Room {
         if (result.ok && taken) this.emitEvent({ type: 'drew-discard', playerId: pending.id, card: taken });
         else if (result.ok) this.emitEvent({ type: 'drew-stock', playerId: pending.id });
         break;
+      }
+    }
+  }
+
+  /**
+   * Signale les joueurs sortis par le coup qui vient d'être joué — et eux
+   * seulement. Rediffuser tous les éliminés de la partie ferait rejouer le son
+   * et l'animation de sortie aux mêmes joueurs à chaque manche.
+   */
+  private emitNewEliminations(before: ReadonlySet<string>): void {
+    for (const player of this.state.players) {
+      if (player.eliminated && !before.has(player.id)) {
+        this.emitEvent({ type: 'player-eliminated', playerId: player.id });
       }
     }
   }
@@ -281,6 +297,13 @@ export class Room {
     if (grace) {
       clearTimeout(grace);
       this.graceTimers.delete(userId);
+    }
+    // On se fie à l'état, pas au minuteur de grâce : après un redémarrage du
+    // serveur, les joueurs sont marqués déconnectés sans qu'aucun minuteur
+    // n'existe — conditionner la reconnexion au minuteur les laissait absents
+    // pour toujours.
+    const player = this.state.players.find((p) => p.id === userId);
+    if (player && !player.connected) {
       this.apply({ type: 'SET_CONNECTED', playerId: userId, connected: true });
       this.emitEvent({ type: 'player-reconnected', playerId: userId });
     }
@@ -331,16 +354,32 @@ export class Room {
     if (this.connectedCount() === 0) this.callbacks.onEmpty?.(this);
   }
 
-  removePlayer(userId: string): void {
+  removePlayer(userId: string): { ok: true } | { ok: false; error: EngineErrorCode } {
     const player = this.state.players.find((p) => p.id === userId);
-    if (!player) return;
+    if (!player) return { ok: false, error: 'PLAYER_NOT_FOUND' };
     const wasHost = this.state.hostId === userId;
     const result = this.apply({ type: 'REMOVE_PLAYER', playerId: userId });
-    if (!result.ok) return;
+    // L'échec remonte à l'appelant : « retirer » un joueur d'une partie
+    // commencée ne fait rien (les sièges et les scores en dépendent), et
+    // répondre ok:true à l'hôte lui ferait croire le contraire.
+    if (!result.ok) return result;
+
+    // Les connexions de l'exclu sont libérées, sinon il continuerait de
+    // recevoir les vues et les événements d'une table où il n'est plus.
+    const sockets = this.sockets.get(userId);
+    if (sockets) {
+      for (const socket of sockets) {
+        socket.emit('room:closed', { reason: 'Vous avez été retiré de la partie.' });
+        void socket.leave(this.code);
+      }
+      this.sockets.delete(userId);
+    }
+
     this.emitEvent({ type: 'player-left', playerId: userId, pseudo: player.pseudo });
     if (wasHost && this.state.players.length > 0) {
       this.emitEvent({ type: 'host-changed', hostId: this.state.hostId });
     }
+    return { ok: true };
   }
 
   leave(userId: string, socket: Socket): void {
@@ -348,7 +387,13 @@ export class Room {
     set?.delete(socket);
     if (set?.size === 0) this.sockets.delete(userId);
     void socket.leave(this.code);
-    this.removePlayer(userId);
+    const removed = this.removePlayer(userId);
+    // Une partie commencée ne rend pas les sièges : celui qui quitte reste à
+    // table, marqué absent, et son tour se jouera tout seul. Sans ce marquage,
+    // la table le croirait présent et l'attendrait à chaque tour.
+    if (!removed.ok && this.isMember(userId) && !this.sockets.has(userId)) {
+      this.apply({ type: 'SET_CONNECTED', playerId: userId, connected: false });
+    }
     if (this.connectedCount() === 0) this.callbacks.onEmpty?.(this);
   }
 

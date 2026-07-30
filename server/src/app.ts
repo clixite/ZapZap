@@ -6,11 +6,21 @@ import { z } from 'zod';
 import { newUserId, signToken, verifyToken } from './auth/tokens';
 import type { Db } from './db/db';
 import { UsersRepo } from './db/users.repo';
+import { RateLimiter } from './rateLimit';
 
 const guestSchema = z.object({
   pseudo: z.string().trim().min(1).max(20),
   avatar: z.string().trim().min(1).max(8),
 });
+
+/**
+ * Création de comptes : 10 d'un coup, puis un par minute et par adresse.
+ *
+ * Chaque compte est une ligne en base pour toujours : sans plafond, une boucle
+ * `curl` remplit le disque. Dix d'un coup couvre le cas réel — une tablée qui
+ * s'inscrit derrière la même box.
+ */
+const guestLimiter = new RateLimiter(10, 1 / 60);
 
 /**
  * L'API.
@@ -26,6 +36,9 @@ export function createApp(db: Db): Express {
 
   app.use(express.json({ limit: '256kb' }));
   app.disable('x-powered-by');
+  // Derrière Traefik, l'adresse du client est dans X-Forwarded-For : sans ce
+  // réglage, tout le monde partagerait l'IP du proxy — et son seau de jetons.
+  app.set('trust proxy', 1);
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });
@@ -39,6 +52,10 @@ export function createApp(db: Db): Express {
    * premier coup.
    */
   app.post('/api/guest', (req, res) => {
+    if (!guestLimiter.allow(req.ip ?? 'unknown')) {
+      res.status(429).json({ error: 'RATE_LIMITED' });
+      return;
+    }
     const parsed = guestSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: 'INVALID_PAYLOAD' });
