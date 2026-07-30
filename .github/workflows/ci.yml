@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Types, tests unitaires et intégration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Vérifier les types
+        run: npm run typecheck
+
+      - name: Tests (cartes, combinaisons, moteur, robots, sockets, géométrie)
+        run: npx vitest run
+
+      - name: Compiler le client et le serveur
+        run: npm run build
+
+  bots:
+    name: Banc d'essai des robots
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Vérifie qu'aucune manche ne se fige, que les annonces gardent leur part
+      # de risque, et qu'aucun siège ne gagne plus souvent qu'un autre.
+      - run: GAMES=40 npx tsx scripts/bot-benchmark.mjs
+
+  navigateur:
+    name: Une partie dans un vrai navigateur
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build -w client
+      - name: Démarrer le serveur
+        run: |
+          PORT=3111 DB_PATH=:memory: JWT_SECRET=ci-secret BOT_DELAY_MS=30 \
+            npx tsx server/src/index.ts &
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:3111/api/health >/dev/null 2>&1 && break
+            sleep 1
+          done
+          curl -fsS http://localhost:3111/api/health
+      - name: Partie de bout en bout
+        env:
+          BASE_URL: http://localhost:3111
+          SHOTS_DIR: /tmp/shots
+        run: node scripts/e2e.mjs
+      - name: Conserver les captures en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: captures
+          path: /tmp/shots
+          retention-days: 7

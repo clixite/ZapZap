@@ -19,9 +19,8 @@
     "start": "npm run start -w server",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p shared && tsc --noEmit -p server && tsc --noEmit -p client",
-    "test:ux": "node scripts/ux-tests.mjs",
-    "store:assets": "node scripts/store-assets.mjs",
-    "store:check": "node scripts/check-store.mjs",
+    "e2e": "node scripts/e2e.mjs",
+    "icons": "node scripts/icons.mjs",
     "bench:bots": "tsx scripts/bot-benchmark.mjs"
   },
   "devDependencies": {
