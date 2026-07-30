@@ -1,0 +1,12 @@
+node_modules/
+dist/
+data/
+*.db
+*.db-journal
+.env
+.env.local
+.DS_Store
+/tmp/
+coverage/
+ios/App/
+ios/node_modules/
