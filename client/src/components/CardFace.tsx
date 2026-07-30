@@ -1,4 +1,4 @@
-import { cardValue, isJoker, type Card } from '@zapzap/shared';
+import { cardId, cardValue, isJoker, type Card } from '@zapzap/shared';
 
 const SUIT_GLYPH: Record<string, string> = { S: '♠', H: '♥', D: '♦', C: '♣', X: '⚡' };
 const RANK_LABEL: Record<number, string> = { 1: 'A', 11: 'V', 12: 'D', 13: 'R' };
@@ -87,9 +87,17 @@ export function CardFace({ card, width, selected, dimmed, onClick, label, disabl
     outlineOffset: 2,
   } as const;
 
+  // `data-card` est le point d'accroche stable : une carte non jouable n'est pas
+  // un bouton, et se repérer sur la balise reviendrait à ne plus voir les
+  // cartes dès que ce n'est plus notre tour.
   if (!onClick) {
     return (
-      <span className="block rounded-[8%/5%] transition-transform duration-200" style={style} aria-label={name}>
+      <span
+        data-card={cardId(card)}
+        className="block rounded-[8%/5%] transition-transform duration-200"
+        style={style}
+        aria-label={name}
+      >
         {content}
       </span>
     );
@@ -98,6 +106,7 @@ export function CardFace({ card, width, selected, dimmed, onClick, label, disabl
   return (
     <button
       type="button"
+      data-card={cardId(card)}
       onClick={onClick}
       disabled={disabled}
       aria-pressed={selected}

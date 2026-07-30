@@ -1,0 +1,17 @@
+# Le contexte de build est envoyé au démon Docker en entier : tout ce qui n'est
+# pas nécessaire à la compilation ralentit chaque déploiement.
+node_modules
+**/node_modules
+**/dist
+.git
+.github
+data
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.*
+!.env.example
+/tmp
+coverage
+ios/App

@@ -122,10 +122,10 @@ try {
   // On attend les cartes elles-mêmes : le panneau de main existe dès la phase
   // de donne, il est simplement vide.
   await page
-    .locator('[role="group"][aria-label="Votre main"] button')
+    .locator('[aria-label="Votre main"] [data-card]')
     .first()
     .waitFor({ timeout: 20_000 });
-  const handCards = await page.locator('[role="group"][aria-label="Votre main"] button').count();
+  const handCards = await page.locator('[aria-label="Votre main"] [data-card]').count();
   check(handCards >= 3 && handCards <= 7, `la main compte ${handCards} cartes (3 à 7 attendues)`);
   await checkNoHorizontalOverflow(page, 'Table');
   await capture(page, 'table');
@@ -135,8 +135,8 @@ try {
   await page.getByText('À vous — défaussez').waitFor({ timeout: 30_000 });
   check(true, 'notre tour arrive');
 
-  const handBefore = await page.locator('[role="group"][aria-label="Votre main"] button').count();
-  await page.locator('[role="group"][aria-label="Votre main"] button').first().click();
+  const handBefore = await page.locator('[aria-label="Votre main"] [data-card]').count();
+  await page.locator('[aria-label="Votre main"] [data-card]').first().click();
   await capture(page, 'selection');
 
   const discardBtn = page.getByRole('button', { name: 'Défausser' });
@@ -149,7 +149,7 @@ try {
 
   await page.getByLabel(/Piocher à l’aveugle/).click();
   await page.waitForTimeout(600);
-  const handAfter = await page.locator('[role="group"][aria-label="Votre main"] button').count();
+  const handAfter = await page.locator('[aria-label="Votre main"] [data-card]').count();
   check(handAfter === handBefore, `la main reste à ${handBefore} cartes : on repioche toujours`);
 
   console.log('\nLes règles');

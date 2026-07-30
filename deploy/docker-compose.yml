@@ -1,0 +1,32 @@
+# ZapZap en production.
+#
+# Le VPS héberge déjà d'autres services (dont Rikiki) : tout est donc nommé et
+# numéroté distinctement — conteneur, volume, port interne. Rien ici ne doit
+# pouvoir entrer en collision avec un service existant.
+
+services:
+  zapzap:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: zapzap:latest
+    container_name: zapzap
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      PUBLIC_URL: ${PUBLIC_URL:-https://zapzap.clixite-prod.cloud}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET est obligatoire}
+      DB_PATH: /data/zapzap.db
+      BOT_DELAY_MS: ${BOT_DELAY_MS:-800}
+      TURN_TIMEOUT_MS: ${TURN_TIMEOUT_MS:-45000}
+    volumes:
+      - zapzap-data:/data
+    ports:
+      # Exposé uniquement sur la boucle locale : c'est le reverse proxy déjà en
+      # place sur la machine qui termine TLS et publie le service. Le port est
+      # paramétrable pour ne pas entrer en conflit si 3210 est déjà pris.
+      - '${PORT_BINDING:-127.0.0.1:3210:3000}'
+
+volumes:
+  zapzap-data:
