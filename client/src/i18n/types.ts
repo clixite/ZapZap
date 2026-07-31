@@ -19,12 +19,18 @@ export type Messages = typeof fr;
  * l'Union — la cible, énumérée plus bas.
  */
 export const LOCALES = [
+  'cs', // čeština
+  'da', // dansk
   'de', // Deutsch
   'en', // English
   'es', // español
+  'fi', // suomi
   'fr', // français
   'it', // italiano
   'nl', // Nederlands
+  'pl', // polski
+  'pt', // português
+  'sv', // svenska
 ] as const;
 
 /** La cible : les 24 langues officielles de l'Union européenne. */
@@ -59,12 +65,18 @@ export type Locale = (typeof LOCALES)[number];
 
 /** Nom de chaque langue, écrit dans cette langue (endonyme). */
 export const LOCALE_NAMES: Record<Locale, string> = {
+  cs: 'Čeština',
+  da: 'Dansk',
   de: 'Deutsch',
   en: 'English',
   es: 'Español',
+  fi: 'Suomi',
   fr: 'Français',
   it: 'Italiano',
   nl: 'Nederlands',
+  pl: 'Polski',
+  pt: 'Português',
+  sv: 'Svenska',
 };
 
 export const DEFAULT_LOCALE: Locale = 'en';
