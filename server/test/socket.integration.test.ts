@@ -587,11 +587,17 @@ describe('fin de partie enregistrée', () => {
     const dealer = room.state.players.find((p) => p.seat === room.state.round!.dealerSeat)!;
     room.apply({ type: 'DEAL', playerId: dealer.id, handSize: 3 });
 
-    // Fin expéditive : Bob dépasse 100, la manche se clôt, la partie aussi.
-    room.state.players.find((p) => p.id === 'u_bob')!.totalScore = 95;
+    /*
+     * Fin expéditive, et surtout déterministe : le donneur est tiré au sort,
+     * donc l'annonceur peut être l'un ou l'autre. C'est toujours **celui qui
+     * n'annonce pas** qu'on met au bord de la sortie — sinon il annonce, marque
+     * 0, et personne n'est éliminé.
+     */
     const current = room.state.players.find((p) => p.seat === room.state.round!.currentSeat)!;
+    const victim = room.state.players.find((p) => p.id !== current.id)!;
+    victim.totalScore = 95;
     room.state.round!.hands[current.id] = [{ suit: 'S', rank: 1 }];
-    room.state.round!.hands[current.id === alice.id ? 'u_bob' : alice.id] = [
+    room.state.round!.hands[victim.id] = [
       { suit: 'H', rank: 13 },
       { suit: 'D', rank: 12 },
     ];

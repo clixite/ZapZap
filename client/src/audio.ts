@@ -41,12 +41,65 @@ function ensureContext(): AudioContext | null {
   return ctx;
 }
 
+/* ------------------------------------------------------------------ */
+/* Échantillons                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Les sons enregistrés, par opposition aux sons synthétisés.
+ *
+ * Un seul pour l'instant : la voix qui lance « ZapZap ! ». Le moment mérite une
+ * vraie voix — c'est le pari de la manche, celui qu'on entend de l'autre bout
+ * de la pièce — là où un arpège synthétisé resterait un bip parmi d'autres.
+ *
+ * Décodés une fois puis rejoués depuis la mémoire : passer par un élément
+ * `<audio>` imposerait une latence de démarrage à chaque annonce, et sur iOS un
+ * élément non déclenché par un geste reste muet.
+ */
+const SAMPLE_URLS = {
+  zapzap: '/sounds/zapzap.mp3',
+} as const;
+
+export type SampleName = keyof typeof SAMPLE_URLS;
+
+const samples = new Map<SampleName, AudioBuffer>();
+
+async function loadSample(name: SampleName): Promise<void> {
+  const audio = ensureContext();
+  if (!audio || samples.has(name)) return;
+  try {
+    const res = await fetch(SAMPLE_URLS[name]);
+    if (!res.ok) return;
+    samples.set(name, await audio.decodeAudioData(await res.arrayBuffer()));
+  } catch {
+    // Réseau coupé ou format refusé : on jouera le son de synthèse à la place.
+  }
+}
+
+/** Joue un échantillon. `false` s'il n'est pas encore prêt — l'appelant se rabat. */
+function playSample(name: SampleName, volume = 0.9): boolean {
+  const audio = ensureContext();
+  const buffer = audio && samples.get(name);
+  if (!audio || !buffer) return false;
+  const source = audio.createBufferSource();
+  const gain = audio.createGain();
+  gain.gain.value = volume;
+  source.buffer = buffer;
+  source.connect(gain).connect(audio.destination);
+  source.start();
+  return true;
+}
+
 /** À appeler une fois au démarrage : arme le déverrouillage sur premier geste. */
 export function initAudio(): void {
   if (typeof window === 'undefined') return;
   const unlock = () => {
     unlocked = true;
     ensureContext();
+    // Le décodage demande un contexte audio vivant : on ne peut donc précharger
+    // qu'après le premier geste. L'annonce arrive bien plus tard dans la partie,
+    // le son est prêt largement à temps.
+    void loadSample('zapzap');
   };
   window.addEventListener('pointerdown', unlock, { once: true, passive: true });
   window.addEventListener('keydown', unlock, { once: true });
@@ -103,6 +156,7 @@ export type SoundName =
   | 'discard'
   | 'draw'
   | 'yourTurn'
+  | 'zapCall'
   | 'zapWin'
   | 'zapFail'
   | 'eliminated'
@@ -120,6 +174,21 @@ const SOUNDS: Record<SoundName, () => void> = {
   yourTurn: () => {
     tone(660, 0, 90);
     tone(880, 100, 130);
+  },
+  /*
+   * L'annonce elle-même : la voix.
+   *
+   * On la joue au moment où quelqu'un annonce, avant même de savoir si c'est
+   * réussi — c'est le geste qu'on entend à une vraie table, et il fait lever la
+   * tête. Le verdict suit une demi-seconde plus tard avec `zapWin`/`zapFail`.
+   *
+   * Repli sur un arpège synthétisé si l'échantillon n'a pas pu être chargé :
+   * le moment fort du jeu ne doit jamais passer en silence.
+   */
+  zapCall: () => {
+    if (playSample('zapzap')) return;
+    tone(880, 0, 90, { volume: 0.14 });
+    tone(1175, 90, 140, { volume: 0.14 });
   },
   // L'annonce réussie monte, la ratée descend : la nouvelle s'entend avant de se lire.
   zapWin: () => {

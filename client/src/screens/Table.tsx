@@ -69,10 +69,17 @@ export function Table() {
       case 'drew-discard':
         if (lastEvent.playerId !== view.you) play('draw');
         break;
-      case 'zap-called':
-        play(lastEvent.success ? 'zapWin' : 'zapFail');
-        vibrate(lastEvent.success ? 'success' : 'failure');
-        break;
+      case 'zap-called': {
+        // La voix d'abord — c'est l'annonce qu'on entend à une vraie table —
+        // puis le verdict, le temps qu'elle finisse de le dire.
+        play('zapCall');
+        const success = lastEvent.success;
+        const timer = setTimeout(() => {
+          play(success ? 'zapWin' : 'zapFail');
+          vibrate(success ? 'success' : 'failure');
+        }, 950);
+        return () => clearTimeout(timer);
+      }
       case 'player-eliminated':
         play('eliminated');
         if (lastEvent.playerId === view.you) vibrate('failure');
