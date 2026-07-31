@@ -774,10 +774,25 @@ story('manifeste et hors-ligne', async () => {
   const body = manifest.ok() ? await manifest.json() : {};
   check(body.name?.includes('ZapZap'), 'le manifeste porte le bon nom');
   check(body.theme_color === '#1c1547', 'la couleur de thème est celle du design system');
+  /*
+   * Le type, et pas seulement le code de statut.
+   *
+   * Le serveur sert une application à page unique : tout chemin qui ne
+   * correspond à rien retombe sur `index.html`, avec un **200**. Vérifier
+   * `res.ok()` sur une icône était donc un test qui ne pouvait pas échouer —
+   * une icône supprimée par mégarde passait au vert, en renvoyant du HTML. Le
+   * type de contenu est ce qui distingue une image d'une page d'accueil.
+   */
+  const isImage = async (url) => {
+    const res = await context.request.get(url);
+    return res.ok() && (res.headers()['content-type'] ?? '').startsWith('image/');
+  };
   for (const icon of body.icons ?? []) {
-    const res = await context.request.get(icon.src);
-    check(res.ok(), `icône ${icon.sizes} ${icon.purpose ?? 'any'} présente`);
+    check(await isImage(icon.src), `icône ${icon.sizes} ${icon.purpose ?? 'any'} présente`);
   }
+  // Le contrôle du contrôle : si celui-ci passait au vert, c'est que le test
+  // ci-dessus ne prouve rien.
+  check(!(await isImage('/icons/celle-ci-nexiste-pas.png')), 'une icône absente est bien détectée absente');
 
   /*
    * Le plein écran, et le chemin pour y arriver.
@@ -803,14 +818,15 @@ story('manifeste et hors-ligne', async () => {
   const html = home.ok() ? await home.text() : '';
   check(/name="apple-mobile-web-app-capable" content="yes"/.test(html), 'iOS : le plein écran est demandé dans la page');
   check(/name="apple-mobile-web-app-title"/.test(html), 'iOS : l’icône porte un nom court');
-  const touch = await context.request.get('/icons/apple-touch-icon.png');
-  check(touch.ok(), 'iOS : l’icône d’écran d’accueil est servie');
+  check(await isImage('/icons/apple-touch-icon.png'), 'iOS : l’icône d’écran d’accueil est servie');
 
   const health = await context.request.get('/api/health');
   check(health.ok(), 'la sonde de santé répond');
+  // Même piège : un son manquant retomberait sur `index.html` avec un 200.
   for (const sound of ['/sounds/zapzap.mp3', '/sounds/launch.mp3']) {
     const res = await context.request.get(sound);
-    check(res.ok(), `le son ${sound} est servi`);
+    const type = res.headers()['content-type'] ?? '';
+    check(res.ok() && (type.startsWith('audio/') || type === 'application/octet-stream'), `le son ${sound} est servi`);
   }
   await context.close();
 });
