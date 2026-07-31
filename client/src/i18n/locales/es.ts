@@ -149,6 +149,34 @@ export const es: Messages = {
     whyGap: 'Falta una carta para que la escalera se sostenga.',
   },
 
+  theme: {
+    cardBack: 'Dorso de carta',
+    cardBackDetail: 'Es lo que más miras. Cada uno elige el suyo.',
+    names: {
+      storm: 'Tormenta',
+      volt: 'Rayo',
+      flash: 'Relámpago',
+      ink: 'Tinta',
+      paper: 'Papel',
+    },
+  },
+
+  tutorial: {
+    title: 'Cómo se juega',
+    stepOf: (a, b) => `Paso ${a} de ${b}`,
+    skip: 'Saltar',
+    next: 'Siguiente',
+    play: 'Jugar',
+    goal: 'El objetivo: la mano más baja',
+    goalBody: 'Cada carta vale sus puntos — el as 1, las figuras 10. No buscas ganar cartas, buscas soltarlas.',
+    turn: 'Tu turno: baja y luego roba',
+    turnBody: 'Baja una carta suelta, un grupo del mismo valor, o una escalera de al menos tres cartas del mismo palo. Una combinación por turno.',
+    draw: 'Siempre robas una carta',
+    drawBody: 'A ciegas del mazo, o del descarte del turno anterior — la punta o la cola de una escalera. Nunca tu propio descarte.',
+    call: 'ZapZap: la apuesta',
+    callBody: 'Mano de 5 puntos o menos, al empezar tu turno: cantas. Nadie por debajo, marcas 0. Alguien igual o menor, te llevas 30.',
+  },
+
   menu: {
     resume: 'Volver a la partida',
     pause: 'Hacer una pausa',

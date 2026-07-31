@@ -148,6 +148,34 @@ export const pl: Messages = {
     whyGap: 'Brakuje jednej karty, żeby sekwens się trzymał.',
   },
 
+  theme: {
+    cardBack: 'Rewers karty',
+    cardBackDetail: 'To na to patrzysz najdłużej. Każdy wybiera swój.',
+    names: {
+      storm: 'Burza',
+      volt: 'Piorun',
+      flash: 'Błyskawica',
+      ink: 'Atrament',
+      paper: 'Papier',
+    },
+  },
+
+  tutorial: {
+    title: 'Jak się gra',
+    stepOf: (a, b) => `Krok ${a} z ${b}`,
+    skip: 'Pomiń',
+    next: 'Dalej',
+    play: 'Graj',
+    goal: 'Cel: najsłabsza ręka',
+    goalBody: 'Każda karta jest warta swoje punkty — as 1, figury 10. Nie chodzi o zbieranie kart, tylko o pozbywanie się ich.',
+    turn: 'Twoja kolej: wyłóż, potem dobierz',
+    turnBody: 'Wyłóż jedną kartę, komplet tej samej figury albo sekwens co najmniej trzech kart w jednym kolorze. Jeden układ na kolejkę.',
+    draw: 'Zawsze dobierasz jedną kartę',
+    drawBody: 'W ciemno z talii albo ze stosu zrzutów z poprzedniej kolejki — początek lub koniec sekwensu. Nigdy własnego zrzutu.',
+    call: 'ZapZap: zakład',
+    callBody: 'Ręka na 5 punktów lub mniej, na początku kolejki: ogłaszasz. Nikt niżej — masz 0. Ktoś równo lub niżej — bierzesz 30.',
+  },
+
   menu: {
     resume: 'Wróć do gry',
     pause: 'Zrób przerwę',

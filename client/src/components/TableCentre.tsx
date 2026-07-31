@@ -21,6 +21,14 @@ export interface TableCentreProps {
   lastDiscard: DiscardSlot | null;
   /** Qui a posé ce qui est sur la défausse. `null` pour la carte de la donne. */
   author: { avatar: string; pseudo: string; isMe: boolean } | null;
+  /**
+   * D'où la pose arrive, en coordonnées du tapis.
+   *
+   * Le siège de son auteur, ou le bas de l'écran quand c'est nous. Une carte
+   * qui tombe du ciel ne dit rien ; une carte qui part de quelqu'un dit qui
+   * vient de jouer, avant même qu'on ait lu son nom.
+   */
+  origin: { x: number; y: number } | null;
   /** Cartes prenables, si c'est à moi de piocher. Sinon `null`. */
   drawOptions: DrawOption[] | null;
   onDrawStock: () => void;
@@ -33,6 +41,7 @@ export function TableCentre({
   stockCount,
   lastDiscard,
   author,
+  origin,
   drawOptions,
   onDrawStock,
   onDrawDiscard,
@@ -114,20 +123,32 @@ export function TableCentre({
                 // `key` sur l'identifiant de carte : une pose remplace la
                 // précédente, donc React démonte et remonte — l'animation
                 // d'entrée se rejoue d'elle-même à chaque nouvelle défausse.
-                className="zz-card-in"
-                style={{
-                  marginRight: -spread,
-                  animationDelay: `${i * 60}ms`,
-                  transform: `translateY(${i * stagger}px) rotate(${(i - (discardCards.length - 1) / 2) * 3}deg)`,
-                }}
+                className="zz-card-fly"
+                style={
+                  {
+                    marginRight: -spread,
+                    animationDelay: `${i * 60}ms`,
+                    '--zz-dx': `${(origin?.x ?? layout.discard.x) - layout.discard.x}px`,
+                    '--zz-dy': `${(origin?.y ?? layout.discard.y - 28) - layout.discard.y}px`,
+                  } as React.CSSProperties
+                }
               >
-                <DiscardCard
-                  card={card}
-                  width={layout.cardW}
-                  takeable={canDraw && takeable.has(cardId(card))}
-                  onTake={() => onDrawDiscard(cardId(card))}
-                  someTakeable={canDraw}
-                />
+                {/* L'inclinaison vit sur un enfant : l'animation de vol occupe
+                    déjà la transformation du parent. */}
+                <span
+                  className="block"
+                  style={{
+                    transform: `translateY(${i * stagger}px) rotate(${(i - (discardCards.length - 1) / 2) * 3}deg)`,
+                  }}
+                >
+                  <DiscardCard
+                    card={card}
+                    width={layout.cardW}
+                    takeable={canDraw && takeable.has(cardId(card))}
+                    onTake={() => onDrawDiscard(cardId(card))}
+                    someTakeable={canDraw}
+                  />
+                </span>
               </span>
             ))
           )}

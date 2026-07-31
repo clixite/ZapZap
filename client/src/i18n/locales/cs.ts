@@ -148,6 +148,34 @@ export const cs: Messages = {
     whyGap: 'K postupce chybí jedna karta.',
   },
 
+  theme: {
+    cardBack: 'Rub karty',
+    cardBackDetail: 'Na to koukáš nejdéle. Každý si volí svůj.',
+    names: {
+      storm: 'Bouře',
+      volt: 'Blesk',
+      flash: 'Hrom',
+      ink: 'Inkoust',
+      paper: 'Papír',
+    },
+  },
+
+  tutorial: {
+    title: 'Jak se hraje',
+    stepOf: (a, b) => `Krok ${a} z ${b}`,
+    skip: 'Přeskočit',
+    next: 'Dál',
+    play: 'Hrát',
+    goal: 'Cíl: nejslabší ruka',
+    goalBody: 'Každá karta má své body — eso 1, figury 10. Nejde o získávání karet, ale o zbavování se jich.',
+    turn: 'Tvůj tah: vylož, pak lízni',
+    turnBody: 'Vylož jednu kartu, skupinu stejné hodnoty nebo postupku aspoň tří karet v jedné barvě. Jedna kombinace za tah.',
+    draw: 'Vždy si lízneš jednu kartu',
+    drawBody: 'Naslepo z balíčku, nebo z odhazovací hromádky z minulého tahu — začátek či konec postupky. Nikdy vlastní odhoz.',
+    call: 'ZapZap: sázka',
+    callBody: 'Ruka na 5 bodů či míň, na začátku tahu: hlásíš. Nikdo níž — máš 0. Někdo stejně či níž — bereš 30.',
+  },
+
   menu: {
     resume: 'Zpět do hry',
     pause: 'Dát si pauzu',

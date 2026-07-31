@@ -4,16 +4,17 @@ import { EMOTES, handValue, type EmoteId, type GameView, type Player } from '@za
 import { isMuted, play, setMuted } from '../audio';
 import { MiniCards } from '../components/CardFace';
 import { DealPicker, DealWaiting } from '../components/DealPicker';
+import { FirstTimeTutorial, tutorialSeen } from '../components/FirstTimeTutorial';
 import { HandFan } from '../components/HandFan';
 import { useT } from '../i18n';
 import { EMOTE_GLYPHS, EventTicker, TurnCountdown, useEmoteBubbles } from '../components/LiveFeedback';
 import { IconBack, IconHistory, IconMuted, IconSmile, IconSound } from '../components/icons';
 import { PassedCards } from '../components/PassedCards';
-import { PlayerSeats } from '../components/PlayerSeats';
+import { PlayerSeats, orderedOpponents } from '../components/PlayerSeats';
 import { RoundRecap } from '../components/RoundRecap';
 import { TableCentre } from '../components/TableCentre';
 import { TableMenu } from '../components/TableMenu';
-import { STATUS_H, useFeltLayout } from '../components/tableLayout';
+import { STATUS_H, useFeltLayout, type FeltLayout } from '../components/tableLayout';
 import { vibrate } from '../haptics';
 import { useWakeLock } from '../hooks/useWakeLock';
 import { useGame, useGameChannel, useView } from '../store/game';
@@ -50,6 +51,15 @@ export function Table() {
   const [showLog, setShowLog] = useState(false);
   const [showEmotes, setShowEmotes] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  /*
+   * Le tutoriel s'ouvre tout seul à la toute première partie.
+   *
+   * ZapZap ne ressemble à aucun jeu que le joueur connaît déjà : lâché sur le
+   * tapis sans rien savoir, il défausse au hasard et croit que le jeu ne veut
+   * rien dire. On ne le montre qu'une fois par appareil — celui qui connaît le
+   * jeu ne doit pas avoir à le subir — et il se ferme d'un geste.
+   */
+  const [showTutorial, setShowTutorial] = useState(() => !tutorialSeen());
   const [muted, setMutedState] = useState(isMuted);
   const bubbles = useEmoteBubbles(lastEvent);
   /** Vrai pendant la seconde qui suit la donne : la main entre carte par carte. */
@@ -248,6 +258,10 @@ export function Table() {
           </button>
         </div>
 
+        {showTutorial && view.phase !== 'game-over' && (
+          <FirstTimeTutorial onClose={() => setShowTutorial(false)} />
+        )}
+
         {showMenu && (
           <TableMenu
             view={view}
@@ -280,6 +294,7 @@ export function Table() {
             stockCount={round.stockCount}
             lastDiscard={round.lastDiscard}
             author={authorOf(view, round.lastDiscard?.playerId)}
+            origin={originOf(view, layout, round.lastDiscard?.playerId)}
             drawOptions={round.drawOptions}
             onDrawStock={() => void draw({ source: 'stock' })}
             onDrawDiscard={(id) => void draw({ source: 'discard', cardId: id })}
@@ -564,6 +579,21 @@ function authorOf(view: GameView, playerId: string | undefined) {
   const player = view.players.find((p) => p.id === playerId);
   if (!player) return null;
   return { avatar: player.avatar, pseudo: player.pseudo, isMe: player.id === view.you };
+}
+
+/**
+ * D'où part la carte qui arrive au centre.
+ *
+ * Le siège de son auteur si c'est un adversaire — chacun les voit dans l'ordre
+ * du tour à partir de lui, donc la position dépend de qui regarde. Le bas de
+ * l'écran si c'est nous : notre main n'est pas sur le tapis, mais c'est bien de
+ * là que la carte est partie.
+ */
+function originOf(view: GameView, layout: FeltLayout, playerId: string | undefined) {
+  if (!playerId) return null;
+  if (playerId === view.you) return { x: layout.width / 2, y: layout.height };
+  const index = orderedOpponents(view).findIndex((p) => p.id === playerId);
+  return layout.seats[index] ?? null;
 }
 
 /**

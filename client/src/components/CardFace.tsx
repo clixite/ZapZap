@@ -1,4 +1,5 @@
 import { cardId, cardValue, isJoker, type Card } from '@zapzap/shared';
+import { CARD_BACK_STYLES, useCardBack } from '../store/theme';
 
 const SUIT_GLYPH: Record<string, string> = { S: '♠', H: '♥', D: '♦', C: '♣', X: '⚡' };
 const RANK_LABEL: Record<number, string> = { 1: 'A', 11: 'V', 12: 'D', 13: 'R' };
@@ -302,8 +303,12 @@ export function describeCard(card: Card): string {
  *
  * Un motif d'éclairs en diagonale plutôt que de simples rayures — le dos est ce
  * qu'on regarde le plus longtemps dans une partie, il porte l'identité du jeu.
+ * Et comme on le regarde longtemps, le joueur peut en changer : le motif vient
+ * de sa préférence locale, sans que la table en sache rien. Un dos ne porte
+ * aucune information de jeu, il n'y a donc rien à synchroniser.
  */
 export function CardBack({ width }: { width: number }) {
+  const theme = CARD_BACK_STYLES[useCardBack()];
   return (
     <span
       className="relative block overflow-hidden rounded-[7%/4.7%]"
@@ -311,21 +316,18 @@ export function CardBack({ width }: { width: number }) {
         width,
         height: width * 1.5,
         boxShadow: 'var(--shadow-card)',
-        background: 'linear-gradient(150deg, var(--color-storm-600), var(--color-storm-800))',
-        border: '2px solid var(--color-storm-500)',
+        background: theme.background,
+        border: theme.border,
       }}
       aria-hidden="true"
     >
       <span
-        className="absolute inset-0 opacity-30"
-        style={{
-          backgroundImage:
-            'repeating-linear-gradient(58deg, transparent 0 5px, var(--color-volt-400) 5px 6px, transparent 6px 11px)',
-        }}
+        className="absolute inset-0"
+        style={{ backgroundImage: theme.pattern, opacity: theme.patternOpacity }}
       />
       <span
-        className="absolute inset-0 flex items-center justify-center leading-none opacity-40"
-        style={{ fontSize: width * 0.4 }}
+        className="absolute inset-0 flex items-center justify-center leading-none opacity-45"
+        style={{ fontSize: width * 0.4, color: theme.glyph }}
       >
         ⚡
       </span>

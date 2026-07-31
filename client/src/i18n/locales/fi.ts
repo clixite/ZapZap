@@ -148,6 +148,34 @@ export const fi: Messages = {
     whyGap: 'Suorasta puuttuu yksi kortti.',
   },
 
+  theme: {
+    cardBack: 'Kortin selkä',
+    cardBackDetail: 'Sitä katsoo pisimpään. Jokainen valitsee omansa.',
+    names: {
+      storm: 'Myrsky',
+      volt: 'Salama',
+      flash: 'Ukkonen',
+      ink: 'Muste',
+      paper: 'Paperi',
+    },
+  },
+
+  tutorial: {
+    title: 'Näin pelataan',
+    stepOf: (a, b) => `Vaihe ${a}/${b}`,
+    skip: 'Ohita',
+    next: 'Seuraava',
+    play: 'Pelaa',
+    goal: 'Tavoite: heikoin käsi',
+    goalBody: 'Jokainen kortti on pisteidensä arvoinen — ässä 1, kuvakortit 10. Et kerää kortteja, vaan pääset niistä eroon.',
+    turn: 'Vuorosi: laske, sitten nosta',
+    turnBody: 'Laske yksi kortti, samanarvoinen sarja tai vähintään kolmen kortin suora yhdessä maassa. Yksi yhdistelmä per vuoro.',
+    draw: 'Nostat aina yhden kortin takaisin',
+    drawBody: 'Sokkona pakasta tai edellisen vuoron poistopinosta — suoran alku tai loppu. Ei koskaan omaa pudotustasi.',
+    call: 'ZapZap: veto',
+    callBody: 'Käsi 5 pisteessä tai alle, vuorosi alussa: huudat. Kukaan ei alempana — saat 0. Joku tasoissa tai alempana — otat 30.',
+  },
+
   menu: {
     resume: 'Takaisin peliin',
     pause: 'Pidä tauko',

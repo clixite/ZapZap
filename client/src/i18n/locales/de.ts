@@ -149,6 +149,34 @@ export const de: Messages = {
     whyGap: 'Es fehlt eine Karte, damit die Folge hält.',
   },
 
+  theme: {
+    cardBack: 'Kartenrücken',
+    cardBackDetail: 'Das schaust du am längsten an. Jeder wählt seinen eigenen.',
+    names: {
+      storm: 'Sturm',
+      volt: 'Blitz',
+      flash: 'Gewitter',
+      ink: 'Tinte',
+      paper: 'Papier',
+    },
+  },
+
+  tutorial: {
+    title: 'So wird gespielt',
+    stepOf: (a, b) => `Schritt ${a} von ${b}`,
+    skip: 'Überspringen',
+    next: 'Weiter',
+    play: 'Spielen',
+    goal: 'Das Ziel: die schwächste Hand',
+    goalBody: 'Jede Karte zählt ihre Punkte — Ass 1, Bilder 10. Du willst keine Karten gewinnen, du willst sie loswerden.',
+    turn: 'Dein Zug: legen, dann ziehen',
+    turnBody: 'Lege eine Einzelkarte, einen Satz gleichen Werts oder eine Folge von mindestens drei Karten einer Farbe. Eine Kombination pro Zug.',
+    draw: 'Du ziehst immer eine Karte nach',
+    drawBody: 'Blind vom Talon, oder aus der Ablage des letzten Zuges — Kopf oder Ende einer Folge. Nie deine eigene Ablage.',
+    call: 'ZapZap: die Wette',
+    callBody: 'Hand mit 5 Punkten oder weniger, zu Zugbeginn: du sagst an. Niemand darunter, du bekommst 0. Jemand gleichauf oder darunter, du bekommst 30.',
+  },
+
   menu: {
     resume: 'Zurück zur Partie',
     pause: 'Pause machen',

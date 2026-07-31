@@ -170,6 +170,34 @@ export const fr = {
     whyGap: 'Il manque une carte pour que la suite se tienne.',
   },
 
+  theme: {
+    cardBack: 'Dos de carte',
+    cardBackDetail: 'C’est ce que vous regardez le plus longtemps. Chacun choisit le sien.',
+    names: {
+      storm: 'Orage',
+      volt: 'Éclair',
+      flash: 'Foudre',
+      ink: 'Encre',
+      paper: 'Papier',
+    },
+  },
+
+  tutorial: {
+    title: 'Comment on joue',
+    stepOf: (a: number, b: number) => `Étape ${a} sur ${b}`,
+    skip: 'Passer',
+    next: 'Suivant',
+    play: 'Jouer',
+    goal: 'Le but : la main la plus faible',
+    goalBody: 'Chaque carte vaut ses points — l’As 1, les figures 10. On ne cherche pas à gagner des cartes, on cherche à s’en débarrasser.',
+    turn: 'Votre tour : posez, puis piochez',
+    turnBody: 'Vous posez une carte seule, un ensemble de même rang, ou une suite d’au moins trois cartes de même couleur. Une seule combinaison par tour.',
+    draw: 'On repioche toujours une carte',
+    drawBody: 'Au talon à l’aveugle, ou dans la défausse du tour précédent — la tête ou la queue d’une suite. Jamais votre propre défausse.',
+    call: 'ZapZap : le pari',
+    callBody: 'Main à 5 points ou moins, en début de tour : vous annoncez. Personne en dessous, vous marquez 0. Quelqu’un vous égale ou vous bat, vous prenez 30.',
+  },
+
   /* Menu de la table ---------------------------------------------- */
   menu: {
     resume: 'Reprendre la partie',

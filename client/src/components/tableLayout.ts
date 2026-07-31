@@ -28,6 +28,9 @@ export interface Point {
 }
 
 export interface FeltLayout {
+  /** Taille réelle du tapis : sert aux animations qui partent d'un point précis. */
+  width: number;
+  height: number;
   /** Centre de chaque siège adverse, dans l'ordre du tour à partir de moi. */
   seats: Point[];
   seatW: number;
@@ -150,6 +153,8 @@ export function computeLayout(width: number, height: number, opponents: number):
   const gap = Math.max(24, Math.round(cardW * 0.55));
 
   return {
+    width,
+    height,
     seats,
     seatW,
     seatH,

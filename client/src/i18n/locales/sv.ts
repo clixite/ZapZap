@@ -148,6 +148,34 @@ export const sv: Messages = {
     whyGap: 'Det saknas ett kort för att stegen ska hålla.',
   },
 
+  theme: {
+    cardBack: 'Kortets baksida',
+    cardBackDetail: 'Det är det du tittar mest på. Var och en väljer sin.',
+    names: {
+      storm: 'Storm',
+      volt: 'Blixt',
+      flash: 'Åska',
+      ink: 'Bläck',
+      paper: 'Papper',
+    },
+  },
+
+  tutorial: {
+    title: 'Så spelar man',
+    stepOf: (a, b) => `Steg ${a} av ${b}`,
+    skip: 'Hoppa över',
+    next: 'Nästa',
+    play: 'Spela',
+    goal: 'Målet: den svagaste handen',
+    goalBody: 'Varje kort är värt sina poäng — ess 1, klädda kort 10. Du vill inte vinna kort, du vill bli av med dem.',
+    turn: 'Din tur: lägg ner, sedan dra',
+    turnBody: 'Lägg ett enstaka kort, en samling med samma valör, eller en stege på minst tre kort i en färg. En kombination per tur.',
+    draw: 'Du drar alltid ett kort tillbaka',
+    drawBody: 'Blint från talongen, eller från förra turens kasthög — stegens början eller slut. Aldrig din egen kastning.',
+    call: 'ZapZap: vadet',
+    callBody: 'Hand på 5 poäng eller mindre, i början av din tur: du ropar. Ingen under — du får 0. Någon lika eller lägre — du tar 30.',
+  },
+
   menu: {
     resume: 'Tillbaka till partiet',
     pause: 'Ta en paus',

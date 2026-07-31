@@ -128,11 +128,25 @@ async function tableWithBots(pseudo, bots = 2) {
   }
   await player.page.getByRole('button', { name: 'Commencer' }).click();
   await player.page.waitForURL(/\/table\//, { timeout: 15_000 });
+  await dismissTutorial(player.page);
   return { player, code };
 }
 
 /** Passe la phase de donne, que ce soit à nous de donner ou non. */
+/**
+ * Referme le tutoriel de première partie, s'il s'affiche.
+ *
+ * Il s'ouvre par-dessus le tapis pour un nouveau joueur — ce que le contexte de
+ * test est toujours. Un vrai joueur le passe ; les histoires font pareil, sinon
+ * elles testeraient un écran de démarrage plutôt que le jeu.
+ */
+async function dismissTutorial(page) {
+  const skip = page.getByRole('button', { name: 'Passer' }).first();
+  if (await skip.isVisible().catch(() => false)) await skip.click().catch(() => {});
+}
+
 async function passDealing(page) {
+  await dismissTutorial(page);
   const picker = page.getByRole('button', { name: /^\s*5\s*cartes\s*$/ }).first();
   if (await picker.isVisible().catch(() => false)) await picker.click();
   await page.locator('[aria-label="Votre main"] [data-card]').first().waitFor({ timeout: 25_000 });
@@ -272,10 +286,47 @@ story('accueil', async () => {
   await closePlayer(player);
 });
 
+story('premier joueur : le tutoriel', async () => {
+  // Personne n'a jamais joué à ZapZap : ni plis, ni atout, et la manche se
+  // termine sur une annonce. Le premier écran doit le dire.
+  const player = await newPlayer('Novice');
+  await player.page.getByRole('button', { name: /robots/ }).click();
+  await player.page.waitForURL(/\/table\//, { timeout: 20_000 });
+  check(
+    await player.page.getByRole('dialog', { name: /Comment on joue/ }).isVisible({ timeout: 10_000 }).catch(() => false),
+    'le tutoriel s’ouvre tout seul à la première partie',
+  );
+  await capture(player.page, 'tutoriel-1');
+  await player.page.getByRole('button', { name: 'Suivant' }).click();
+  await player.page.getByRole('button', { name: 'Suivant' }).click();
+  await player.page.getByRole('button', { name: 'Suivant' }).click();
+  check(
+    await player.page.getByText(/ZapZap : le pari/).isVisible(),
+    'les quatre étapes se parcourent jusqu’à l’annonce',
+  );
+  await capture(player.page, 'tutoriel-4');
+  await player.page.getByRole('button', { name: 'Jouer' }).click();
+  await player.page.waitForTimeout(400);
+  check(
+    !(await player.page.getByRole('dialog', { name: /Comment on joue/ }).isVisible().catch(() => false)),
+    'il se referme et laisse jouer',
+  );
+
+  // Et il ne revient pas : on ne subit pas deux fois le même tutoriel.
+  await player.page.reload();
+  await player.page.waitForTimeout(2_000);
+  check(
+    !(await player.page.getByRole('dialog', { name: /Comment on joue/ }).isVisible().catch(() => false)),
+    'il ne revient pas au rechargement',
+  );
+  await closePlayer(player);
+});
+
 story('solo contre robots', async () => {
   const player = await newPlayer('Solo');
   await player.page.getByRole('button', { name: /robots/ }).click();
   await player.page.waitForURL(/\/table\//, { timeout: 20_000 });
+  await dismissTutorial(player.page);
   check(true, 'le raccourci solo mène directement à la table, sans salon');
   await passDealing(player.page);
   const cards = await player.page.locator('[aria-label="Votre main"] [data-card]').count();
@@ -612,6 +663,32 @@ story('règles, historique, profil', async () => {
   await checkNoHorizontalOverflow(page, 'Profil');
   await checkTapTargets(page, 'Profil');
   await capture(page, 'profil');
+  await closePlayer(player);
+});
+
+story('dos de carte', async () => {
+  const player = await newPlayer('Styliste');
+  const { page } = player;
+  await page.goto('/profil');
+  // L'écran est chargé à la demande : on attend qu'il soit là avant de juger.
+  await page.locator('[data-cardback="storm"]').waitFor({ timeout: 15_000 });
+  check(
+    await page.getByRole('radiogroup', { name: /Dos de carte/ }).isVisible(),
+    'le choix du dos est proposé',
+  );
+  await page.locator('[data-cardback="paper"]').click();
+  await page.waitForTimeout(300);
+  check(
+    (await page.locator('[data-cardback="paper"]').getAttribute('aria-checked')) === 'true',
+    'le dos choisi est retenu',
+  );
+  await capture(page, 'dos-de-carte');
+  await page.reload();
+  await page.waitForTimeout(800);
+  check(
+    (await page.locator('[data-cardback="paper"]').getAttribute('aria-checked')) === 'true',
+    'le choix survit au rechargement',
+  );
   await closePlayer(player);
 });
 

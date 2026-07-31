@@ -149,6 +149,34 @@ export const en: Messages = {
     whyGap: 'One card is missing for the run to hold.',
   },
 
+  theme: {
+    cardBack: 'Card back',
+    cardBackDetail: 'It is what you look at the longest. Everyone picks their own.',
+    names: {
+      storm: 'Storm',
+      volt: 'Bolt',
+      flash: 'Lightning',
+      ink: 'Ink',
+      paper: 'Paper',
+    },
+  },
+
+  tutorial: {
+    title: 'How to play',
+    stepOf: (a, b) => `Step ${a} of ${b}`,
+    skip: 'Skip',
+    next: 'Next',
+    play: 'Play',
+    goal: 'The goal: the weakest hand',
+    goalBody: 'Every card is worth its points — ace 1, court cards 10. You are not trying to win cards, you are trying to get rid of them.',
+    turn: 'Your turn: lay down, then draw',
+    turnBody: 'Lay a single card, a set of the same rank, or a run of at least three cards in one suit. One combination per turn.',
+    draw: 'You always draw one card back',
+    drawBody: 'Blind from the stock, or from the previous turn\'s discard — the head or the tail of a run. Never your own discard.',
+    call: 'ZapZap: the bet',
+    callBody: 'Hand at 5 points or less, at the start of your turn: you call. Nobody below, you score 0. Anyone level or lower, you take 30.',
+  },
+
   menu: {
     resume: 'Back to the game',
     pause: 'Take a break',

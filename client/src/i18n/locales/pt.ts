@@ -149,6 +149,34 @@ export const pt: Messages = {
     whyGap: 'Falta uma carta para a sequência se aguentar.',
   },
 
+  theme: {
+    cardBack: 'Verso da carta',
+    cardBackDetail: 'É o que mais olha. Cada um escolhe o seu.',
+    names: {
+      storm: 'Tempestade',
+      volt: 'Raio',
+      flash: 'Relâmpago',
+      ink: 'Tinta',
+      paper: 'Papel',
+    },
+  },
+
+  tutorial: {
+    title: 'Como se joga',
+    stepOf: (a, b) => `Passo ${a} de ${b}`,
+    skip: 'Saltar',
+    next: 'Seguinte',
+    play: 'Jogar',
+    goal: 'O objetivo: a mão mais baixa',
+    goalBody: 'Cada carta vale os seus pontos — ás 1, figuras 10. Não quer ganhar cartas, quer livrar-se delas.',
+    turn: 'A sua vez: baixe e depois tire',
+    turnBody: 'Baixe uma carta solta, um conjunto do mesmo valor, ou uma sequência de pelo menos três cartas do mesmo naipe. Uma combinação por vez.',
+    draw: 'Tira-se sempre uma carta',
+    drawBody: 'Às cegas do baralho, ou do descarte da vez anterior — a ponta ou a cauda de uma sequência. Nunca o seu próprio descarte.',
+    call: 'ZapZap: a aposta',
+    callBody: 'Mão com 5 pontos ou menos, no início da sua vez: anuncia. Ninguém abaixo, faz 0. Alguém a par ou abaixo, leva 30.',
+  },
+
   menu: {
     resume: 'Voltar ao jogo',
     pause: 'Fazer uma pausa',

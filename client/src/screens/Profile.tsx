@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { deleteAccount, requestMagicLink, updateProfile, uploadPhoto } from '../api';
+import { CardBackPicker } from '../components/CardBackPicker';
 import { LocalePicker } from '../components/LocalePicker';
 import { useT } from '../i18n';
 import { toAvatarPhoto } from '../photo';
@@ -100,6 +101,7 @@ export function Profile() {
         pas est le premier de ces problèmes.
       */}
       <LocalePicker />
+      <CardBackPicker />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center gap-4">

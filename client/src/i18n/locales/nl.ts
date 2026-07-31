@@ -149,6 +149,34 @@ export const nl: Messages = {
     whyGap: 'Er ontbreekt een kaart om de reeks te sluiten.',
   },
 
+  theme: {
+    cardBack: 'Kaartrug',
+    cardBackDetail: 'Daar kijk je het langst naar. Iedereen kiest de zijne.',
+    names: {
+      storm: 'Storm',
+      volt: 'Bliksem',
+      flash: 'Onweer',
+      ink: 'Inkt',
+      paper: 'Papier',
+    },
+  },
+
+  tutorial: {
+    title: 'Hoe je speelt',
+    stepOf: (a, b) => `Stap ${a} van ${b}`,
+    skip: 'Overslaan',
+    next: 'Verder',
+    play: 'Spelen',
+    goal: 'Het doel: de zwakste hand',
+    goalBody: 'Elke kaart telt haar punten — aas 1, plaatjes 10. Je wilt geen kaarten winnen, je wilt ze kwijt.',
+    turn: 'Jouw beurt: leggen, dan trekken',
+    turnBody: 'Leg één kaart, een set van dezelfde waarde, of een reeks van minstens drie kaarten in één kleur. Eén combinatie per beurt.',
+    draw: 'Je trekt altijd één kaart terug',
+    drawBody: 'Blind van de stok, of uit de aflegstapel van de vorige beurt — kop of staart van een reeks. Nooit je eigen aflegging.',
+    call: 'ZapZap: de gok',
+    callBody: 'Hand op 5 punten of minder, aan het begin van je beurt: je roept. Niemand eronder, je scoort 0. Iemand gelijk of lager, je krijgt er 30.',
+  },
+
   menu: {
     resume: 'Terug naar het spel',
     pause: 'Even pauzeren',

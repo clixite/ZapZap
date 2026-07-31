@@ -149,6 +149,34 @@ export const it: Messages = {
     whyGap: 'Manca una carta perché la scala tenga.',
   },
 
+  theme: {
+    cardBack: 'Dorso della carta',
+    cardBackDetail: 'È ciò che guardi più a lungo. Ognuno sceglie il suo.',
+    names: {
+      storm: 'Tempesta',
+      volt: 'Fulmine',
+      flash: 'Lampo',
+      ink: 'Inchiostro',
+      paper: 'Carta',
+    },
+  },
+
+  tutorial: {
+    title: 'Come si gioca',
+    stepOf: (a, b) => `Passo ${a} di ${b}`,
+    skip: 'Salta',
+    next: 'Avanti',
+    play: 'Gioca',
+    goal: 'L’obiettivo: la mano più bassa',
+    goalBody: 'Ogni carta vale i suoi punti — asso 1, figure 10. Non cerchi di vincere carte, cerchi di liberartene.',
+    turn: 'Il tuo turno: cala, poi pesca',
+    turnBody: 'Cala una carta singola, un tris dello stesso valore, o una scala di almeno tre carte dello stesso seme. Una combinazione per turno.',
+    draw: 'Peschi sempre una carta',
+    drawBody: 'Alla cieca dal mazzo, o dagli scarti del turno precedente — testa o coda di una scala. Mai il tuo stesso scarto.',
+    call: 'ZapZap: la scommessa',
+    callBody: 'Mano a 5 punti o meno, a inizio turno: dichiari. Nessuno sotto, fai 0. Qualcuno alla pari o sotto, prendi 30.',
+  },
+
   menu: {
     resume: 'Torna alla partita',
     pause: 'Fare una pausa',

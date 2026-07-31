@@ -232,6 +232,29 @@ a[role='button'] {
   }
 }
 
+/**
+ * Une carte qui vole du siège de son auteur jusqu'au centre.
+ *
+ * C'est l'animation qui répond à « qui a posé quoi » sans un mot : le geste
+ * part de quelqu'un. Le point de départ est passé en variables plutôt que fixé
+ * ici, parce qu'il dépend de la place réelle du joueur à table — calculée, et
+ * différente pour chacun puisque chacun se voit en bas.
+ *
+ * L'élément animé ne porte que le vol ; l'inclinaison de la pose vit sur un
+ * enfant. Sans cette séparation, la dernière image de l'animation écraserait
+ * l'inclinaison et la combinaison retomberait à plat.
+ */
+@keyframes zz-card-fly {
+  from {
+    opacity: 0.25;
+    transform: translate(var(--zz-dx, 0), var(--zz-dy, -28px)) scale(0.62) rotate(-10deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /** Le tas de pioche quand on y puise : un léger enfoncement. */
 @keyframes zz-press {
   50% {
@@ -245,6 +268,10 @@ a[role='button'] {
 
 .zz-card-in {
   animation: zz-card-in 0.24s var(--ease-out-quint) both;
+}
+
+.zz-card-fly {
+  animation: zz-card-fly 0.3s var(--ease-out-quint) both;
 }
 
 .zz-deal-in {

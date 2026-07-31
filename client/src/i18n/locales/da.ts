@@ -148,6 +148,34 @@ export const da: Messages = {
     whyGap: 'Der mangler et kort, før rækken holder.',
   },
 
+  theme: {
+    cardBack: 'Kortryg',
+    cardBackDetail: 'Det er det, du kigger længst på. Hver vælger sin egen.',
+    names: {
+      storm: 'Storm',
+      volt: 'Lyn',
+      flash: 'Torden',
+      ink: 'Blæk',
+      paper: 'Papir',
+    },
+  },
+
+  tutorial: {
+    title: 'Sådan spiller man',
+    stepOf: (a, b) => `Trin ${a} af ${b}`,
+    skip: 'Spring over',
+    next: 'Videre',
+    play: 'Spil',
+    goal: 'Målet: den svageste hånd',
+    goalBody: 'Hvert kort tæller sine point — es 1, billedkort 10. Du vil ikke vinde kort, du vil af med dem.',
+    turn: 'Din tur: læg, og træk så',
+    turnBody: 'Læg et enkelt kort, et sæt med samme værdi, eller en række på mindst tre kort i én farve. Én kombination pr. tur.',
+    draw: 'Du trækker altid ét kort igen',
+    drawBody: 'Blindt fra bunken, eller fra sidste turs kastebunke — rækkens begyndelse eller slutning. Aldrig din egen afkastning.',
+    call: 'ZapZap: væddemålet',
+    callBody: 'Hånd på 5 point eller mindre, i starten af din tur: du melder. Ingen under — du får 0. Nogen lige eller lavere — du tager 30.',
+  },
+
   menu: {
     resume: 'Tilbage til spillet',
     pause: 'Tag en pause',
