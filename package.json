@@ -21,7 +21,8 @@
     "typecheck": "tsc --noEmit -p shared && tsc --noEmit -p server && tsc --noEmit -p client",
     "e2e": "node scripts/e2e.mjs",
     "icons": "node scripts/icons.mjs",
-    "bench:bots": "tsx scripts/bot-benchmark.mjs"
+    "bench:bots": "tsx scripts/bot-benchmark.mjs",
+    "deploy": "node scripts/deploy.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

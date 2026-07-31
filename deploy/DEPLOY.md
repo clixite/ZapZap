@@ -23,6 +23,33 @@ proxy — pas sur ce VPS.
   pas d'enregistrement propre. Rien à créer, et surtout rien à modifier dans une
   zone qui sert six autres services.
 
+## Pousser une nouvelle version
+
+Le déploiement prend la branche **telle qu'elle est sur GitHub** : on pousse
+d'abord, on déploie ensuite.
+
+```bash
+git push                                        # 1. publier
+HOSTINGER_API_TOKEN=… npm run deploy            # 2. mettre en ligne
+```
+
+`npm run deploy` presse un bouton posé sur le VPS : un projet compose à usage
+unique, `zapzap-deployer`, qui tire la branche, reconstruit l'image, relance le
+service et s'éteint. Le script attend la fin, vérifie `/api/health` et affiche
+l'estampille de version réellement servie — la seule preuve que la nouvelle
+image est bien celle qui tourne. Compter une à deux minutes.
+
+**Depuis le VPS**, si l'on y est déjà connecté, le même résultat :
+
+```bash
+cd /opt/zapzap && git pull && bash deploy/install.sh
+```
+
+**Ce que le déploiement préserve** : le `.env` (donc les sessions des joueurs),
+et le volume `zapzap-data` — les parties en cours, les comptes, l'historique et
+les statistiques. La seule interruption est la bascule de conteneur, environ
+deux secondes.
+
 ## Installation, en une commande
 
 En root sur le VPS :
