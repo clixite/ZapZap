@@ -909,10 +909,18 @@ story('partie complète jusqu’à la revanche', async () => {
   while (Date.now() < deadline) {
     if (page.url().includes('/fin/')) break;
 
-    const next = page.getByRole('button', { name: 'Manche suivante' });
+    /*
+     * Le bouton du décompte change de nom sur la dernière manche.
+     *
+     * La partie s'arrête au premier joueur au-dessus de 100 : sur cette
+     * manche-là, l'écran ne promet plus une manche suivante, il propose de voir
+     * le résultat. La boucle qui ne cherchait que « Manche suivante » restait
+     * donc plantée sur le tout dernier écran, à deux clics de la fin.
+     */
+    const next = page.getByRole('button', { name: /Manche suivante|Voir le résultat/ });
     if (await shown(next)) {
       recapSeen = true;
-      if (await shown(page.getByText('annonce'))) zapShown = true;
+      if (await shown(page.getByText(/annonce (réussie|ratée)|est contré|passe/))) zapShown = true;
       await capture(page, 'decompte');
       await tap(next);
       await page.waitForTimeout(900);
@@ -977,8 +985,19 @@ story('partie complète jusqu’à la revanche', async () => {
   // L'annonce du scénario dépend des cartes reçues : elle n'est pas garantie.
   // Ce qui doit l'être, c'est que l'écran de décompte sache la raconter — les
   // robots annoncent souvent, et le moteur couvre le calcul par ailleurs.
+  /*
+   * L'annonce dépend des cartes reçues : on ne peut pas l'exiger.
+   *
+   * Elle était pourtant vérifiée sans condition, et ne passait que parce que la
+   * partie durait assez longtemps — au dernier debout — pour qu'une annonce
+   * finisse par arriver. Depuis que la partie s'arrête au premier joueur
+   * au-dessus de 100, elle est bien plus courte, et une partie entière peut se
+   * jouer sans qu'aucune main ne descende sous le seuil. Ce qui doit être vrai,
+   * c'est que **si** une annonce a eu lieu, le décompte a su la raconter.
+   */
   log(`annonce déclenchée par le scénario : ${zapSeen ? 'oui' : 'non (dépend des cartes)'}`);
-  check(zapShown, 'un écran de décompte a montré une annonce ZapZap');
+  if (zapSeen) check(zapShown, 'un écran de décompte a montré une annonce ZapZap');
+  else log('aucune annonce dans cette partie — le décompte de l’annonce n’est pas évalué');
   check(recapSeen, 'l’écran de décompte de manche a été atteint');
   const over = page.url().includes('/fin/');
   check(over, 'la partie va jusqu’à son terme');

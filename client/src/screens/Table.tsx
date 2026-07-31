@@ -303,7 +303,19 @@ export function Table() {
             className="absolute right-1 z-20 flex flex-col items-end"
             style={{ top: 'max(0.25rem, env(safe-area-inset-top))' }}
           >
+            {/*
+              Lisible, mais pas annoncé.
+
+              Un `role="status"` en aurait fait une région vivante, relue à
+              chaque rendu — soit plusieurs fois par tour pour un chiffre qui ne
+              bouge qu'une fois par manche. C'est du bruit pour un lecteur
+              d'écran, et cela entrait en concurrence avec le bandeau de tour,
+              qui est la seule chose qui doive vraiment s'annoncer ici. Le
+              libellé porte donc la phrase complète, et on la lit quand on va
+              la chercher.
+            */}
             <span
+              aria-label={t.table.myScoreSpoken(me.totalScore, ELIMINATION_SCORE - me.totalScore)}
               className={`flex h-11 items-center rounded-xl px-3 font-display text-sm font-bold tabular-nums ${
                 ELIMINATION_SCORE - me.totalScore <= 15
                   ? 'zz-alert bg-danger-solid text-white'
@@ -313,9 +325,6 @@ export function Table() {
               }`}
             >
               {t.table.myScore(me.totalScore, ELIMINATION_SCORE)}
-            </span>
-            <span className="sr-only" role="status">
-              {t.table.myScoreSpoken(me.totalScore, ELIMINATION_SCORE - me.totalScore)}
             </span>
           </div>
         )}
