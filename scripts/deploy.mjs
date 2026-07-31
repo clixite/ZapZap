@@ -98,11 +98,35 @@ if (!now || now === before) {
   process.exit(1);
 }
 
-const health = await fetch(`${SITE}/api/health`)
-  .then((r) => r.json())
-  .catch(() => null);
+/*
+ * La sonde de santé, avec le droit de se faire attendre.
+ *
+ * Elle était interrogée une fois, à la seconde même où l'estampille de version
+ * changeait — et ces deux choses ne basculent pas ensemble. Les fichiers du
+ * client sont servis dès que le conteneur monte ; le serveur Node, lui, ouvre
+ * son port un instant plus tard, le temps d'ouvrir la base et de restaurer les
+ * tables. Entre les deux, la sonde ne répond pas encore.
+ *
+ * Le script déclarait donc l'échec d'un déploiement parfaitement réussi. Une
+ * fausse alerte au déploiement coûte plus cher qu'un contrôle un peu lent :
+ * elle envoie chercher une panne qui n'existe pas, et surtout elle apprend à
+ * ne plus croire l'alerte suivante. On réessaie une trentaine de secondes ;
+ * au-delà, c'est un vrai problème.
+ */
+const HEALTH_TRIES = 15;
+let health = null;
+for (let i = 0; i < HEALTH_TRIES; i++) {
+  health = await fetch(`${SITE}/api/health`, { cache: 'no-store' })
+    .then((r) => r.json())
+    .catch(() => null);
+  if (health?.ok) break;
+  if (i === 0) process.stdout.write('  la sonde de santé ne répond pas encore, on patiente…\n');
+  await sleep(2_000);
+}
 if (!health?.ok) {
-  console.error('✗ La nouvelle version est servie mais /api/health ne répond pas.');
+  console.error(`✗ La nouvelle version est servie mais /api/health ne répond toujours pas après ${HEALTH_TRIES * 2}s.`);
+  console.error('  Journal du déployeur :');
+  for (const line of (await deployerLog().catch(() => [])).slice(-12)) console.error(`    ${line}`);
   process.exit(1);
 }
 
