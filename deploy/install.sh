@@ -43,12 +43,17 @@ echo "  Docker $(docker --version | awk '{print $3}' | tr -d ,)"
 # ---------------------------------------------------------------------------
 info "Port interne"
 # ---------------------------------------------------------------------------
-# Un port déjà pris signifierait qu'on marche sur un service existant : on
-# préfère s'arrêter que de casser ce qui tourne.
-if ss -ltn "sport = :${PORT}" 2>/dev/null | grep -q ":${PORT}"; then
-  die "Le port ${PORT} est déjà utilisé. Relancez avec PORT=<autre> bash deploy/install.sh"
+# Un port déjà pris signifierait qu'on marche sur un service existant — sauf
+# s'il est tenu par ZapZap lui-même, ce qui est le cas normal d'une mise à
+# jour. Sans cette exception, le script refusait tout redéploiement en
+# accusant l'application d'occuper sa propre place.
+if docker ps -a --format '{{.Names}}' | grep -qx zapzap; then
+  echo "  ${PORT} est occupé par ZapZap : c'est une mise à jour."
+elif ss -ltn "sport = :${PORT}" 2>/dev/null | grep -q ":${PORT}"; then
+  die "Le port ${PORT} est pris par un autre service. Relancez avec PORT=<autre> bash deploy/install.sh"
+else
+  echo "  ${PORT} est libre."
 fi
-echo "  ${PORT} est libre."
 
 # ---------------------------------------------------------------------------
 info "Secrets"
