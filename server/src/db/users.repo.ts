@@ -1,4 +1,4 @@
-import { type GameHistoryEntry, type PublicUser, type UserStats } from '@zapzap/shared';
+import { type GameHistoryEntry, type LeaderboardRow, type PublicUser, type UserStats } from '@zapzap/shared';
 import type { Db } from './db';
 
 export interface UserRow {
@@ -140,6 +140,59 @@ export class UsersRepo {
         entry.won ? 1 : 0,
         JSON.stringify(entry.standings),
       );
+  }
+
+  /**
+   * Le classement des gens avec qui l'on joue.
+   *
+   * Aucune table de plus : `game_history` porte déjà une ligne par humain et
+   * par partie, donc deux lignes de même code sont deux joueurs de la même
+   * table. Une auto-jointure suffit à répondre à « qui ai-je affronté, et
+   * comment nous en sommes-nous sortis ».
+   *
+   * Le tri met les victoires d'abord, puis le nombre de parties — quelqu'un qui
+   * gagne une fois sur une partie ne passe pas devant un habitué — et enfin le
+   * score moyen, le plus bas gagnant : c'est un jeu où l'on cherche à ne pas
+   * marquer.
+   */
+  getLeaderboard(userId: string, limit = 20): LeaderboardRow[] {
+    const rows = this.db
+      .prepare(
+        `SELECT other.user_id AS user_id,
+                users.pseudo  AS pseudo,
+                users.avatar  AS avatar,
+                users.photo   AS photo,
+                COUNT(*)      AS games,
+                SUM(other.won) AS wins,
+                AVG(other.my_score) AS average
+         FROM game_history mine
+         JOIN game_history other ON other.code = mine.code
+         JOIN users ON users.id = other.user_id
+         WHERE mine.user_id = ?
+         GROUP BY other.user_id
+         ORDER BY wins DESC, games DESC, average ASC
+         LIMIT ?`,
+      )
+      .all(userId, limit) as {
+      user_id: string;
+      pseudo: string;
+      avatar: string;
+      photo: string | null;
+      games: number;
+      wins: number;
+      average: number;
+    }[];
+
+    return rows.map((row) => ({
+      userId: row.user_id,
+      pseudo: row.pseudo,
+      avatar: row.avatar,
+      photo: row.photo,
+      games: row.games,
+      wins: row.wins,
+      averageScore: Math.round(row.average),
+      isMe: row.user_id === userId,
+    }));
   }
 
   getHistory(userId: string, limit = 20): GameHistoryEntry[] {

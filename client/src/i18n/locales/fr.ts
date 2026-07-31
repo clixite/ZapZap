@@ -198,6 +198,22 @@ export const fr = {
     callBody: 'Main à 5 points ou moins, en début de tour : vous annoncez. Personne en dessous, vous marquez 0. Quelqu’un vous égale ou vous bat, vous prenez 30.',
   },
 
+  push: {
+    title: 'Notifications',
+    detail: 'Un mot quand c’est à vous, uniquement dans les parties « chacun son heure ». Jamais pendant une partie en direct.',
+    on: 'Activer les notifications',
+    off: 'Désactiver',
+    blocked: 'Votre navigateur les a bloquées pour ce site. Réactivez-les dans ses réglages.',
+  },
+
+  leaderboard: {
+    title: 'Classement entre vous',
+    detail: 'Les gens avec qui vous avez fini des parties. Le score moyen le plus bas est le meilleur.',
+    you: 'vous',
+    wins: 'victoires',
+    line: (g: number, s: number) => `${g} parties · ${s} pt en moyenne`,
+  },
+
   /* Menu de la table ---------------------------------------------- */
   menu: {
     resume: 'Reprendre la partie',

@@ -177,6 +177,22 @@ export const de: Messages = {
     callBody: 'Hand mit 5 Punkten oder weniger, zu Zugbeginn: du sagst an. Niemand darunter, du bekommst 0. Jemand gleichauf oder darunter, du bekommst 30.',
   },
 
+  push: {
+    title: 'Benachrichtigungen',
+    detail: 'Ein Hinweis, wenn du dran bist — nur in Partien „jeder wann er will“. Nie während einer Live-Partie.',
+    on: 'Benachrichtigungen einschalten',
+    off: 'Ausschalten',
+    blocked: 'Dein Browser hat sie für diese Seite blockiert. Schalte sie in seinen Einstellungen wieder ein.',
+  },
+
+  leaderboard: {
+    title: 'Eure Rangliste',
+    detail: 'Die Leute, mit denen du Partien zu Ende gespielt hast. Der niedrigste Schnitt ist der beste.',
+    you: 'du',
+    wins: 'Siege',
+    line: (g, s) => `${g} Partien · Ø ${s} Pkt`,
+  },
+
   menu: {
     resume: 'Zurück zur Partie',
     pause: 'Pause machen',

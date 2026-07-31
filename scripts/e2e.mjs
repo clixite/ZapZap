@@ -342,6 +342,9 @@ story('salon : code, invitation, réglages', async () => {
   await page.waitForURL(/\/salon\//, { timeout: 15_000 });
   const code = codeOf(page);
   check(/^[A-Z]{4}$/.test(code ?? ''), `code de partie à 4 lettres (${code})`);
+  // L'URL change avant que le salon n'ait fini de se peindre : on attend le
+  // panneau d'invitation, sinon la vérification juge un écran encore vide.
+  await page.getByText('Invitez vos amis').waitFor({ timeout: 15_000 });
   check(await page.getByText(code).first().isVisible(), 'le code est affiché en grand');
   check(await page.getByRole('button', { name: 'WhatsApp' }).isVisible(), 'on peut inviter par WhatsApp');
   check(await page.getByRole('button', { name: /Copier/ }).isVisible(), 'on peut copier le lien');
@@ -690,6 +693,46 @@ story('dos de carte', async () => {
     'le choix survit au rechargement',
   );
   await closePlayer(player);
+});
+
+story('notifications et classement', async () => {
+  const player = await newPlayer('Notifié');
+  const { page } = player;
+  await page.goto('/profil');
+  await page.locator('[data-cardback="storm"]').waitFor({ timeout: 15_000 });
+  check(
+    await page.locator('[data-push-toggle]').isVisible().catch(() => false),
+    'le réglage des notifications est proposé, avec ce qu’il fait et ne fait pas',
+  );
+  check(
+    await page.getByText(/chacun son heure/).isVisible().catch(() => false),
+    'il annonce qu’il ne notifie jamais pendant une partie en direct',
+  );
+  await capture(page, 'notifications');
+
+  // Le classement n'a rien à montrer tant qu'on n'a fini aucune partie : mieux
+  // vaut rien qu'un classement d'une seule personne, soi-même en tête.
+  await page.goto('/historique');
+  await page.waitForTimeout(1_200);
+  check(
+    !(await page.getByText(/Classement entre vous/).isVisible().catch(() => false)),
+    'le classement se tait tant qu’on n’a joué avec personne',
+  );
+  await closePlayer(player);
+});
+
+story('la clé de notification est servie', async () => {
+  const context = await newContext();
+  const res = await context.request.get('/api/push/key');
+  check(res.ok(), 'le serveur expose une clé publique de notification');
+  if (res.ok()) {
+    const body = await res.json();
+    check(typeof body.key === 'string' && body.key.length > 60, 'la clé a la forme attendue');
+  }
+  // Sans compte, on ne peut abonner personne.
+  const denied = await context.request.post('/api/push/subscribe', { data: {} });
+  check(denied.status() === 401, 'on ne peut pas abonner un appareil sans compte');
+  await context.close();
 });
 
 story('manifeste et hors-ligne', async () => {

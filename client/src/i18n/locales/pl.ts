@@ -176,6 +176,22 @@ export const pl: Messages = {
     callBody: 'Ręka na 5 punktów lub mniej, na początku kolejki: ogłaszasz. Nikt niżej — masz 0. Ktoś równo lub niżej — bierzesz 30.',
   },
 
+  push: {
+    title: 'Powiadomienia',
+    detail: 'Sygnał, gdy Twoja kolej — tylko w grach „każdy w swoim czasie”. Nigdy podczas gry na żywo.',
+    on: 'Włącz powiadomienia',
+    off: 'Wyłącz',
+    blocked: 'Przeglądarka zablokowała je dla tej strony. Włącz je ponownie w jej ustawieniach.',
+  },
+
+  leaderboard: {
+    title: 'Wasz ranking',
+    detail: 'Osoby, z którymi kończyłeś partie. Najniższa średnia jest najlepsza.',
+    you: 'Ty',
+    wins: 'wygrane',
+    line: (g, s) => `${g} partii · średnio ${s} pkt`,
+  },
+
   menu: {
     resume: 'Wróć do gry',
     pause: 'Zrób przerwę',

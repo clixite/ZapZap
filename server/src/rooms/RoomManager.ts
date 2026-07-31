@@ -25,6 +25,8 @@ export class RoomManager {
     private roomOptions: RoomOptions = {},
     /** Appelé une fois par partie, au passage en fin de partie : stats, historique. */
     private onGameOver?: (room: Room) => void,
+    /** Appelé quand la table attend quelqu'un qui n'a pas d'onglet ouvert. */
+    private onTurnAwaited?: (room: Room, playerId: string) => void,
   ) {
     this.restore();
     this.sweepTimer = setInterval(() => this.sweep(), 60_000);
@@ -103,6 +105,15 @@ export class RoomManager {
         // Une table vide n'est pas fermée sur-le-champ : quelqu'un peut revenir,
         // et une partie asynchrone est vide par nature. Le balayage tranchera.
         this.persist(room);
+      },
+      onTurnAwaited: (room: Room, playerId: string) => {
+        try {
+          this.onTurnAwaited?.(room, playerId);
+        } catch (error) {
+          // Une notification qui échoue ne doit jamais bloquer la partie : le
+          // joueur rouvrira l'application de lui-même, c'est le pire des cas.
+          console.error('onTurnAwaited a échoué :', error);
+        }
       },
     };
   }

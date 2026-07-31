@@ -7,6 +7,7 @@ import { config } from './config';
 import { openDatabase } from './db/db';
 import { UsersRepo } from './db/users.repo';
 import { createMailer } from './mail/mailer';
+import { PushService } from './push/push';
 import type { Room } from './rooms/Room';
 import { RoomManager } from './rooms/RoomManager';
 import { registerHandlers } from './sockets/handlers';
@@ -15,7 +16,8 @@ const db = openDatabase();
 const users = new UsersRepo(db);
 // Accesseur paresseux : l'application naît avant le gestionnaire de tables.
 let rooms: RoomManager | null = null;
-const app = createApp(db, () => rooms);
+const push = new PushService(db);
+const app = createApp(db, () => rooms, push);
 app.use('/api', magicLinkRoutes(db, users, createMailer(config)));
 const http = createServer(app);
 
@@ -57,7 +59,28 @@ const io = new Server(http, {
   connectionStateRecovery: { maxDisconnectionDuration: 120_000 },
 });
 
-rooms = new RoomManager(io, db, {}, recordGameOver);
+/**
+ * « C'est à toi » — le message qui fait vivre le mode asynchrone.
+ *
+ * Court et sans détail de jeu : une notification s'affiche sur un écran
+ * verrouillé, parfois devant quelqu'un d'autre. Le code de la table suffit à
+ * savoir laquelle rouvrir, la main du joueur ne regarde personne.
+ */
+function notifyAwaited(room: Room, playerId: string): void {
+  const opponents = room.state.players.filter((p) => p.id !== playerId).length;
+  void push
+    .notify(playerId, {
+      title: 'ZapZap — c’est à vous',
+      body: `Table ${room.code}, ${opponents} adversaire${opponents > 1 ? 's' : ''} vous attend${opponents > 1 ? 'ent' : ''}.`,
+      url: `/table/${room.code}`,
+    })
+    .catch(() => {
+      // Le service de push est injoignable : rien à faire de plus ici, les
+      // abonnements morts sont nettoyés dans `notify`.
+    });
+}
+
+rooms = new RoomManager(io, db, {}, recordGameOver, notifyAwaited);
 registerHandlers({ io, rooms, users });
 
 http.listen(config.port, () => {

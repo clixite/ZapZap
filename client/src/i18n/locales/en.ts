@@ -177,6 +177,22 @@ export const en: Messages = {
     callBody: 'Hand at 5 points or less, at the start of your turn: you call. Nobody below, you score 0. Anyone level or lower, you take 30.',
   },
 
+  push: {
+    title: 'Notifications',
+    detail: 'A nudge when it is your turn, only in “everyone in their own time” games. Never during a live game.',
+    on: 'Turn notifications on',
+    off: 'Turn off',
+    blocked: 'Your browser has blocked them for this site. Re-enable them in its settings.',
+  },
+
+  leaderboard: {
+    title: 'Your circle',
+    detail: 'The people you have finished games with. The lowest average score is the best.',
+    you: 'you',
+    wins: 'wins',
+    line: (g, s) => `${g} games · ${s} pts on average`,
+  },
+
   menu: {
     resume: 'Back to the game',
     pause: 'Take a break',

@@ -176,6 +176,22 @@ export const da: Messages = {
     callBody: 'Hånd på 5 point eller mindre, i starten af din tur: du melder. Ingen under — du får 0. Nogen lige eller lavere — du tager 30.',
   },
 
+  push: {
+    title: 'Notifikationer',
+    detail: 'Et vink når det er din tur, kun i spil hvor hver spiller når det passer. Aldrig under et direkte spil.',
+    on: 'Slå notifikationer til',
+    off: 'Slå fra',
+    blocked: 'Din browser har blokeret dem for dette websted. Slå dem til igen i indstillingerne.',
+  },
+
+  leaderboard: {
+    title: 'Jeres rangliste',
+    detail: 'Dem du har spillet spil færdige med. Det laveste gennemsnit er bedst.',
+    you: 'dig',
+    wins: 'sejre',
+    line: (g, s) => `${g} spil · ${s} p i snit`,
+  },
+
   menu: {
     resume: 'Tilbage til spillet',
     pause: 'Tag en pause',

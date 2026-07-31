@@ -49,6 +49,15 @@ export const config = {
   isProduction,
 
   /**
+   * Adresse de contact déclarée aux services de notification.
+   *
+   * La spécification VAPID l'exige : c'est à elle qu'un opérateur de push écrit
+   * si notre serveur se met à mal se comporter. Elle n'est jamais montrée aux
+   * joueurs.
+   */
+  contactEmail: process.env.CONTACT_EMAIL ?? 'support@clixite.be',
+
+  /**
    * Délai avant qu'un robot ne joue.
    *
    * Un robot qui joue instantanément donne l'impression d'un bug plutôt que

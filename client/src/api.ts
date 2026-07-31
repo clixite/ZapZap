@@ -1,4 +1,4 @@
-import type { ActiveGame, GameHistoryEntry, PublicUser, UserStats } from '@zapzap/shared';
+import type { ActiveGame, GameHistoryEntry, LeaderboardRow, PublicUser, UserStats } from '@zapzap/shared';
 
 const TOKEN_KEY = 'zapzap.token';
 const HISTORY_CACHE_KEY = 'zapzap.history-cache';
@@ -108,6 +108,23 @@ export async function fetchHistory(userId: string): Promise<GameHistoryEntry[] |
 /* Compte                                                              */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Le classement entre joueurs qui se connaissent.
+ *
+ * Pas de cache : contrairement à l'historique, il change à chaque partie de
+ * n'importe lequel des adversaires, et un classement périmé est pire qu'un
+ * classement qui met une seconde à venir.
+ */
+export async function fetchLeaderboard(): Promise<LeaderboardRow[] | null> {
+  try {
+    const res = await fetch('/api/me/leaderboard', { headers: authHeaders() });
+    if (!res.ok) return null;
+    return ((await res.json()) as { leaderboard: LeaderboardRow[] }).leaderboard;
+  } catch {
+    return null;
+  }
+}
+
 export async function updateProfile(pseudo: string, avatar: string): Promise<PublicUser | null> {
   const res = await fetch('/api/me', {
     method: 'PATCH',
@@ -139,6 +156,17 @@ export async function deleteAccount(): Promise<boolean> {
     }
   }
   return res.ok;
+}
+
+/** L'envoi d'e-mails est-il configuré sur ce serveur ? */
+export async function mailEnabled(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/auth/mail-status');
+    if (!res.ok) return false;
+    return ((await res.json()) as { enabled: boolean }).enabled;
+  } catch {
+    return false;
+  }
 }
 
 /** Demande d'un lien magique. Renvoie le message d'erreur du serveur, ou null si parti. */

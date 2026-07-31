@@ -177,6 +177,22 @@ export const pt: Messages = {
     callBody: 'Mão com 5 pontos ou menos, no início da sua vez: anuncia. Ninguém abaixo, faz 0. Alguém a par ou abaixo, leva 30.',
   },
 
+  push: {
+    title: 'Notificações',
+    detail: 'Um aviso quando é a sua vez, só nos jogos «cada um a seu tempo». Nunca durante um jogo ao vivo.',
+    on: 'Ativar as notificações',
+    off: 'Desativar',
+    blocked: 'O seu navegador bloqueou-as para este site. Reative-as nas definições.',
+  },
+
+  leaderboard: {
+    title: 'A vossa classificação',
+    detail: 'As pessoas com quem terminou jogos. A média mais baixa é a melhor.',
+    you: 'você',
+    wins: 'vitórias',
+    line: (g, s) => `${g} jogos · média de ${s} pts`,
+  },
+
   menu: {
     resume: 'Voltar ao jogo',
     pause: 'Fazer uma pausa',

@@ -52,6 +52,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Le morceau qui reçoit les notifications, greffé au service worker
+        // généré : on garde la mise en cache du plugin sans la réécrire.
+        importScripts: ['/push-sw.js'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
         runtimeCaching: [],

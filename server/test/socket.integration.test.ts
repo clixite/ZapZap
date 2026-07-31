@@ -331,6 +331,75 @@ describe('tables publiques', () => {
   });
 });
 
+describe('notifications « c’est à vous »', () => {
+  /**
+   * On n'envoie rien pour de vrai : ce qui compte ici est **quand** la table
+   * décide de prévenir quelqu'un. L'envoi lui-même relève du service de push,
+   * qui n'a rien à faire dans un test de protocole.
+   */
+  function watchAwaited() {
+    const awaited: { code: string; playerId: string }[] = [];
+    const manager = new RoomManager(
+      ioServer,
+      db,
+      { botDelayMs: 1, turnTimeoutMs: 50, disconnectGraceMs: 40 },
+      undefined,
+      (room, playerId) => awaited.push({ code: room.code, playerId }),
+    );
+    return { awaited, manager };
+  }
+
+  it('ne prévient personne en partie rapide', async () => {
+    // Tout le monde est devant l'écran : une notification par tour serait
+    // insupportable, et c'est le premier réflexe qui fait couper les alertes.
+    const { awaited, manager } = watchAwaited();
+    const room = manager.create({ id: 'u_a', pseudo: 'a', avatar: '⚡' });
+    room.apply({ type: 'ADD_PLAYER', player: { id: 'u_b', pseudo: 'b', avatar: '⚡' } });
+    room.apply({ type: 'START_GAME', playerId: 'u_a' });
+    expect(awaited).toHaveLength(0);
+    manager.stop();
+  });
+
+  it('prévient le joueur attendu en mode « chacun son heure »', async () => {
+    const { awaited, manager } = watchAwaited();
+    const room = manager.create({ id: 'u_a', pseudo: 'a', avatar: '⚡' });
+    room.apply({ type: 'ADD_PLAYER', player: { id: 'u_b', pseudo: 'b', avatar: '⚡' } });
+    room.apply({ type: 'SET_PACE', playerId: 'u_a', pace: 'async' });
+    room.apply({ type: 'START_GAME', playerId: 'u_a' });
+    // Personne n'a d'onglet ouvert : le donneur est prévenu.
+    expect(awaited.length).toBeGreaterThan(0);
+    manager.stop();
+  });
+
+  it('ne prévient pas deux fois pour le même tour', async () => {
+    const { awaited, manager } = watchAwaited();
+    const room = manager.create({ id: 'u_a', pseudo: 'a', avatar: '⚡' });
+    room.apply({ type: 'ADD_PLAYER', player: { id: 'u_b', pseudo: 'b', avatar: '⚡' } });
+    room.apply({ type: 'SET_PACE', playerId: 'u_a', pace: 'async' });
+    room.apply({ type: 'START_GAME', playerId: 'u_a' });
+    const first = awaited.length;
+    // Un coup qui ne change pas de tour ne doit rien renvoyer : sans garde,
+    // poser puis piocher enverrait deux notifications au même joueur.
+    room.apply({ type: 'SET_CONNECTED', playerId: 'u_b', connected: false });
+    expect(awaited).toHaveLength(first);
+    manager.stop();
+  });
+
+  it('ne prévient pas un joueur en pause', async () => {
+    const { awaited, manager } = watchAwaited();
+    const room = manager.create({ id: 'u_a', pseudo: 'a', avatar: '⚡' });
+    room.apply({ type: 'ADD_PLAYER', player: { id: 'u_b', pseudo: 'b', avatar: '⚡' } });
+    room.apply({ type: 'SET_PACE', playerId: 'u_a', pace: 'async' });
+    const dealer = () => room.state.players.find((p) => p.seat === room.state.round!.dealerSeat)!.id;
+    room.apply({ type: 'START_GAME', playerId: 'u_a' });
+    const before = awaited.length;
+    room.apply({ type: 'SET_AWAY', playerId: dealer(), away: true });
+    // Celui qui a demandé qu'on le laisse ne doit pas être réveillé.
+    expect(awaited.filter((a) => a.playerId === dealer())).toHaveLength(before);
+    manager.stop();
+  });
+});
+
 describe('pause et départ définitif', () => {
   it('met sa place en pause et laisse un robot jouer', async () => {
     const alice = await join('alice');

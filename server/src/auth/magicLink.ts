@@ -41,6 +41,18 @@ function bearerUserId(req: Request): string | null {
 export function magicLinkRoutes(db: Db, users: UsersRepo, mailer: Mailer): Router {
   const router = Router();
 
+  /**
+   * L'envoi d'e-mails est-il configuré ?
+   *
+   * Le client demande avant de proposer quoi que ce soit : offrir un champ
+   * e-mail qui répondra « service indisponible » après coup, c'est faire perdre
+   * son temps au joueur et donner l'impression d'une panne. Mieux vaut ne rien
+   * offrir et dire pourquoi.
+   */
+  router.get('/auth/mail-status', (_req, res) => {
+    res.json({ enabled: mailer.enabled, provider: mailer.provider });
+  });
+
   router.post('/auth/magic-link', async (req, res) => {
     if (!mailer.enabled) {
       res

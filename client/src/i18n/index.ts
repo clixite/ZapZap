@@ -131,3 +131,8 @@ export function useLocale(): Locale {
 export function t(): Messages {
   return messages;
 }
+
+/** La langue courante, hors composant. */
+export function locale(): Locale {
+  return current;
+}

@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { deleteAccount, requestMagicLink, updateProfile, uploadPhoto } from '../api';
+import { deleteAccount, mailEnabled, requestMagicLink, updateProfile, uploadPhoto } from '../api';
 import { CardBackPicker } from '../components/CardBackPicker';
 import { LocalePicker } from '../components/LocalePicker';
+import { PushToggle } from '../components/PushToggle';
 import { useT } from '../i18n';
 import { toAvatarPhoto } from '../photo';
 import { AVATAR_CHOICES, useSession } from '../store/session';
@@ -40,6 +41,21 @@ export function Profile() {
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | string>('idle');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  /*
+   * L'envoi d'e-mails n'est pas toujours configuré sur le serveur.
+   *
+   * Offrir un champ qui répondra « service indisponible » après coup fait
+   * perdre son temps au joueur et ressemble à une panne. On demande d'abord,
+   * et on n'affiche le bloc que s'il mène quelque part.
+   */
+  const [canMail, setCanMail] = useState<boolean | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void mailEnabled().then((yes) => alive && setCanMail(yes));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   if (!user) {
     return (
@@ -102,6 +118,7 @@ export function Profile() {
       */}
       <LocalePicker />
       <CardBackPicker />
+      <PushToggle />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center gap-4">
@@ -174,6 +191,7 @@ export function Profile() {
         </button>
       </section>
 
+      {(canMail !== false || user.email) && (
       <section className="flex flex-col gap-2 rounded-2xl bg-storm-800/70 p-4">
         <h2 className="font-display text-lg font-bold">Sauvegarder mon compte</h2>
         {user.email ? (
@@ -214,6 +232,7 @@ export function Profile() {
           </>
         )}
       </section>
+      )}
 
       <section className="flex flex-col gap-2 rounded-2xl border border-danger/40 p-4">
         <h2 className="font-display text-lg font-bold text-danger">Zone rouge</h2>

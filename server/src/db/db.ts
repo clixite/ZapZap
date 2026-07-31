@@ -84,6 +84,43 @@ export function openDatabase(path = config.dbPath): Database.Database {
       state      TEXT NOT NULL,
       updated_at INTEGER NOT NULL
     );
+
+    /*
+     * Abonnements aux notifications, un par appareil.
+     *
+     * La clé est l'adresse d'envoi : c'est elle que le navigateur renouvelle, et
+     * deux appareils du même joueur en ont deux différentes. On garde donc
+     * plusieurs lignes par personne — quelqu'un qui joue sur son téléphone et
+     * sa tablette doit être prévenu sur les deux.
+     *
+     * notified_at porte le silence : on ne réveille pas le même appareil deux
+     * fois de suite parce que deux parties l'attendent.
+     */
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      endpoint   TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      p256dh     TEXT NOT NULL,
+      auth       TEXT NOT NULL,
+      locale     TEXT NOT NULL DEFAULT 'fr',
+      created_at INTEGER NOT NULL,
+      notified_at INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id);
+
+    /*
+     * Réglages du serveur qui doivent survivre à un redémarrage.
+     *
+     * Une seule entrée pour l'instant : la paire de clés VAPID. Elle pourrait
+     * vivre dans l'environnement, mais alors une installation neuve exigerait
+     * de la générer à la main avant que les notifications ne fonctionnent — et
+     * la changer invaliderait tous les abonnements existants. La base est
+     * l'endroit où l'on garde ce qui doit rester stable sans être configuré.
+     */
+    CREATE TABLE IF NOT EXISTS settings (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
   `);
 
   return db;

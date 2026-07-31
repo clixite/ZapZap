@@ -176,6 +176,22 @@ export const sv: Messages = {
     callBody: 'Hand på 5 poäng eller mindre, i början av din tur: du ropar. Ingen under — du får 0. Någon lika eller lägre — du tar 30.',
   },
 
+  push: {
+    title: 'Aviseringar',
+    detail: 'En knuff när det är din tur, bara i partier där var och en spelar när det passar. Aldrig i direktspel.',
+    on: 'Slå på aviseringar',
+    off: 'Slå av',
+    blocked: 'Din webbläsare har blockerat dem för den här sidan. Slå på dem igen i inställningarna.',
+  },
+
+  leaderboard: {
+    title: 'Er rangordning',
+    detail: 'De du har spelat färdiga partier med. Lägst snitt är bäst.',
+    you: 'du',
+    wins: 'vinster',
+    line: (g, s) => `${g} partier · ${s} p i snitt`,
+  },
+
   menu: {
     resume: 'Tillbaka till partiet',
     pause: 'Ta en paus',

@@ -23,6 +23,14 @@ export interface RoomCallbacks {
   onChanged?: (room: Room) => void;
   onGameOver?: (room: Room) => void;
   onEmpty?: (room: Room) => void;
+  /**
+   * C'est au tour de quelqu'un qui n'est pas là pour le voir.
+   *
+   * La table ne sait pas envoyer de notification — ce n'est pas son travail —
+   * mais elle est la seule à savoir *quand* : au changement de tour, en
+   * asynchrone, vers un humain sans onglet ouvert.
+   */
+  onTurnAwaited?: (room: Room, playerId: string) => void;
 }
 
 export interface RoomOptions {
@@ -134,12 +142,44 @@ export class Room {
     }
   }
 
+  /**
+   * Prévenir celui qu'on attend, s'il n'est pas là pour s'en apercevoir.
+   *
+   * Trois conditions, et chacune évite un agacement précis :
+   *
+   *  - **en asynchrone seulement.** Une partie en direct a déjà tout le monde
+   *    devant l'écran ; y ajouter une notification par tour, c'est faire vibrer
+   *    le téléphone trente fois en dix minutes ;
+   *  - **jamais un robot, jamais un joueur en pause.** Ils ne liront rien, et
+   *    celui qui a mis sa place en pause a précisément demandé qu'on le laisse ;
+   *  - **jamais quelqu'un dont un onglet est connecté à la table.** Il voit son
+   *    tour arriver ; le prévenir serait du bruit.
+   *
+   * Le front montant est assuré par `lastNotifiedTurn` : `afterChange` est
+   * appelé à chaque coup, y compris pendant le tour de la même personne — sans
+   * lui, poser puis piocher enverrait deux notifications.
+   */
+  private notifyAwaitedPlayer(): void {
+    if (this.state.pace !== 'async') return;
+    const pending = this.pendingPlayer();
+    if (!pending || isBotId(pending.id) || pending.away) return;
+    if (this.sockets.has(pending.id)) return;
+
+    const key = `${this.state.roundIndex}:${pending.id}:${this.state.round?.turnStep ?? ''}`;
+    if (key === this.lastNotifiedTurn) return;
+    this.lastNotifiedTurn = key;
+    this.callbacks.onTurnAwaited?.(this, pending.id);
+  }
+
+  private lastNotifiedTurn: string | null = null;
+
   /** Diffusion, minuteur, robots, sauvegarde : dans cet ordre, après chaque coup. */
   private afterChange(): void {
     if (this.disposed) return;
     this.armTurnTimer();
     this.broadcastViews();
     this.scheduleAutoplay();
+    this.notifyAwaitedPlayer();
     this.callbacks.onChanged?.(this);
     // Sur le front montant uniquement : après la fin, une simple reconnexion
     // passe encore par apply (SET_CONNECTED) et aurait recompté la partie.

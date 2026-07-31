@@ -7,6 +7,7 @@ import type { ActiveGame } from '@zapzap/shared';
 import { newUserId, signToken, verifyToken } from './auth/tokens';
 import type { Db } from './db/db';
 import { UsersRepo } from './db/users.repo';
+import type { PushService } from './push/push';
 import { RateLimiter } from './rateLimit';
 
 /** Ce que l'API attend du gestionnaire de tables — juste la liste par joueur. */
@@ -20,6 +21,14 @@ function bearerUserId(req: Request): string | null {
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
   return token ? verifyToken(token) : null;
 }
+
+const subscriptionSchema = z.object({
+  subscription: z.object({
+    endpoint: z.string().url().max(1024),
+    keys: z.object({ p256dh: z.string().max(256), auth: z.string().max(256) }),
+  }),
+  locale: z.string().max(8).optional(),
+});
 
 const guestSchema = z.object({
   pseudo: z.string().trim().min(1).max(20),
@@ -51,7 +60,11 @@ const guestLimiter = new RateLimiter(30, 1 / 20);
  * `getRooms` est un accesseur paresseux : le gestionnaire de tables naît après
  * l'application (il a besoin du serveur HTTP, qui a besoin d'elle).
  */
-export function createApp(db: Db, getRooms: () => RoomsPort | null = () => null): Express {
+export function createApp(
+  db: Db,
+  getRooms: () => RoomsPort | null = () => null,
+  push: PushService | null = null,
+): Express {
   const app = express();
   const users = new UsersRepo(db);
 
@@ -85,6 +98,52 @@ export function createApp(db: Db, getRooms: () => RoomsPort | null = () => null)
     const id = newUserId();
     const user = users.create(id, parsed.data.pseudo, parsed.data.avatar);
     res.json({ token: signToken(id), user });
+  });
+
+  /*
+   * Notifications : la clé publique, l'abonnement, le désabonnement.
+   *
+   * La clé publique n'est pas un secret — le navigateur en a besoin pour
+   * fabriquer un abonnement, et elle n'autorise personne à écrire à sa place.
+   * Le service est optionnel : sans lui, la route répond « pas de clé » et le
+   * client se contente de ne rien proposer, plutôt que de tomber en erreur.
+   */
+  app.get('/api/push/key', (_req, res) => {
+    if (!push) {
+      res.status(503).json({ error: 'PUSH_UNAVAILABLE' });
+      return;
+    }
+    res.json({ key: push.publicKey() });
+  });
+
+  app.post('/api/push/subscribe', (req, res) => {
+    const userId = bearerUserId(req);
+    if (!userId || !push) {
+      res.status(userId ? 503 : 401).json({ error: userId ? 'PUSH_UNAVAILABLE' : 'INVALID_TOKEN' });
+      return;
+    }
+    const parsed = subscriptionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'INVALID_PAYLOAD' });
+      return;
+    }
+    push.subscribe(userId, parsed.data.subscription, parsed.data.locale ?? 'fr');
+    res.json({ ok: true });
+  });
+
+  app.post('/api/push/unsubscribe', (req, res) => {
+    const userId = bearerUserId(req);
+    if (!userId || !push) {
+      res.status(userId ? 503 : 401).json({ error: userId ? 'PUSH_UNAVAILABLE' : 'INVALID_TOKEN' });
+      return;
+    }
+    const endpoint = (req.body as { endpoint?: unknown })?.endpoint;
+    if (typeof endpoint !== 'string') {
+      res.status(400).json({ error: 'INVALID_PAYLOAD' });
+      return;
+    }
+    push.unsubscribe(endpoint);
+    res.json({ ok: true });
   });
 
   /** Qui suis-je — avec les statistiques, pour l'écran d'historique. */
@@ -121,6 +180,23 @@ export function createApp(db: Db, getRooms: () => RoomsPort | null = () => null)
       return;
     }
     res.json({ history: users.getHistory(userId) });
+  });
+
+  /**
+   * Le classement entre joueurs qui se connaissent.
+   *
+   * Aucune liste d'amis à tenir : ceux avec qui l'on a fini des parties *sont*
+   * les adversaires réguliers, et c'est la seule comparaison qui ait un sens —
+   * un classement mondial dans un jeu qu'on joue à six autour d'une table ne
+   * dit rien à personne.
+   */
+  app.get('/api/me/leaderboard', (req, res) => {
+    const userId = bearerUserId(req);
+    if (!userId || !users.get(userId)) {
+      res.status(401).json({ error: 'INVALID_TOKEN' });
+      return;
+    }
+    res.json({ leaderboard: users.getLeaderboard(userId) });
   });
 
   /** Mise à jour du profil : pseudo et avatar. */

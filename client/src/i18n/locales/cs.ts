@@ -176,6 +176,22 @@ export const cs: Messages = {
     callBody: 'Ruka na 5 bodů či míň, na začátku tahu: hlásíš. Nikdo níž — máš 0. Někdo stejně či níž — bereš 30.',
   },
 
+  push: {
+    title: 'Oznámení',
+    detail: 'Upozornění, když jsi na řadě — jen v partiích „každý po svém“. Nikdy během živé partie.',
+    on: 'Zapnout oznámení',
+    off: 'Vypnout',
+    blocked: 'Prohlížeč je pro tento web zablokoval. Povol je znovu v jeho nastavení.',
+  },
+
+  leaderboard: {
+    title: 'Vaše pořadí',
+    detail: 'Lidé, s nimiž jsi dohrál partie. Nejnižší průměr je nejlepší.',
+    you: 'ty',
+    wins: 'výher',
+    line: (g, s) => `${g} partií · průměr ${s} b`,
+  },
+
   menu: {
     resume: 'Zpět do hry',
     pause: 'Dát si pauzu',

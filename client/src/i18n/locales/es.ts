@@ -177,6 +177,22 @@ export const es: Messages = {
     callBody: 'Mano de 5 puntos o menos, al empezar tu turno: cantas. Nadie por debajo, marcas 0. Alguien igual o menor, te llevas 30.',
   },
 
+  push: {
+    title: 'Notificaciones',
+    detail: 'Un aviso cuando te toca, solo en partidas «cada uno a su ritmo». Nunca durante una partida en directo.',
+    on: 'Activar las notificaciones',
+    off: 'Desactivar',
+    blocked: 'Tu navegador las ha bloqueado para este sitio. Vuelve a activarlas en sus ajustes.',
+  },
+
+  leaderboard: {
+    title: 'Vuestra clasificación',
+    detail: 'Las personas con las que has terminado partidas. La media más baja es la mejor.',
+    you: 'tú',
+    wins: 'victorias',
+    line: (g, s) => `${g} partidas · ${s} pts de media`,
+  },
+
   menu: {
     resume: 'Volver a la partida',
     pause: 'Hacer una pausa',

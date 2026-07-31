@@ -177,6 +177,22 @@ export const nl: Messages = {
     callBody: 'Hand op 5 punten of minder, aan het begin van je beurt: je roept. Niemand eronder, je scoort 0. Iemand gelijk of lager, je krijgt er 30.',
   },
 
+  push: {
+    title: 'Meldingen',
+    detail: 'Een seintje als jij aan zet bent, alleen in spellen op eigen tempo. Nooit tijdens een live spel.',
+    on: 'Meldingen aanzetten',
+    off: 'Uitzetten',
+    blocked: 'Je browser heeft ze voor deze site geblokkeerd. Zet ze weer aan in de instellingen.',
+  },
+
+  leaderboard: {
+    title: 'Jullie klassement',
+    detail: 'De mensen met wie je spellen hebt uitgespeeld. De laagste gemiddelde score is de beste.',
+    you: 'jij',
+    wins: 'winst',
+    line: (g, s) => `${g} spellen · gemiddeld ${s} ptn`,
+  },
+
   menu: {
     resume: 'Terug naar het spel',
     pause: 'Even pauzeren',

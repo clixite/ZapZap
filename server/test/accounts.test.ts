@@ -188,3 +188,91 @@ describe('lien magique', () => {
     await new Promise<void>((resolve) => server.close(() => resolve()));
   });
 });
+
+describe('classement entre joueurs', () => {
+  /** Une partie finie, avec le classement de chacun. */
+  function playedTogether(code: string, results: { id: string; rank: number; score: number }[]): void {
+    const standings = results.map((r) => ({ pseudo: r.id, avatar: '⚡', score: r.score }));
+    for (const r of results) {
+      users.addHistoryEntry(r.id, {
+        code,
+        playedAt: Date.now(),
+        playersCount: results.length,
+        myScore: r.score,
+        myRank: r.rank,
+        won: r.rank === 1,
+        standings,
+      });
+    }
+  }
+
+  beforeEach(() => {
+    for (const id of ['u_a', 'u_b', 'u_c', 'u_solo']) users.create(id, id, '⚡');
+  });
+
+  it('ne compte que les gens avec qui on a joué', () => {
+    playedTogether('AAAA', [
+      { id: 'u_a', rank: 1, score: 40 },
+      { id: 'u_b', rank: 2, score: 100 },
+    ]);
+    // u_solo a joué ailleurs : il n'a rien à faire dans le classement de u_a.
+    playedTogether('BBBB', [
+      { id: 'u_solo', rank: 1, score: 10 },
+      { id: 'u_c', rank: 2, score: 100 },
+    ]);
+
+    const board = users.getLeaderboard('u_a');
+    expect(board.map((r) => r.userId).sort()).toEqual(['u_a', 'u_b']);
+  });
+
+  it('se compte soi-même, et se marque', () => {
+    playedTogether('AAAA', [
+      { id: 'u_a', rank: 1, score: 40 },
+      { id: 'u_b', rank: 2, score: 100 },
+    ]);
+    const me = users.getLeaderboard('u_a').find((r) => r.userId === 'u_a')!;
+    expect(me.isMe).toBe(true);
+    expect(me.wins).toBe(1);
+    expect(me.games).toBe(1);
+  });
+
+  it('classe par victoires, puis par parties', () => {
+    playedTogether('AAAA', [
+      { id: 'u_a', rank: 1, score: 30 },
+      { id: 'u_b', rank: 2, score: 100 },
+      { id: 'u_c', rank: 3, score: 110 },
+    ]);
+    playedTogether('BBBB', [
+      { id: 'u_b', rank: 1, score: 20 },
+      { id: 'u_a', rank: 2, score: 100 },
+      { id: 'u_c', rank: 3, score: 120 },
+    ]);
+    playedTogether('CCCC', [
+      { id: 'u_b', rank: 1, score: 25 },
+      { id: 'u_a', rank: 2, score: 100 },
+      { id: 'u_c', rank: 3, score: 130 },
+    ]);
+
+    const board = users.getLeaderboard('u_a');
+    expect(board.map((r) => r.userId)).toEqual(['u_b', 'u_a', 'u_c']);
+    expect(board[0].wins).toBe(2);
+    expect(board[2].wins).toBe(0);
+  });
+
+  it('donne le score moyen, arrondi', () => {
+    playedTogether('AAAA', [
+      { id: 'u_a', rank: 1, score: 30 },
+      { id: 'u_b', rank: 2, score: 101 },
+    ]);
+    playedTogether('BBBB', [
+      { id: 'u_a', rank: 1, score: 41 },
+      { id: 'u_b', rank: 2, score: 100 },
+    ]);
+    const me = users.getLeaderboard('u_a').find((r) => r.userId === 'u_a')!;
+    expect(me.averageScore).toBe(36);
+  });
+
+  it('rend une liste vide à qui n’a jamais fini de partie', () => {
+    expect(users.getLeaderboard('u_solo')).toEqual([]);
+  });
+});

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { GameHistoryEntry, UserStats } from '@zapzap/shared';
 import { fetchHistory, fetchMe, readCachedHistory, storedToken } from '../api';
+import { Leaderboard } from '../components/Leaderboard';
 import { useSession } from '../store/session';
 
 /**
@@ -56,6 +57,8 @@ export function History() {
         </Link>
         <h1 className="mt-3 font-display text-3xl font-bold">Vos parties</h1>
       </header>
+
+      <Leaderboard />
 
       {stats && (
         <div className="grid grid-cols-3 gap-2">

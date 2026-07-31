@@ -176,6 +176,22 @@ export const fi: Messages = {
     callBody: 'Käsi 5 pisteessä tai alle, vuorosi alussa: huudat. Kukaan ei alempana — saat 0. Joku tasoissa tai alempana — otat 30.',
   },
 
+  push: {
+    title: 'Ilmoitukset',
+    detail: 'Viesti kun on sinun vuorosi, vain peleissä joissa kukin pelaa omaan tahtiinsa. Ei koskaan suorassa pelissä.',
+    on: 'Ota ilmoitukset käyttöön',
+    off: 'Poista käytöstä',
+    blocked: 'Selaimesi on estänyt ne tältä sivustolta. Salli ne uudelleen sen asetuksista.',
+  },
+
+  leaderboard: {
+    title: 'Teidän sijoituksenne',
+    detail: 'Ne, joiden kanssa olet pelannut pelit loppuun. Matalin keskiarvo on paras.',
+    you: 'sinä',
+    wins: 'voittoa',
+    line: (g, s) => `${g} peliä · keskiarvo ${s} p`,
+  },
+
   menu: {
     resume: 'Takaisin peliin',
     pause: 'Pidä tauko',

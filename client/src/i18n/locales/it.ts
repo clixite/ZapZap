@@ -177,6 +177,22 @@ export const it: Messages = {
     callBody: 'Mano a 5 punti o meno, a inizio turno: dichiari. Nessuno sotto, fai 0. Qualcuno alla pari o sotto, prendi 30.',
   },
 
+  push: {
+    title: 'Notifiche',
+    detail: 'Un avviso quando tocca a te, solo nelle partite «ognuno quando vuole». Mai durante una partita dal vivo.',
+    on: 'Attivare le notifiche',
+    off: 'Disattivare',
+    blocked: 'Il tuo browser le ha bloccate per questo sito. Riattivale nelle sue impostazioni.',
+  },
+
+  leaderboard: {
+    title: 'La vostra classifica',
+    detail: 'Le persone con cui hai finito delle partite. La media più bassa è la migliore.',
+    you: 'tu',
+    wins: 'vittorie',
+    line: (g, s) => `${g} partite · ${s} pt di media`,
+  },
+
   menu: {
     resume: 'Torna alla partita',
     pause: 'Fare una pausa',

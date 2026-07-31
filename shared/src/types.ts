@@ -310,6 +310,28 @@ export interface GameHistoryEntry {
   standings: { pseudo: string; avatar: string; score: number }[];
 }
 
+/**
+ * Une ligne du classement entre joueurs qui se connaissent.
+ *
+ * « Entre amis » ne suppose aucune liste d'amis à tenir à jour : les gens avec
+ * qui vous avez fini des parties *sont* vos adversaires réguliers. Le classement
+ * se déduit donc de l'historique, sans que personne ait à ajouter qui que ce
+ * soit — et il ne compte que les parties **jouées ensemble**, ce qui est la
+ * seule comparaison qui ait un sens.
+ */
+export interface LeaderboardRow {
+  userId: string;
+  pseudo: string;
+  avatar: string;
+  photo?: string | null;
+  /** Parties finies en commun avec moi. Pour ma propre ligne : mes parties. */
+  games: number;
+  wins: number;
+  /** Score moyen : plus il est bas, mieux c'est — c'est un jeu de défausse. */
+  averageScore: number;
+  isMe: boolean;
+}
+
 export interface UserStats {
   gamesPlayed: number;
   gamesWon: number;

@@ -30,6 +30,7 @@ export const LOCALES = [
   'nl', // Nederlands
   'pl', // polski
   'pt', // português
+  'ro', // română
   'sv', // svenska
 ] as const;
 
@@ -76,6 +77,7 @@ export const LOCALE_NAMES: Record<Locale, string> = {
   nl: 'Nederlands',
   pl: 'Polski',
   pt: 'Português',
+  ro: 'Română',
   sv: 'Svenska',
 };
 
