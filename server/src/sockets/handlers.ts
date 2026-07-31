@@ -126,8 +126,30 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     const limited = <T,>(ack: unknown, produce: () => Ack<T>): void =>
       reply(ack, () => (actionLimiter.allow(userId) ? produce() : (fail('RATE_LIMITED') as Ack<T>)));
 
-    /** La table où ce joueur est assis, s'il y en a une — partie finie comprise. */
-    const myRoom = (): Room | undefined => rooms.findRoomOf(userId);
+    /**
+     * La table que **ce socket** regarde.
+     *
+     * Un joueur peut être assis à plusieurs tables à la fois — c'est tout
+     * l'intérêt du mode asynchrone. Chercher « une table dont il est membre »
+     * renvoyait alors la première venue : créer une seconde partie donnait un
+     * salon où ajouter un robot, régler ou démarrer n'avait aucun effet visible,
+     * parce que tout partait sur l'ancienne table.
+     *
+     * L'onglet dit donc explicitement où il est, à chaque fois qu'il s'assoit.
+     * Le repli sur `findRoomOf` ne sert qu'aux tout premiers instants d'une
+     * reconnexion, avant que le client n'ait redemandé sa table.
+     */
+    const focusOn = (room: Room): Room => {
+      socket.data.roomCode = room.code;
+      return room;
+    };
+
+    const myRoom = (): Room | undefined => {
+      const code = socket.data.roomCode as string | undefined;
+      const focused = code ? rooms.get(code) : undefined;
+      if (focused?.isMember(userId)) return focused;
+      return rooms.findRoomOf(userId);
+    };
 
     const profile = (): Pick<Player, 'id' | 'pseudo' | 'avatar'> & { photo?: string | null } => {
       const user = users.get(userId)!;
@@ -141,7 +163,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     socket.on('room:create', (ack) =>
       limited(ack, () => {
         if (rooms.gamesOf(userId).length >= MAX_ACTIVE_ROOMS) return fail('TOO_MANY_ROOMS');
-        const room = rooms.create(profile());
+        const room = focusOn(rooms.create(profile()));
         room.attach(userId, socket);
         return { ok: true, code: room.code };
       }),
@@ -160,22 +182,29 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
           if (!result.ok) return fail(result.error);
           room.emitEvent({ type: 'player-joined', playerId: userId, pseudo: profile().pseudo });
         }
-        room.attach(userId, socket);
+        focusOn(room).attach(userId, socket);
         return { ok: true, code: room.code };
       }),
     );
 
     socket.on('room:quickMatch', (ack) =>
       limited(ack, () => {
+        /*
+         * Une table où l'on est déjà **assis à attendre** n'est pas à quitter :
+         * y renvoyer, c'est reprendre sa place. Une partie déjà lancée, si —
+         * « partie rapide » veut dire « trouve-moi une table maintenant », et
+         * renvoyer vers un jeu en cours donnait l'impression que le bouton ne
+         * faisait rien. Les parties en cours ont leur propre liste à l'accueil.
+         */
         const existing = myRoom();
-        if (existing) {
-          existing.attach(userId, socket);
+        if (existing && existing.state.phase === 'lobby') {
+          focusOn(existing).attach(userId, socket);
           return { ok: true, code: existing.code, created: false };
         }
         if (rooms.gamesOf(userId).length >= MAX_ACTIVE_ROOMS) return fail('TOO_MANY_ROOMS');
         const { room, created } = rooms.quickMatch(profile());
         if (!created) room.emitEvent({ type: 'player-joined', playerId: userId, pseudo: profile().pseudo });
-        room.attach(userId, socket);
+        focusOn(room).attach(userId, socket);
         return { ok: true, code: room.code, created };
       }),
     );
@@ -187,6 +216,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
         room.leave(userId, socket);
+        socket.data.roomCode = undefined;
         return { ok: true };
       }),
     );
@@ -242,7 +272,7 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
         // la tablée sans que personne n'ait à retaper un code.
         const next = rooms.create(profile());
         room.emitEvent({ type: 'rematch', code: next.code });
-        next.attach(userId, socket);
+        focusOn(next).attach(userId, socket);
         return { ok: true, code: next.code };
       }),
     );

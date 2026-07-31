@@ -27,13 +27,17 @@ const guestSchema = z.object({
 });
 
 /**
- * Création de comptes : 10 d'un coup, puis un par minute et par adresse.
+ * Création de comptes : 30 d'un coup, puis un toutes les vingt secondes.
  *
  * Chaque compte est une ligne en base pour toujours : sans plafond, une boucle
- * `curl` remplit le disque. Dix d'un coup couvre le cas réel — une tablée qui
- * s'inscrit derrière la même box.
+ * `curl` remplit le disque. Mais la limite est par **adresse IP**, et une
+ * adresse IP n'est pas une personne : derrière la box d'un café, d'une école ou
+ * d'une famille, tout le monde partage la même. Dix d'un coup — la valeur
+ * précédente — refusait le compte au onzième joueur d'une soirée, avec pour
+ * seul recours d'attendre une minute sans savoir pourquoi. Trente laisse passer
+ * une tablée entière et arrête toujours net une boucle automatisée.
  */
-const guestLimiter = new RateLimiter(10, 1 / 60);
+const guestLimiter = new RateLimiter(30, 1 / 20);
 
 /**
  * L'API.

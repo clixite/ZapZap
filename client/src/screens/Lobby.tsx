@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MAX_PLAYERS, MIN_PLAYERS, isBotId, type ZapVariants } from '@zapzap/shared';
 import { InviteButtons } from '../components/InviteButtons';
-import { useGame, useView } from '../store/game';
+import { useGame, useGameChannel, useView } from '../store/game';
 import { useSession } from '../store/session';
 
 /**
@@ -20,15 +20,25 @@ export function Lobby() {
   const busy = useGame((s) => s.busy);
   const send = useGame((s) => s.send);
   const setError = useGame((s) => s.setError);
-  const listen = useGame((s) => s.listen);
+    const join = useGame((s) => s.join);
+  const denied = useGame((s) => s.denied);
   const view = useView();
   const user = useSession((s) => s.user);
+  const connected = useSession((s) => s.connected);
 
-  useEffect(() => listen(), [listen]);
+  useGameChannel();
 
+  // Comme à table : on attend la connexion pour demander sa place, sinon le
+  // premier chargement d'un lien d'invitation échoue sans jamais réessayer.
+  // Et on ne redemande pas sa place là où on vient d'être retiré.
   useEffect(() => {
-    if (code && !view) void send('room:join', { code });
-  }, [code, view, send]);
+    if (connected && code && !view && denied !== code) void join(code);
+  }, [connected, code, view, join, denied]);
+
+  // Exclu, ou table close : on ne reste pas sur un écran vide à se demander.
+  useEffect(() => {
+    if (denied === code) navigate('/', { replace: true });
+  }, [denied, code, navigate]);
 
   useEffect(() => {
     if (view && view.phase !== 'lobby') navigate(`/table/${view.code}`, { replace: true });
@@ -44,13 +54,30 @@ export function Lobby() {
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-md flex-col gap-5 px-5 py-6">
-      <header className="text-center">
-        <p className="text-xs tracking-wide text-paper-300 uppercase">Code de la partie</p>
-        <p className="font-display text-5xl font-bold tracking-[0.2em] text-volt-300">{view.code}</p>
+      {/*
+        L'invitation en premier, et expliquée.
+
+        Un code seul ne dit pas ce qu'on doit en faire. La consigne tient en une
+        phrase — « envoyez ce code, ils l'entrent à l'accueil » — et elle
+        transforme un nombre affiché en une action à faire.
+      */}
+      <header className="rounded-2xl bg-storm-900/70 px-4 py-4 text-center">
+        <p className="text-sm font-medium text-paper-100">Invitez vos amis</p>
+        <p className="mt-0.5 text-xs text-paper-300">
+          Envoyez-leur ce code : ils l’entrent à l’accueil et arrivent ici.
+        </p>
+        <p className="mt-2 font-display text-5xl font-bold tracking-[0.2em] text-volt-300">{view.code}</p>
         <div className="mt-3">
           <InviteButtons code={view.code} />
         </div>
       </header>
+
+      {!isHost && (
+        <p className="rounded-xl bg-storm-800 px-4 py-3 text-center text-sm text-paper-300">
+          {view.players.find((p) => p.id === view.hostId)?.pseudo ?? 'L’hôte'} règle la partie et donne le
+          coup d’envoi.
+        </p>
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xs font-medium tracking-wide text-paper-300 uppercase">
@@ -225,7 +252,7 @@ function Choice<T extends string>({
             role="radio"
             aria-checked={value === key}
             onClick={() => onChange(key)}
-            className={`min-h-11 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+            className={`min-h-11 min-w-11 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
               value === key ? 'bg-volt-500 text-storm-950' : 'bg-storm-700 text-paper-300'
             }`}
           >

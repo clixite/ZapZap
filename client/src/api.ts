@@ -35,6 +35,12 @@ export async function createGuest(pseudo: string, avatar: string): Promise<{ tok
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ pseudo, avatar }),
   });
+  // Le plafond de création est par adresse IP : derrière une box partagée, un
+  // joueur peut se le prendre sans avoir rien fait de mal. Lui dire « réessayez »
+  // sans dire quoi attendre, c'est le perdre — on nomme la cause et le délai.
+  if (res.status === 429) {
+    throw new Error('Beaucoup de comptes viennent d’être créés depuis votre connexion. Réessayez dans une minute.');
+  }
   if (!res.ok) throw new Error('Impossible de créer le compte');
   return (await res.json()) as { token: string; user: PublicUser };
 }
