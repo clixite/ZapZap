@@ -97,14 +97,23 @@ export function RoundRecap({ view, onNext, canAdvance, busy }: RoundRecapProps) 
           })}
       </ul>
 
-      <button
-        type="button"
-        onClick={onNext}
-        disabled={!canAdvance || busy}
-        className="mt-1 rounded-xl bg-volt-500 py-3 font-display text-lg font-bold text-storm-950 transition-transform active:scale-[0.98] disabled:opacity-40"
-      >
-        {canAdvance ? 'Manche suivante' : 'En attente de l’hôte…'}
-      </button>
+      {/*
+        Le bouton ne descend pas avec la liste : il est **toujours à l'écran**.
+        À six joueurs, la feuille des mains abattues dépasse largement la
+        hauteur du tapis, et il fallait faire défiler pour découvrir qu'il y
+        avait quelque chose à toucher — la table entière attendait un joueur qui
+        ne voyait pas le bouton.
+      */}
+      <div className="sticky bottom-0 z-20 -mx-4 bg-gradient-to-t from-storm-900 via-storm-900 to-transparent px-4 pt-6 pb-3">
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={!canAdvance || busy}
+          className="w-full rounded-xl bg-volt-500 py-3 font-display text-lg font-bold text-storm-950 transition-transform active:scale-[0.98] disabled:opacity-40"
+        >
+          {canAdvance ? 'Manche suivante' : 'En attente de l’hôte…'}
+        </button>
+      </div>
     </div>
   );
 }

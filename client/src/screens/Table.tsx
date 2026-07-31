@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { EMOTES, handValue, type EmoteId, type GameView } from '@zapzap/shared';
+import { EMOTES, handValue, type EmoteId, type GameView, type Player } from '@zapzap/shared';
 import { isMuted, play, setMuted } from '../audio';
+import { MiniCards } from '../components/CardFace';
 import { DealPicker, DealWaiting } from '../components/DealPicker';
 import { HandFan } from '../components/HandFan';
 import { EMOTE_GLYPHS, EventTicker, TurnCountdown, useEmoteBubbles } from '../components/LiveFeedback';
@@ -13,7 +14,7 @@ import { TableCentre } from '../components/TableCentre';
 import { STATUS_H, useFeltLayout } from '../components/tableLayout';
 import { vibrate } from '../haptics';
 import { useWakeLock } from '../hooks/useWakeLock';
-import { useGame, useView } from '../store/game';
+import { useGame, useGameChannel, useView } from '../store/game';
 import { useSession } from '../store/session';
 
 /**
@@ -34,10 +35,12 @@ export function Table() {
   const send = useGame((s) => s.send);
   const playMove = useGame((s) => s.play);
   const setError = useGame((s) => s.setError);
-  const listen = useGame((s) => s.listen);
+    const join = useGame((s) => s.join);
+  const denied = useGame((s) => s.denied);
   const lastEvent = useGame((s) => s.lastEvent);
   const view = useView();
   const user = useSession((s) => s.user);
+  const connected = useSession((s) => s.connected);
   const [selected, setSelected] = useState<string[]>([]);
   /** Premier tap sur ZapZap : armé. Deuxième : envoyé. Un raté coûte 30 points. */
   const [zapArmed, setZapArmed] = useState(false);
@@ -49,7 +52,7 @@ export function Table() {
   /** Vrai pendant la seconde qui suit la donne : la main entre carte par carte. */
   const [dealing, setDealing] = useState(false);
 
-  useEffect(() => listen(), [listen]);
+  useGameChannel();
 
   // L'écran reste allumé tant qu'on est à table : regarder les autres jouer,
   // c'est ne pas toucher son téléphone.
@@ -94,9 +97,18 @@ export function Table() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastEvent]);
 
+  // On ne demande à s'asseoir qu'une fois la connexion établie : au chargement
+  // direct de l'écran, la session est encore en train de se rétablir, et une
+  // demande partie trop tôt n'aboutit nulle part.
   useEffect(() => {
-    if (code && !view) void send('room:join', { code });
-  }, [code, view, send]);
+    if (connected && code && !view && denied !== code) void join(code);
+  }, [connected, code, view, join, denied]);
+
+  // Retiré de la table, ou table close : on repart de l'accueil plutôt que de
+  // rester devant un tapis qui ne se remplira plus.
+  useEffect(() => {
+    if (denied === code) navigate('/', { replace: true });
+  }, [denied, code, navigate]);
 
   // Ni la sélection ni l'annonce armée ne survivent au tour : garder l'une
   // ferait poser autre chose que ce qu'on croit, garder l'autre ferait annoncer
@@ -242,6 +254,7 @@ export function Table() {
             layout={layout}
             stockCount={round.stockCount}
             lastDiscard={round.lastDiscard}
+            author={authorOf(view, round.lastDiscard?.playerId)}
             drawOptions={round.drawOptions}
             onDrawStock={() => void draw({ source: 'stock' })}
             onDrawDiscard={(id) => void draw({ source: 'discard', cardId: id })}
@@ -272,10 +285,16 @@ export function Table() {
 
         {showLog && round && <PassedCards view={view} onClose={() => setShowLog(false)} />}
 
-        {/* La ligne d'annonce, juste au-dessus de la ligne d'état */}
-        <div className="absolute inset-x-0" style={{ bottom: STATUS_H }}>
-          <EventTicker view={view} lastEvent={lastEvent} />
-        </div>
+        {/*
+          La ligne d'annonce, juste au-dessus de la ligne d'état — sauf pendant
+          le décompte, où elle passait par-dessus la feuille des scores et
+          barrait le nom d'un joueur au moment précis où on lisait sa main.
+        */}
+        {view.phase !== 'round-scoring' && (
+          <div className="absolute inset-x-0" style={{ bottom: STATUS_H }}>
+            <EventTicker view={view} lastEvent={lastEvent} />
+          </div>
+        )}
 
         {/* Ligne d'état : réservée, rien ne descend dessus */}
         <div
@@ -293,14 +312,19 @@ export function Table() {
             </button>
           )}
 
+          {/*
+            La ligne d'état a quitté cette barre pour le bandeau au-dessus de la
+            main : à mi-hauteur de l'écran, en petit, entre deux icônes, « au
+            tour de… » se lisait rarement. Ne reste ici que le décompte, qui est
+            une jauge et non un texte.
+          */}
           <div className="flex min-w-0 flex-1 flex-col items-center justify-center">
-            <StatusLine view={view} myTurn={myTurn} pending={pending?.pseudo ?? null} />
             {view.turnDeadline != null && view.phase !== 'round-scoring' && (
               <TurnCountdown deadline={view.turnDeadline} mine={myTurn} />
             )}
           </div>
 
-          {round && (
+          {round && view.phase !== 'round-scoring' && (
             <button
               type="button"
               onClick={() => setShowEmotes((s) => !s)}
@@ -351,11 +375,12 @@ export function Table() {
         )}
       </div>
 
-      {/* La main, toujours visible */}
+      {/* La main, toujours visible, coiffée du bandeau de tour */}
       <div
-        className="shrink-0 rounded-t-2xl bg-storm-800/80 pt-1 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+        className="shrink-0 rounded-t-2xl bg-storm-800/80 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         style={{ boxShadow: 'var(--shadow-panel)' }}
       >
+        <TurnBanner view={view} myTurn={myTurn} pending={pending} />
         <HandArea
           view={view}
           selected={selected}
@@ -472,41 +497,95 @@ function HandArea({
             )}
           </button>
         )}
-        <button
-          type="button"
-          onClick={onDiscard}
-          disabled={!interactive || selected.length === 0 || busy}
-          className="flex-1 rounded-xl bg-volt-500 py-3 font-display text-lg font-bold text-storm-950 transition-transform active:scale-[0.98] disabled:opacity-40"
-        >
-          Défausser
-        </button>
+        {/*
+          Hors du temps de jeu — la donne, le décompte —, le bouton disparaît au
+          lieu de rester grisé. Un bouton éteint invite quand même à appuyer, et
+          on l'appuie : pendant le décompte, « Défausser » était le geste le plus
+          visible de l'écran alors qu'il n'y avait rien à défausser.
+        */}
+        {view.phase === 'playing' && (
+          <button
+            type="button"
+            onClick={onDiscard}
+            disabled={!interactive || selected.length === 0 || busy}
+            className="flex-1 rounded-xl bg-volt-500 py-3 font-display text-lg font-bold text-storm-950 transition-transform active:scale-[0.98] disabled:opacity-40"
+          >
+            Défausser
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
-function StatusLine({ view, myTurn, pending }: { view: GameView; myTurn: boolean; pending: string | null }) {
-  const round = view.round;
-  let text: string;
+/** Qui a posé les cartes visibles au centre — `null` pour la carte de la donne. */
+function authorOf(view: GameView, playerId: string | undefined) {
+  if (!playerId) return null;
+  const player = view.players.find((p) => p.id === playerId);
+  if (!player) return null;
+  return { avatar: player.avatar, pseudo: player.pseudo, isMe: player.id === view.you };
+}
 
+/**
+ * Le bandeau de tour : qui joue, et ce qu'il doit faire.
+ *
+ * Il est collé au-dessus de la main — là où le regard revient entre deux coups —
+ * plutôt qu'au milieu de l'écran. Quand c'est mon tour il prend la couleur
+ * d'accent sur toute la largeur : impossible de croire qu'on attend quelqu'un
+ * d'autre. Quand ce n'est pas mon tour, il porte l'avatar de celui qu'on attend,
+ * pour que le nom du bandeau et l'anneau sur le tapis désignent visiblement la
+ * même personne.
+ *
+ * Il porte aussi le rappel de ma propre pose pendant que je pioche : mes cartes
+ * ont quitté ma main mais ne sont pas encore au centre, et sans ce rappel elles
+ * n'existaient nulle part.
+ */
+function TurnBanner({ view, myTurn, pending }: { view: GameView; myTurn: boolean; pending: Player | null }) {
+  const round = view.round;
+  const myPose = round?.pendingDiscard?.playerId === view.you ? round.pendingDiscard : null;
+
+  let text: string;
   if (view.phase === 'dealing') {
-    text = myTurn ? 'À vous de donner' : `${pending ?? '…'} donne`;
+    text = myTurn ? 'À vous de donner' : `${pending?.pseudo ?? '…'} choisit la donne`;
   } else if (view.phase === 'round-scoring') {
     text = 'Manche terminée';
   } else if (myTurn) {
-    text = round?.turnStep === 'discard' ? 'À vous — défaussez' : 'Maintenant, piochez';
+    text = round?.turnStep === 'discard' ? 'À vous — posez vos cartes' : 'À vous — piochez une carte';
   } else {
-    text = `Au tour de ${pending ?? '…'}`;
+    text = `Au tour de ${pending?.pseudo ?? '…'}`;
   }
 
+  const hint =
+    !myTurn && view.phase === 'playing'
+      ? round?.turnStep === 'discard'
+        ? 'il défausse'
+        : 'il pioche'
+      : null;
+
   return (
-    <p
-      className={`truncate text-sm font-medium ${myTurn ? 'text-volt-300' : 'text-paper-300'}`}
+    <div
       role="status"
       aria-live="polite"
+      // `relative z-10` : les cartes de la donne s'animent depuis le tapis et
+      // passaient par-dessus le bandeau, illisible pendant une seconde.
+      className={`relative z-10 flex min-h-9 items-center justify-center gap-2 rounded-t-2xl px-3 py-1.5 text-sm font-bold transition-colors ${
+        myTurn ? 'zz-turn bg-volt-500 text-storm-950' : 'bg-storm-900/80 text-paper-100'
+      }`}
     >
-      {text}
-    </p>
+      {!myTurn && pending && (
+        <span className="text-base leading-none" aria-hidden="true">
+          {pending.avatar}
+        </span>
+      )}
+      <span className="truncate">{text}</span>
+      {hint && <span className="shrink-0 text-xs font-medium text-paper-300">· {hint}</span>}
+      {myPose && (
+        <span className="flex shrink-0 items-center gap-1.5">
+          <span className="text-xs font-medium">vous avez posé</span>
+          <MiniCards cards={myPose.combo.cards} size={11} />
+        </span>
+      )}
+    </div>
   );
 }
 

@@ -255,6 +255,32 @@ export function CardFace({ card, width, selected, dimmed, onClick, label, disabl
   );
 }
 
+/**
+ * Une combinaison en tout petit : « 7♥ 8♥ », aux couleurs des familles.
+ *
+ * Sert partout où il faut dire *quelles* cartes sans avoir la place de les
+ * dessiner — l'étiquette d'une pose au siège de son auteur, le rappel de sa
+ * propre pose pendant qu'on pioche. Une vraie carte miniature à cette échelle
+ * n'est plus lisible ; le rang et le symbole, si.
+ */
+export function MiniCards({ cards, size = 11 }: { cards: Card[]; size?: number }) {
+  return (
+    <span className="inline-flex items-center gap-[0.35em]" style={{ fontSize: size }}>
+      {cards.map((card) => (
+        <span
+          key={cardId(card)}
+          className="rounded-[3px] bg-paper-50 px-[0.28em] font-display leading-[1.35] font-bold"
+          style={{ color: inkFor(card) }}
+          aria-label={describeCard(card)}
+        >
+          {rankLabel(card)}
+          <span aria-hidden="true">{SUIT_GLYPH[card.suit] ?? ''}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 const SUIT_NAME: Record<string, string> = {
   S: 'pique',
   H: 'cœur',

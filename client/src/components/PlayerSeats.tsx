@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { isBotId, type EmoteId, type GameView, type Player } from '@zapzap/shared';
+import { MiniCards } from './CardFace';
 import { EMOTE_GLYPHS } from './LiveFeedback';
 import type { FeltLayout } from './tableLayout';
 
@@ -10,6 +12,15 @@ import type { FeltLayout } from './tableLayout';
  * permette d'évaluer le danger avant d'annoncer — c'est le cœur du jeu, il doit
  * se lire sans effort, d'où la pastille chiffrée plutôt qu'un empilement de dos
  * de cartes qu'il faudrait compter.
+ *
+ * Deux ajouts qui répondent à la même question — *qui joue, et qui a posé quoi* :
+ *
+ *  - l'anneau du tour entoure l'avatar de celui dont c'est le tour et **se vide
+ *    avec son temps**. C'est la convention des jeux de cartes en ligne : le
+ *    joueur actif n'est pas signalé quelque part, il est signalé *sur lui* ;
+ *  - la pose en cours s'affiche **sous le siège de son auteur**, le temps qu'il
+ *    pioche. Avant, elle n'apparaissait au centre qu'une fois son tour fini :
+ *    on voyait les cartes changer sans jamais voir qui les avait mises.
  */
 
 export interface PlayerSeatsProps {
@@ -63,6 +74,62 @@ export function orderedOpponents(view: GameView): Player[] {
   return ordered;
 }
 
+/**
+ * L'anneau du tour : le temps qui reste, tracé autour de l'avatar.
+ *
+ * Un simple halo disait « c'est à lui » ; il ne disait pas « il lui reste dix
+ * secondes ». L'anneau se vide, passe à l'ambre sur la fin, et reste plein
+ * quand la table joue sans minuteur — la même pièce sert aux deux rythmes.
+ */
+function TurnRing({ size, deadline }: { size: number; deadline: number | null }) {
+  const [now, setNow] = useState(() => Date.now());
+  const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    if (deadline == null) return;
+    setTotal(Math.max(1, deadline - Date.now()));
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(timer);
+  }, [deadline]);
+
+  const remaining = deadline == null ? 1 : Math.max(0, deadline - now);
+  const ratio = deadline == null ? 1 : total > 0 ? Math.min(1, remaining / total) : 0;
+  const urgent = deadline != null && remaining <= 10_000;
+  const stroke = Math.max(2.5, size * 0.07);
+  const r = (size - stroke) / 2 + stroke;
+  const circumference = 2 * Math.PI * r;
+
+  return (
+    <svg
+      className="pointer-events-none absolute -inset-[6px] -rotate-90"
+      viewBox={`0 0 ${(r + stroke) * 2} ${(r + stroke) * 2}`}
+      aria-hidden="true"
+    >
+      <circle
+        cx={r + stroke}
+        cy={r + stroke}
+        r={r}
+        fill="none"
+        stroke="var(--color-storm-600)"
+        strokeWidth={stroke}
+      />
+      <circle
+        cx={r + stroke}
+        cy={r + stroke}
+        r={r}
+        fill="none"
+        stroke={urgent ? 'var(--color-flash-400)' : 'var(--color-volt-400)'}
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={circumference * (1 - ratio)}
+        className="transition-[stroke-dashoffset] duration-300 ease-linear"
+      />
+    </svg>
+  );
+}
+
 function Seat({
   player,
   view,
@@ -86,13 +153,24 @@ function Seat({
     ((view.phase === 'dealing' && player.seat === round.dealerSeat) ||
       (view.phase === 'playing' && player.seat === round.currentSeat));
   const isDealer = round !== null && player.seat === round.dealerSeat;
+  // La pose qu'il vient de faire et qui n'est pas encore passée au centre.
+  const posing = round?.pendingDiscard?.playerId === player.id ? round.pendingDiscard : null;
 
   return (
     <div
-      className="absolute flex flex-col items-center"
-      style={{ left: x, top: y, width: layout.seatW, transform: 'translate(-50%, -50%)' }}
+      className="absolute flex flex-col items-center transition-opacity duration-300"
+      style={{
+        left: x,
+        top: y,
+        width: layout.seatW,
+        transform: 'translate(-50%, -50%)',
+        // Le joueur actif est le seul à pleine intensité : la table se lit d'un
+        // coup d'œil, sans chercher lequel des cinq avatars est allumé.
+        opacity: round === null || isPending ? 1 : 0.62,
+      }}
     >
       <div className="relative">
+        {isPending && <TurnRing size={layout.avatar} deadline={view.turnDeadline ?? null} />}
         {bubble && (
           <span
             className="zz-zap absolute -top-6 left-1/2 z-10 -translate-x-1/2 rounded-full bg-paper-50 px-1.5 py-0.5 text-base shadow-lg"
@@ -151,11 +229,33 @@ function Seat({
       </div>
 
       {layout.showName && (
-        <span className="mt-1 max-w-full truncate text-[11px] text-paper-100">{player.pseudo}</span>
+        <span
+          // `mt-2` et non `mt-1` : la pastille du nombre de cartes déborde sous
+          // l'avatar, et le pseudo du joueur actif — désormais sur fond plein —
+          // venait la chevaucher.
+          className={`mt-2 max-w-full truncate rounded-full px-1.5 text-[11px] ${
+            isPending ? 'bg-volt-500 font-bold text-storm-950' : 'text-paper-100'
+          }`}
+        >
+          {player.pseudo}
+        </span>
       )}
       <span className="text-[10px] text-paper-300">
         {player.eliminated ? 'éliminé' : `${player.totalScore} pt`}
       </span>
+
+      {/*
+        Ce qu'il vient de poser, attaché à lui.
+
+        C'est l'attribution que le centre du tapis ne peut pas donner : au
+        centre, les cartes sont là, mais rien ne dit de quelle main elles
+        sortent. Ici, la pose est sous son avatar tant qu'il n'a pas pioché.
+      */}
+      {posing && (
+        <span className="zz-fade-up absolute top-full left-1/2 z-10 mt-0.5 flex -translate-x-1/2 items-center gap-1 rounded-full bg-storm-950/90 px-1.5 py-0.5 whitespace-nowrap ring-1 ring-volt-400/60">
+          <MiniCards cards={posing.combo.cards} size={10} />
+        </span>
+      )}
 
       <span className="sr-only">
         {player.pseudo}, {cards} carte{cards > 1 ? 's' : ''} en main

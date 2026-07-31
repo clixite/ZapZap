@@ -18,6 +18,8 @@ export interface TableCentreProps {
   layout: FeltLayout;
   stockCount: number;
   lastDiscard: DiscardSlot | null;
+  /** Qui a posé ce qui est sur la défausse. `null` pour la carte de la donne. */
+  author: { avatar: string; pseudo: string; isMe: boolean } | null;
   /** Cartes prenables, si c'est à moi de piocher. Sinon `null`. */
   drawOptions: DrawOption[] | null;
   onDrawStock: () => void;
@@ -29,6 +31,7 @@ export function TableCentre({
   layout,
   stockCount,
   lastDiscard,
+  author,
   drawOptions,
   onDrawStock,
   onDrawDiscard,
@@ -71,7 +74,24 @@ export function TableCentre({
       <Pile
         x={layout.discard.x}
         y={layout.discard.y}
-        label="Défausse"
+        /*
+         * L'étiquette dit *qui*, pas *quoi*.
+         *
+         * « Défausse » était une évidence — on voit bien que c'est la défausse.
+         * Ce qu'on ne voyait pas, c'est de quelle main ces cartes sortent, et
+         * c'est pourtant l'information dont dépend tout le comptage : ramasser
+         * le 7 que le voisin vient de lâcher n'a pas le même sens que ramasser
+         * celui qu'on a soi-même écarté au tour d'avant.
+         */
+        label={
+          lastDiscard === null
+            ? 'Défausse'
+            : author === null
+              ? 'Carte retournée'
+              : author.isMe
+                ? 'Vous avez posé'
+                : `${author.avatar} ${author.pseudo}`
+        }
         caption={
           discardCards.length === 0
             ? '—'
@@ -171,7 +191,7 @@ function Pile({
       className="absolute flex flex-col items-center gap-1"
       style={{ left: x, top: y, transform: 'translate(-50%, -50%)' }}
     >
-      <span className="text-[11px] font-medium tracking-wide text-paper-300 uppercase">{label}</span>
+      <span className="max-w-24 truncate text-[11px] font-medium tracking-wide text-paper-100">{label}</span>
       {children}
       <span className="text-[11px] text-paper-300">{caption}</span>
     </div>
