@@ -594,13 +594,10 @@ describe('élimination et fin de partie', () => {
     expect(state.players.find((p) => p.id === me)!.finishRank).toBe(1);
   });
 
-  it('s’arrête à la première élimination en variante « first-out »', () => {
+  it('s’arrête dès que quelqu’un dépasse 100, sans réglage à activer', () => {
+    // Règle absolue du jeu : la partie ne se joue pas « au dernier debout ».
+    // Le premier qui saute arrête tout le monde, et on en relance une.
     let state = lobby(['a', 'b', 'c']);
-    state = ok(state, {
-      type: 'SET_VARIANTS',
-      playerId: 'a',
-      variants: { ...DEFAULT_VARIANTS, endMode: 'first-out' },
-    });
     state = ok(state, { type: 'START_GAME', playerId: 'a' });
     const dealer = state.players.find((p) => p.seat === state.round!.dealerSeat)!;
     state = ok(state, { type: 'DEAL', playerId: dealer.id, handSize: 3 });
@@ -614,6 +611,79 @@ describe('élimination et fin de partie', () => {
     state = ok(state, { type: 'CALL_ZAP', playerId: me });
     state = ok(state, { type: 'NEXT_ROUND', playerId: 'a' });
     expect(state.phase).toBe('game-over');
+  });
+});
+
+describe('la fin de partie, règle absolue', () => {
+  /**
+   * Dès qu'un joueur dépasse 100, la partie s'arrête **pour tout le monde**.
+   * Ce n'était qu'une variante ; c'est désormais la règle, et ces tests sont là
+   * pour qu'elle ne redevienne jamais un réglage par accident.
+   */
+  function scoredGame(totals: Record<string, number>): GameState {
+    let state = playing(Object.keys(totals), 3);
+    state = structuredClone(state);
+    for (const p of state.players) p.totalScore = totals[p.id];
+    return state;
+  }
+
+  /** Clôt la manche sur une annonce du joueur donné, puis avance. */
+  function finishRound(state: GameState, callerHand: Card[]): GameState {
+    const me = current(state);
+    let next = setHand(state, me, callerHand);
+    next = ok(next, { type: 'CALL_ZAP', playerId: me });
+    return ok(next, { type: 'NEXT_ROUND', playerId: next.hostId });
+  }
+
+  it('ne laisse aucun réglage la désactiver', () => {
+    // `endMode` n'existe plus : le moteur refuse un objet de variantes qui
+    // prétendrait le porter — donc personne ne peut rallonger la partie.
+    expect(Object.keys(DEFAULT_VARIANTS)).not.toContain('endMode');
+  });
+
+  it('s’arrête au premier joueur au-dessus de 100, les autres encore debout', () => {
+    let state = scoredGame({ a: 0, b: 0, c: 98 });
+    // `c` prend sa main en pleine figure : il passe 100 et tout s'arrête.
+    state = setHand(state, 'c', [c('H', 13), c('D', 12)]);
+    const me = current(state);
+    if (me === 'c') return;
+    state = finishRound(state, [c('S', 1)]);
+
+    expect(state.phase).toBe('game-over');
+    expect(state.players.find((p) => p.id === 'c')!.eliminated).toBe(true);
+    // Les deux autres n'ont pas été éliminés : la partie s'est arrêtée avant.
+    expect(state.players.filter((p) => !p.eliminated)).toHaveLength(2);
+  });
+
+  it('classe tout le monde, du plus bas score au plus haut', () => {
+    let state = scoredGame({ a: 0, b: 0, c: 98 });
+    state = setHand(state, 'c', [c('H', 13), c('D', 12)]);
+    const me = current(state);
+    if (me === 'c') return;
+    state = finishRound(state, [c('S', 1)]);
+
+    const ranked = [...state.players].sort((x, y) => x.finishRank! - y.finishRank!);
+    expect(ranked.map((p) => p.finishRank)).toEqual([1, 2, 3]);
+    // Celui qui a fait sauter la partie est forcément dernier : il est le seul
+    // au-dessus de 100.
+    expect(ranked[2].id).toBe('c');
+    // Et le classement suit le total, puisque tout le jeu est de ne pas marquer.
+    expect(ranked[0].totalScore).toBeLessThanOrEqual(ranked[1].totalScore);
+  });
+
+  it('range les partants derrière ceux qui ont joué jusqu’au bout', () => {
+    // Abandonner n'est pas finir : classer un déserteur au score
+    // récompenserait celui qui s'en va pendant qu'il mène.
+    let state = scoredGame({ a: 0, b: 0, c: 98 });
+    state = ok(state, { type: 'FORFEIT', playerId: 'b' });
+    state = setHand(state, 'c', [c('H', 13), c('D', 12)]);
+    if (current(state) === 'c') return;
+    state = finishRound(state, [c('S', 1)]);
+
+    expect(state.phase).toBe('game-over');
+    const b = state.players.find((p) => p.id === 'b')!;
+    const others = state.players.filter((p) => p.id !== 'b');
+    for (const p of others) expect(p.finishRank!).toBeLessThan(b.finishRank!);
   });
 });
 
@@ -859,15 +929,10 @@ describe('pause et départ volontaire', () => {
     expect(state.hostId).toBe('c');
   });
 
-  it('un départ volontaire ne compte pas comme première élimination', () => {
-    // Variante « fin à la première élimination » : partir en claquant la porte
-    // ne doit pas arrêter la partie de ceux qui restent.
+  it('un départ volontaire n’arrête pas la partie des autres', () => {
+    // La partie s'arrête au premier qui dépasse 100, pas au premier qui s'en
+    // va : claquer la porte au deuxième tour terminerait la partie des autres.
     let state = lobby(['a', 'b', 'c']);
-    state = ok(state, {
-      type: 'SET_VARIANTS',
-      playerId: 'a',
-      variants: { ...DEFAULT_VARIANTS, endMode: 'first-out' },
-    });
     state = ok(state, { type: 'START_GAME', playerId: 'a' });
     const dealer = state.players.find((p) => p.seat === state.round!.dealerSeat)!;
     state = ok(state, { type: 'DEAL', playerId: dealer.id, handSize: 5 });

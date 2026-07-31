@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import type { HandSort } from '@zapzap/shared';
 
 /**
  * Le dos de carte, au choix du joueur.
@@ -170,4 +171,51 @@ function subscribeColorblind(cb: () => void): () => void {
 
 export function useColorblind(): boolean {
   return useSyncExternalStore(subscribeColorblind, colorblind, colorblind);
+}
+
+/**
+ * Comment je tiens ma main : par couleur, ou par rang.
+ *
+ * Voir `sortHandBy` pour la raison de fond — les suites et les ensembles se
+ * lisent dans des tris opposés, et n'en avoir qu'un en cache toujours la
+ * moitié. La préférence est **locale et privée** : elle ne part pas au serveur,
+ * personne d'autre ne la voit, et elle ne peut donc rien changer au jeu. C'est
+ * exactement le statut de la façon dont on range ses cartes en main.
+ *
+ * Retenue d'une partie à l'autre : réarranger sa main est un geste qu'on fait
+ * une fois, pas à chaque manche.
+ */
+const SORT_KEY = 'zapzap.handsort';
+const sortListeners = new Set<() => void>();
+let handSortValue: HandSort = readSort();
+
+function readSort(): HandSort {
+  try {
+    return localStorage.getItem(SORT_KEY) === 'rank' ? 'rank' : 'suit';
+  } catch {
+    return 'suit';
+  }
+}
+
+export function setHandSort(order: HandSort): void {
+  handSortValue = order;
+  try {
+    localStorage.setItem(SORT_KEY, order);
+  } catch {
+    // sans stockage, le choix vaut pour la session
+  }
+  sortListeners.forEach((cb) => cb());
+}
+
+function handSort(): HandSort {
+  return handSortValue;
+}
+
+function subscribeSort(cb: () => void): () => void {
+  sortListeners.add(cb);
+  return () => sortListeners.delete(cb);
+}
+
+export function useHandSort(): HandSort {
+  return useSyncExternalStore(subscribeSort, handSort, handSort);
 }

@@ -1,4 +1,4 @@
-import { cardId, handValue, type GameView } from '@zapzap/shared';
+import { cardId, ELIMINATION_SCORE, handValue, type GameView } from '@zapzap/shared';
 import { useT } from '../i18n';
 import { CardFace } from './CardFace';
 
@@ -26,6 +26,15 @@ export function RoundRecap({ view, onNext, canAdvance, busy }: RoundRecapProps) 
   const hands = round.revealedHands ?? {};
   const caller = call ? view.players.find((p) => p.id === call.playerId) : null;
   const iCalled = call?.playerId === view.you;
+  /*
+   * Cette manche était-elle la dernière ?
+   *
+   * La partie s'arrête au premier joueur qui dépasse 100 : le bouton ne doit
+   * alors pas promettre une manche suivante qui n'existera pas. On le lit sur
+   * les scores plutôt que sur la phase, parce qu'à cet instant précis la table
+   * est encore en décompte — c'est justement l'écran où on l'apprend.
+   */
+  const lastRound = view.players.some((p) => !p.forfeited && p.totalScore >= ELIMINATION_SCORE);
 
   return (
     // `pt-14` : la sortie de table occupe le coin haut gauche du tapis, et la
@@ -110,7 +119,7 @@ export function RoundRecap({ view, onNext, canAdvance, busy }: RoundRecapProps) 
           disabled={!canAdvance || busy}
           className="w-full rounded-xl bg-volt-500 py-3 font-display text-lg font-bold text-storm-950 transition-transform active:scale-[0.98] disabled:opacity-40"
         >
-          {canAdvance ? t.recap.next : t.recap.waitingHost}
+          {canAdvance ? (lastRound ? t.recap.seeResult : t.recap.next) : t.recap.waitingHost}
         </button>
       </div>
     </div>

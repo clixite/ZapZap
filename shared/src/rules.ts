@@ -63,9 +63,23 @@ export interface ZapVariants {
   rebound: boolean;
   /** Deux jokers dans le paquet, valant 0 point. */
   jokers: boolean;
-  /** `last-standing` : on joue jusqu'au dernier. `first-out` : fini à la première élimination. */
-  endMode: 'last-standing' | 'first-out';
 }
+
+/*
+ * La fin de partie n'est pas une variante.
+ *
+ * Elle l'a été : on pouvait choisir entre « au dernier debout » — on éliminait
+ * les joueurs un par un et la table continuait à trois, puis à deux — et « à la
+ * première sortie ». C'est la première sortie, et rien d'autre : dès qu'un
+ * joueur dépasse 100, la partie s'arrête pour tout le monde, on classe, et on
+ * en relance une.
+ *
+ * Ce n'est pas un détail de réglage, c'est ce qui donne son rythme au jeu. À
+ * quatre joueurs, « au dernier debout » demandait de continuer à jouer une
+ * partie déjà décidée pendant que les sortis regardaient — la moitié de la
+ * table condamnée à attendre. La partie courte garde tout le monde dedans, et
+ * la revanche est immédiate.
+ */
 
 export const DEFAULT_VARIANTS: ZapVariants = {
   zapThreshold: 5,
@@ -73,7 +87,6 @@ export const DEFAULT_VARIANTS: ZapVariants = {
   sameSuitRuns: true,
   rebound: true,
   jokers: false,
-  endMode: 'last-standing',
 };
 
 export function isZapVariants(value: unknown): value is ZapVariants {
@@ -84,8 +97,7 @@ export function isZapVariants(value: unknown): value is ZapVariants {
     (v.minRun === 2 || v.minRun === 3) &&
     typeof v.sameSuitRuns === 'boolean' &&
     typeof v.rebound === 'boolean' &&
-    typeof v.jokers === 'boolean' &&
-    (v.endMode === 'last-standing' || v.endMode === 'first-out')
+    typeof v.jokers === 'boolean'
   );
 }
 

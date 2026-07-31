@@ -75,9 +75,7 @@ export const it: Messages = {
     jokers: 'Jolly',
     without: 'Senza',
     with: 'Con',
-    endMode: 'La partita finisce',
-    lastStanding: 'All’ultimo rimasto',
-    firstOut: 'Alla prima eliminazione',
+    endRule: 'La partita finisce appena un giocatore supera i 100 punti. Vince il punteggio più basso.',
   },
 
   invite: {
@@ -141,6 +139,9 @@ export const it: Messages = {
     pt: (n) => `${n} pt`,
     seatSummary: (pseudo, cards, score) =>
       `${pseudo}, ${cards} cart${cards > 1 ? 'e' : 'a'} in mano, ${score} punti`,
+    myScore: (n, max) => `${n}/${max}`,
+    myScoreSpoken: (n, left) => `Il tuo punteggio: ${n} punti, ${left} prima dell’eliminazione`,
+    nearOut: (n) => `, a ${n} punti dall’eliminazione`,
     canZap: ' — può dichiarare',
     itsTheirTurn: ', tocca a lui',
     isPaused: ', in pausa, un bot gioca per lui',
@@ -149,6 +150,10 @@ export const it: Messages = {
   },
 
   hand: {
+    bySuit: 'Semi',
+    byRank: 'Valori',
+    sortToRank: 'Ordina la mano per valore, per vedere i gruppi',
+    sortToSuit: 'Ordina la mano per seme, per vedere le scale',
     dealing: 'Si sta distribuendo…',
     yourHand: 'La tua mano',
     single: 'Carta singola',
@@ -243,6 +248,7 @@ export const it: Messages = {
   },
 
   recap: {
+    seeResult: 'Vedi il risultato finale',
     callWon: 'Riuscito!',
     callLost: 'Contrato!',
     youSucceeded: 'Dichiarazione riuscita!',
@@ -388,7 +394,7 @@ export const it: Messages = {
         title: 'Lo scopo',
         body: [
           'A differenza della briscola o del whist, non si cercano prese. Si cerca di avere la mano più debole, per poter annunciare **ZapZap** prima degli altri.',
-          'Il primo giocatore che arriva a 100 punti è eliminato. Si gioca finché ne resta uno solo.',
+          'La partita finisce appena un giocatore supera i 100 punti — per tutti insieme. Vince il punteggio più basso, e se ne rilancia un’altra.',
         ],
       },
       {

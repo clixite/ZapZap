@@ -179,7 +179,7 @@ describe('réglages de table', () => {
   it('refuse un seuil ou une longueur de suite hors liste', () => {
     expect(isZapVariants({ ...DEFAULT_VARIANTS, zapThreshold: 6 })).toBe(false);
     expect(isZapVariants({ ...DEFAULT_VARIANTS, minRun: 4 })).toBe(false);
-    expect(isZapVariants({ ...DEFAULT_VARIANTS, endMode: 'sudden' })).toBe(false);
+    expect(isZapVariants({ ...DEFAULT_VARIANTS, rebound: 'oui' })).toBe(false);
     expect(isZapVariants(null)).toBe(false);
     expect(isZapVariants('classic')).toBe(false);
   });

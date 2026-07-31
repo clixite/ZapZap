@@ -108,19 +108,60 @@ export function shuffle<T>(items: readonly T[], rand: () => number): T[] {
   return out;
 }
 
+const SUIT_ORDER: Record<string, number> = { S: 0, H: 1, D: 2, C: 3, [JOKER_SUIT]: 4 };
+
 /**
- * Tri de la main.
+ * Les deux façons de tenir sa main — et pourquoi il en faut deux.
  *
- * Contrairement à un jeu de plis, où on trie par couleur pour repérer ce qu'on
- * peut fournir, ici on trie pour faire **sauter les combinaisons aux yeux** :
- * couleur puis rang croissant met les suites côte à côte, et les cartes de même
- * rang restent voisines à une couleur près. Les jokers finissent à droite, où
- * l'œil les retrouve sans les confondre avec une figure.
+ * ZapZap a **deux familles de combinaison qui se lisent dans des tris
+ * opposés** :
+ *
+ *  - une **suite** est faite de cartes de même couleur qui se suivent : elle ne
+ *    saute aux yeux que si la main est triée par couleur ;
+ *  - un **ensemble** est fait de cartes de même rang, forcément de couleurs
+ *    différentes : il ne saute aux yeux que si la main est triée par rang.
+ *
+ * Un seul tri en cache donc systématiquement la moitié. Trié par couleur —
+ * l'ordre que le moteur applique — une paire de 7 se retrouve aux deux bouts de
+ * l'éventail, et le joueur doit balayer sa main carte par carte pour la voir.
+ * Or repérer ses combinaisons *est* le jeu.
+ *
+ * Sur une table réelle, la question ne se pose pas : on tient ses cartes et on
+ * les réarrange sans y penser, dans un sens puis dans l'autre. La version
+ * numérique, en figeant l'ordre, était donc **moins jouable que le carton**.
+ * Ces deux tris rendent ce geste.
+ *
+ * Dans les deux cas les jokers finissent à droite, où l'œil les retrouve sans
+ * les confondre avec une figure.
  */
+export type HandSort = 'suit' | 'rank';
+
+/** Par couleur puis rang croissant : les suites se lisent d'un coup. */
 export function sortHand(cards: readonly Card[]): Card[] {
-  const suitOrder: Record<string, number> = { S: 0, H: 1, D: 2, C: 3, [JOKER_SUIT]: 4 };
   return [...cards].sort((a, b) => {
-    const s = suitOrder[a.suit] - suitOrder[b.suit];
+    const s = SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit];
     return s !== 0 ? s : a.rank - b.rank;
   });
+}
+
+/**
+ * Par rang puis couleur : les ensembles se lisent d'un coup.
+ *
+ * Les jokers restent au bout plutôt qu'en tête malgré leur rang nul : ils
+ * valent 0 point et ne forment un ensemble qu'entre eux, les ranger parmi les
+ * as n'aiderait personne.
+ */
+export function sortHandByRank(cards: readonly Card[]): Card[] {
+  return [...cards].sort((a, b) => {
+    const aJoker = a.suit === JOKER_SUIT;
+    const bJoker = b.suit === JOKER_SUIT;
+    if (aJoker !== bJoker) return aJoker ? 1 : -1;
+    const r = a.rank - b.rank;
+    return r !== 0 ? r : SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit];
+  });
+}
+
+/** Le tri demandé, appliqué. */
+export function sortHandBy(cards: readonly Card[], order: HandSort): Card[] {
+  return order === 'rank' ? sortHandByRank(cards) : sortHand(cards);
 }

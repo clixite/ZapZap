@@ -75,9 +75,7 @@ export const de: Messages = {
     jokers: 'Joker',
     without: 'Ohne',
     with: 'Mit',
-    endMode: 'Die Partie endet',
-    lastStanding: 'Beim letzten Überlebenden',
-    firstOut: 'Beim ersten Ausscheiden',
+    endRule: 'Die Partie endet, sobald ein Spieler über 100 Punkte geht. Der niedrigste Punktestand gewinnt.',
   },
 
   invite: {
@@ -141,6 +139,9 @@ export const de: Messages = {
     pt: (n) => `${n} Pkt`,
     seatSummary: (pseudo, cards, score) =>
       `${pseudo}, ${cards} Karte${cards > 1 ? 'n' : ''} auf der Hand, ${score} Punkte`,
+    myScore: (n, max) => `${n}/${max}`,
+    myScoreSpoken: (n, left) => `Dein Punktestand: ${n}, noch ${left} bis zum Ausscheiden`,
+    nearOut: (n) => `, noch ${n} Punkte bis zum Ausscheiden`,
     canZap: ' — kann ansagen',
     itsTheirTurn: ', ist am Zug',
     isPaused: ', pausiert, ein Bot spielt für ihn',
@@ -149,6 +150,10 @@ export const de: Messages = {
   },
 
   hand: {
+    bySuit: 'Farben',
+    byRank: 'Werte',
+    sortToRank: 'Blatt nach Wert sortieren, um Sätze zu sehen',
+    sortToSuit: 'Blatt nach Farbe sortieren, um Folgen zu sehen',
     dealing: 'Es wird gegeben…',
     yourHand: 'Deine Hand',
     single: 'Einzelkarte',
@@ -243,6 +248,7 @@ export const de: Messages = {
   },
 
   recap: {
+    seeResult: 'Endergebnis ansehen',
     callWon: 'Geschafft!',
     callLost: 'Gekontert!',
     youSucceeded: 'Ansage geglückt!',
@@ -388,7 +394,7 @@ export const de: Messages = {
         title: 'Das Ziel',
         body: [
           'Anders als bei Skat oder Whist geht es nicht darum, Stiche zu machen. Es geht darum, das schwächste Blatt zu halten, um vor allen anderen **ZapZap** ansagen zu können.',
-          'Wer zuerst 100 Punkte erreicht, scheidet aus. Gespielt wird, bis nur noch einer übrig ist.',
+          'Die Partie endet, sobald ein Spieler über 100 Punkte geht — für alle gleichzeitig. Der niedrigste Punktestand gewinnt, und man startet eine neue.',
         ],
       },
       {

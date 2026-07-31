@@ -271,46 +271,51 @@ function scoreRound(state: GameState, callerId: string): void {
  * sortis ensemble, rien ne permet de les départager.
  */
 function eliminateBusted(state: GameState, players: Player[]): void {
-  const newlyOut = players.filter((p) => isEliminated(p.totalScore));
-  if (newlyOut.length === 0) return;
-  const rankAfter = players.length - newlyOut.length + 1;
-
-  /*
-   * Quand tout le monde saute d'un coup, il faut quand même un vainqueur.
-   *
-   * Deux joueurs à 90 qui prennent 10 chacun sortaient ensemble avec le même
-   * rang 1 — et la partie créditait une victoire à chacun. Le départage naturel
-   * existe pourtant : le score total, le plus bas devant, puisque tout le jeu
-   * consiste à ne pas marquer.
-   */
-  const ordered =
-    newlyOut.length === players.length
-      ? [...newlyOut].sort((a, b) => a.totalScore - b.totalScore)
-      : newlyOut;
-
-  ordered.forEach((p, i) => {
-    p.eliminated = true;
-    p.finishRank = newlyOut.length === players.length ? i + 1 : rankAfter;
-  });
-}
-
-/** La partie est-elle finie ? */
-function isGameOver(state: GameState): boolean {
-  const alive = activePlayers(state);
-  if (state.variants.endMode === 'first-out') {
-    // Un départ volontaire n'est pas « la première sortie » : quelqu'un qui
-    // ferme l'application au deuxième tour terminait la partie des cinq autres.
-    return state.players.some((p) => p.eliminated && !p.forfeited);
+  for (const p of players) {
+    if (isEliminated(p.totalScore)) p.eliminated = true;
   }
-  return alive.length <= 1;
 }
 
-/** Classement final des survivants : le moins de points d'abord. */
-function rankSurvivors(state: GameState): void {
-  const alive = [...activePlayers(state)].sort((a, b) => a.totalScore - b.totalScore);
-  alive.forEach((p, i) => {
+/**
+ * La partie est-elle finie ?
+ *
+ * Dès qu'un joueur dépasse 100, oui — pour tout le monde en même temps. C'est
+ * la règle du jeu, pas un réglage : voir le commentaire de `ZapVariants`.
+ *
+ * Un départ volontaire ne compte pas : quelqu'un qui ferme l'application au
+ * deuxième tour terminerait la partie des cinq autres.
+ */
+function isGameOver(state: GameState): boolean {
+  return state.players.some((p) => p.eliminated && !p.forfeited);
+}
+
+/**
+ * Le classement final : le moins de points devant.
+ *
+ * Tout le jeu consiste à ne pas marquer, donc le total suffit à départager, et
+ * il départage **tout le monde d'un coup** — celui qui a fait sauter la partie
+ * se retrouve naturellement dernier, puisqu'il est le seul au-dessus de 100.
+ * Plus besoin de deux barèmes, un pour les sortis et un pour les survivants :
+ * la partie s'arrête d'un bloc, elle se classe d'un bloc.
+ *
+ * Ceux qui ont quitté la table en cours de route passent derrière, dans l'ordre
+ * où ils sont partis. Abandonner n'est pas finir : les classer au score
+ * reviendrait à récompenser celui qui s'en va pendant qu'il mène.
+ */
+function rankAll(state: GameState): void {
+  const quitters = state.players.filter((p) => p.forfeited);
+  const played = state.players.filter((p) => !p.forfeited).sort((a, b) => a.totalScore - b.totalScore);
+
+  played.forEach((p, i) => {
     p.finishRank = i + 1;
   });
+  // Leur `finishRank` provisoire, posé au moment du départ, encode déjà l'ordre
+  // dans lequel ils ont quitté : on le conserve pour trier entre eux.
+  [...quitters]
+    .sort((a, b) => (a.finishRank ?? 0) - (b.finishRank ?? 0))
+    .forEach((p, i) => {
+      p.finishRank = played.length + i + 1;
+    });
 }
 
 /* ------------------------------------------------------------------ */
@@ -433,7 +438,7 @@ export function applyAction(prev: GameState, action: GameAction): EngineResult {
       }
 
       if (activePlayers(state).length <= 1) {
-        rankSurvivors(state);
+        rankAll(state);
         state.phase = 'game-over';
         return { ok: true, state };
       }
@@ -594,7 +599,7 @@ export function applyAction(prev: GameState, action: GameAction): EngineResult {
       if (!canAdvance) return err('NOT_HOST');
 
       if (isGameOver(state)) {
-        rankSurvivors(state);
+        rankAll(state);
         state.phase = 'game-over';
         return { ok: true, state };
       }

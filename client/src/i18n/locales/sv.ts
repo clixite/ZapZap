@@ -75,9 +75,7 @@ export const sv: Messages = {
     jokers: 'Jokrar',
     without: 'Utan',
     with: 'Med',
-    endMode: 'Partiet tar slut',
-    lastStanding: 'När en är kvar',
-    firstOut: 'Vid första utslagningen',
+    endRule: 'Partiet tar slut så snart en spelare går över 100 poäng. Lägst poäng vinner.',
   },
 
   invite: {
@@ -140,6 +138,9 @@ export const sv: Messages = {
     left: 'gick',
     pt: (n) => `${n} p`,
     seatSummary: (pseudo, cards, score) => `${pseudo}, ${cards} kort på hand, ${score} poäng`,
+    myScore: (n, max) => `${n}/${max}`,
+    myScoreSpoken: (n, left) => `Din poäng: ${n}, ${left} innan du åker ut`,
+    nearOut: (n) => `, ${n} poäng från att åka ut`,
     canZap: ' — kan ropa',
     itsTheirTurn: ', det är hens tur',
     isPaused: ', pausad, en bot spelar åt hen',
@@ -148,6 +149,10 @@ export const sv: Messages = {
   },
 
   hand: {
+    bySuit: 'Färger',
+    byRank: 'Valörer',
+    sortToRank: 'Sortera handen efter valör, för att se uppsättningar',
+    sortToSuit: 'Sortera handen efter färg, för att se stegar',
     dealing: 'Given är på väg…',
     yourHand: 'Din hand',
     single: 'Enstaka kort',
@@ -242,6 +247,7 @@ export const sv: Messages = {
   },
 
   recap: {
+    seeResult: 'Se slutresultatet',
     callWon: 'Lyckades!',
     callLost: 'Kontrad!',
     youSucceeded: 'Ropet höll!',
@@ -386,7 +392,7 @@ export const sv: Messages = {
         title: 'Målet',
         body: [
           'Till skillnad från bridge eller whist handlar det inte om att ta stick. Det handlar om att ha den svagaste handen, så att du kan ropa **ZapZap** före alla andra.',
-          'Den första som når 100 poäng åker ut. Man spelar tills en enda står kvar.',
+          'Partiet tar slut så snart en spelare går över 100 poäng — för alla samtidigt. Lägst poäng vinner, och man drar igång ett nytt.',
         ],
       },
       {

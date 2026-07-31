@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { EMOTES, handValue, type EmoteId, type GameView, type Player } from '@zapzap/shared';
+import { ELIMINATION_SCORE, EMOTES, handValue, type EmoteId, type GameView, type Player } from '@zapzap/shared';
 import { isMuted, play, setMuted } from '../audio';
 import { MiniCards } from '../components/CardFace';
 import { DealPicker, DealWaiting } from '../components/DealPicker';
@@ -212,6 +212,7 @@ export function Table() {
 
   const hand = round?.myHand ?? [];
   const total = handValue(hand);
+  const me = view.players.find((p) => p.id === view.you) ?? null;
   /** Le pseudo d'un joueur, ou trois points si la vue ne le connaît plus. */
   const pseudoOf = (id: string) => view.players.find((p) => p.id === id)?.pseudo ?? '…';
 
@@ -284,6 +285,40 @@ export function Table() {
             <IconBack />
           </button>
         </div>
+
+        {/*
+          Mon score, et ce qui me sépare de la sortie.
+
+          Il n'apparaissait nulle part pendant le jeu : on ne le voyait qu'à la
+          donne, et seulement quand c'était à soi de donner. Or c'est le chiffre
+          qui commande la décision centrale du jeu — annoncer à 5, c'est risquer
+          +30. À 60 points le pari est ordinaire ; à 85, il est mortel, et il
+          faut le savoir **au moment de le prendre**, pas au décompte.
+
+          En face du menu, dans l'autre coin : deux repères fixes qui encadrent
+          le tapis, et rien au milieu où se jouent les cartes.
+        */}
+        {me && !me.eliminated && view.phase !== 'lobby' && (
+          <div
+            className="absolute right-1 z-20 flex flex-col items-end"
+            style={{ top: 'max(0.25rem, env(safe-area-inset-top))' }}
+          >
+            <span
+              className={`flex h-11 items-center rounded-xl px-3 font-display text-sm font-bold tabular-nums ${
+                ELIMINATION_SCORE - me.totalScore <= 15
+                  ? 'zz-alert bg-danger-solid text-white'
+                  : ELIMINATION_SCORE - me.totalScore <= 30
+                    ? 'bg-storm-950/60 text-flash-300'
+                    : 'bg-storm-950/60 text-paper-300'
+              }`}
+            >
+              {t.table.myScore(me.totalScore, ELIMINATION_SCORE)}
+            </span>
+            <span className="sr-only" role="status">
+              {t.table.myScoreSpoken(me.totalScore, ELIMINATION_SCORE - me.totalScore)}
+            </span>
+          </div>
+        )}
 
         {/*
           L'annonce, en grand, sur le tapis.

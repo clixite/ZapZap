@@ -5,10 +5,13 @@ import {
   comboOptions,
   findCombos,
   handValue,
+  sortHandBy,
   type Card,
   type ZapVariants,
 } from '@zapzap/shared';
+import { vibrate } from '../haptics';
 import { t as messages } from '../i18n';
+import { setHandSort, useHandSort } from '../store/theme';
 import { CardFace } from './CardFace';
 
 /**
@@ -58,7 +61,17 @@ function fanSpread(count: number): number {
   return Math.min(26, count * 4);
 }
 
-export function HandFan({ hand, selected, onToggle, interactive, variants, width, dealing }: HandFanProps) {
+export function HandFan({ hand: served, selected, onToggle, interactive, variants, width, dealing }: HandFanProps) {
+  /*
+   * La main, rangée comme le joueur la tient.
+   *
+   * Le moteur sert toujours ses cartes triées par couleur ; ce tri-ci est une
+   * **vue**, purement locale, qui ne remonte jamais au serveur. C'est ce qui
+   * rend l'opération sans conséquence sur la partie : deux joueurs peuvent
+   * ranger la même main dans deux ordres différents sans que rien ne change.
+   */
+  const order = useHandSort();
+  const hand = useMemo(() => sortHandBy(served, order), [served, order]);
   const count = hand.length;
 
   // Largeur de carte : on part d'une taille confortable et on ne rétrécit que
@@ -121,13 +134,44 @@ export function HandFan({ hand, selected, onToggle, interactive, variants, width
     return new Set(combos.flatMap((combo) => combo.cards.map(cardId)));
   }, [hand, selected, variants]);
 
+  const t = messages();
+
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <div className="flex w-full flex-col items-center gap-1.5">
+      {/*
+        Réarranger sa main, le geste que le carton permet et que l'écran
+        interdisait.
+
+        Placé au-dessus de l'éventail et aligné à droite : c'est un réglage, pas
+        un coup — il ne doit jamais se trouver sous le pouce qui vise une carte.
+        Il reste actif pendant les tours adverses, parce que c'est précisément là
+        qu'on prépare son coup en regardant sa main.
+      */}
+      {count > 1 && (
+        <div className="flex w-full justify-end px-3">
+          <button
+            type="button"
+            onClick={() => {
+              vibrate('tap');
+              setHandSort(order === 'suit' ? 'rank' : 'suit');
+            }}
+            // Le libellé dit ce qu'on obtient en touchant, pas l'état courant :
+            // « Trier par rang » sur un bouton déjà trié par rang ne veut rien
+            // dire pour quelqu'un qui ne voit pas ses cartes.
+            aria-label={order === 'suit' ? t.hand.sortToRank : t.hand.sortToSuit}
+            className="flex h-9 items-center gap-1.5 rounded-full bg-storm-800/80 px-3 text-xs font-medium text-paper-300"
+          >
+            <IconSort />
+            {order === 'suit' ? t.hand.bySuit : t.hand.byRank}
+          </button>
+        </div>
+      )}
+
       <div
         className="relative"
         style={{ width: totalW, height: reserved }}
         role="group"
-        aria-label={messages().hand.yourHand}
+        aria-label={t.hand.yourHand}
       >
         {hand.map((card, i) => {
           const id = cardId(card);
@@ -189,6 +233,20 @@ export function HandFan({ hand, selected, onToggle, interactive, variants, width
 
       <ComboHint chosen={chosen} kind={kind} interactive={interactive} handTotal={handValue(hand)} />
     </div>
+  );
+}
+
+/** Deux barres de longueurs différentes : le pictogramme universel du tri. */
+function IconSort() {
+  return (
+    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true">
+      <path
+        d="M2 4h9M2 8h6M2 12h3"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 

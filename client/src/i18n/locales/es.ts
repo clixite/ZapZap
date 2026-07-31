@@ -75,9 +75,7 @@ export const es: Messages = {
     jokers: 'Comodines',
     without: 'Sin',
     with: 'Con',
-    endMode: 'La partida acaba',
-    lastStanding: 'Con el último en pie',
-    firstOut: 'Con la primera eliminación',
+    endRule: 'La partida acaba en cuanto un jugador pasa de 100 puntos. Gana la puntuación más baja.',
   },
 
   invite: {
@@ -141,6 +139,9 @@ export const es: Messages = {
     pt: (n) => `${n} pts`,
     seatSummary: (pseudo, cards, score) =>
       `${pseudo}, ${cards} carta${cards > 1 ? 's' : ''} en la mano, ${score} puntos`,
+    myScore: (n, max) => `${n}/${max}`,
+    myScoreSpoken: (n, left) => `Tu puntuación: ${n} puntos, ${left} antes de quedar eliminado`,
+    nearOut: (n) => `, a ${n} puntos de quedar eliminado`,
     canZap: ' — puede cantar',
     itsTheirTurn: ', es su turno',
     isPaused: ', en pausa, un bot juega por él',
@@ -149,6 +150,10 @@ export const es: Messages = {
   },
 
   hand: {
+    bySuit: 'Palos',
+    byRank: 'Valores',
+    sortToRank: 'Ordenar mi mano por valor, para ver los grupos',
+    sortToSuit: 'Ordenar mi mano por palo, para ver las escaleras',
     dealing: 'Están repartiendo…',
     yourHand: 'Tu mano',
     single: 'Carta suelta',
@@ -243,6 +248,7 @@ export const es: Messages = {
   },
 
   recap: {
+    seeResult: 'Ver el resultado final',
     callWon: '¡Conseguido!',
     callLost: '¡Contraatacado!',
     youSucceeded: '¡Cante logrado!',
@@ -388,7 +394,7 @@ export const es: Messages = {
         title: 'El objetivo',
         body: [
           'A diferencia del tute o del whist, aquí no se buscan bazas. Se busca tener la mano más floja, para poder cantar **ZapZap** antes que los demás.',
-          'El primer jugador que llega a 100 puntos queda eliminado. Se juega hasta que solo quede uno.',
+          'La partida acaba en cuanto un jugador pasa de 100 puntos — para todos a la vez. Gana la puntuación más baja, y se empieza otra.',
         ],
       },
       {

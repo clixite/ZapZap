@@ -75,9 +75,7 @@ export const pl: Messages = {
     jokers: 'Jokery',
     without: 'Bez',
     with: 'Z',
-    endMode: 'Gra kończy się',
-    lastStanding: 'Na ostatnim stojącym',
-    firstOut: 'Przy pierwszym odpadnięciu',
+    endRule: 'Gra kończy się, gdy tylko gracz przekroczy 100 punktów. Wygrywa najniższy wynik.',
   },
 
   invite: {
@@ -140,6 +138,9 @@ export const pl: Messages = {
     left: 'wyszedł',
     pt: (n) => `${n} pkt`,
     seatSummary: (pseudo, cards, score) => `${pseudo}, kart na ręce: ${cards}, punktów: ${score}`,
+    myScore: (n, max) => `${n}/${max}`,
+    myScoreSpoken: (n, left) => `Twój wynik: ${n} punktów, ${left} do odpadnięcia`,
+    nearOut: (n) => `, ${n} punktów od odpadnięcia`,
     canZap: ' — może ogłosić',
     itsTheirTurn: ', jego kolej',
     isPaused: ', pauza, bot gra za niego',
@@ -148,6 +149,10 @@ export const pl: Messages = {
   },
 
   hand: {
+    bySuit: 'Kolory',
+    byRank: 'Figury',
+    sortToRank: 'Sortuj rękę według figur, by zobaczyć zestawy',
+    sortToSuit: 'Sortuj rękę według koloru, by zobaczyć sekwensy',
     dealing: 'Rozdanie w drodze…',
     yourHand: 'Twoja ręka',
     single: 'Pojedyncza karta',
@@ -242,6 +247,7 @@ export const pl: Messages = {
   },
 
   recap: {
+    seeResult: 'Zobacz wynik końcowy',
     callWon: 'Udane!',
     callLost: 'Skontrowane!',
     youSucceeded: 'Ogłoszenie się udało!',
@@ -386,7 +392,7 @@ export const pl: Messages = {
         title: 'Cel gry',
         body: [
           'Inaczej niż w brydżu czy wiście nie zbiera się lew. Chodzi o to, żeby mieć najsłabszą rękę i zapowiedzieć **ZapZap** przed innymi.',
-          'Pierwszy gracz, który osiągnie 100 punktów, odpada. Gra się aż zostanie jeden.',
+          'Gra kończy się, gdy tylko gracz przekroczy 100 punktów — dla wszystkich naraz. Wygrywa najniższy wynik, i zaczyna się kolejną.',
         ],
       },
       {

@@ -75,9 +75,7 @@ export const cs: Messages = {
     jokers: 'Žolíci',
     without: 'Bez',
     with: 'S',
-    endMode: 'Partie končí',
-    lastStanding: 'Posledním stojícím',
-    firstOut: 'Prvním vyřazením',
+    endRule: 'Partie končí, jakmile hráč přesáhne 100 bodů. Vyhrává nejnižší skóre.',
   },
 
   invite: {
@@ -140,6 +138,9 @@ export const cs: Messages = {
     left: 'odešel',
     pt: (n) => `${n} b`,
     seatSummary: (pseudo, cards, score) => `${pseudo}, karet v ruce: ${cards}, bodů: ${score}`,
+    myScore: (n, max) => `${n}/${max}`,
+    myScoreSpoken: (n, left) => `Tvé skóre: ${n} bodů, ${left} do vyřazení`,
+    nearOut: (n) => `, ${n} bodů od vyřazení`,
     canZap: ' — může hlásit',
     itsTheirTurn: ', je na řadě',
     isPaused: ', pauza, hraje za něj bot',
@@ -148,6 +149,10 @@ export const cs: Messages = {
   },
 
   hand: {
+    bySuit: 'Barvy',
+    byRank: 'Hodnoty',
+    sortToRank: 'Seřadit ruku podle hodnoty, ať vidím skupiny',
+    sortToSuit: 'Seřadit ruku podle barvy, ať vidím postupky',
     dealing: 'Rozdání je na cestě…',
     yourHand: 'Tvoje ruka',
     single: 'Jedna karta',
@@ -242,6 +247,7 @@ export const cs: Messages = {
   },
 
   recap: {
+    seeResult: 'Zobrazit konečný výsledek',
     callWon: 'Vyšlo to!',
     callLost: 'Kontrováno!',
     youSucceeded: 'Hláška vyšla!',
@@ -386,7 +392,7 @@ export const cs: Messages = {
         title: 'Cíl hry',
         body: [
           'Na rozdíl od mariáše nebo whistu nejde o sbírání štychů. Jde o to mít nejslabší ruku, abys mohl ohlásit **ZapZap** dřív než ostatní.',
-          'První hráč, který dosáhne 100 bodů, vypadává. Hraje se, dokud nezůstane jediný.',
+          'Partie končí, jakmile hráč přesáhne 100 bodů — pro všechny naráz. Vyhrává nejnižší skóre a rozjede se další.',
         ],
       },
       {

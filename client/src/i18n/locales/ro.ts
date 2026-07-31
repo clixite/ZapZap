@@ -75,9 +75,7 @@ export const ro: Messages = {
     jokers: 'Jokeri',
     without: 'Fără',
     with: 'Cu',
-    endMode: 'Partida se termină',
-    lastStanding: 'La ultimul rămas',
-    firstOut: 'La prima eliminare',
+    endRule: 'Partida se termină imediat ce un jucător trece de 100 de puncte. Câștigă scorul cel mai mic.',
   },
 
   invite: {
@@ -140,6 +138,9 @@ export const ro: Messages = {
     left: 'a plecat',
     pt: (n) => `${n} p`,
     seatSummary: (pseudo, cards, score) => `${pseudo}, ${cards} cărți în mână, ${score} puncte`,
+    myScore: (n, max) => `${n}/${max}`,
+    myScoreSpoken: (n, left) => `Scorul tău: ${n} puncte, ${left} până la eliminare`,
+    nearOut: (n) => `, la ${n} puncte de eliminare`,
     canZap: ' — poate anunța',
     itsTheirTurn: ', e rândul lui',
     isPaused: ', în pauză, un robot joacă în locul lui',
@@ -148,6 +149,10 @@ export const ro: Messages = {
   },
 
   hand: {
+    bySuit: 'Culori',
+    byRank: 'Valori',
+    sortToRank: 'Sortează mâna după valoare, ca să vezi seturile',
+    sortToSuit: 'Sortează mâna după culoare, ca să vezi chintele',
     dealing: 'Vine împărțeala…',
     yourHand: 'Mâna ta',
     single: 'Carte singură',
@@ -240,6 +245,7 @@ export const ro: Messages = {
   },
 
   recap: {
+    seeResult: 'Vezi rezultatul final',
     callWon: 'Reușit!',
     callLost: 'Contrat!',
     youSucceeded: 'Anunțul a ținut!',
@@ -384,7 +390,7 @@ export const ro: Messages = {
         title: 'Scopul',
         body: [
           'Spre deosebire de bridge sau whist, nu urmărești levate. Urmărești să ai mâna cea mai slabă, ca să poți anunța **ZapZap** înaintea celorlalți.',
-          'Primul jucător care ajunge la 100 de puncte este eliminat. Se joacă până rămâne unul singur.',
+          'Partida se termină imediat ce un jucător trece de 100 de puncte — pentru toți deodată. Câștigă scorul cel mai mic și se începe alta.',
         ],
       },
       {

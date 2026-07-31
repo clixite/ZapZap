@@ -11,6 +11,7 @@ import {
   mulberry32,
   shuffle,
   sortHand,
+  sortHandBy,
 } from '../src/cards';
 import type { Card } from '../src/types';
 
@@ -108,5 +109,55 @@ describe('tri de la main', () => {
   it('renvoie les jokers à droite', () => {
     const hand = [c(JOKER_SUIT, 0), c('C', 4)];
     expect(sortHand(hand)[1]).toEqual(c(JOKER_SUIT, 0));
+  });
+});
+
+describe('les deux façons de ranger sa main', () => {
+  /*
+   * Les deux tris ne sont pas un confort : une suite ne se lit que triée par
+   * couleur, un ensemble que trié par rang. N'en avoir qu'un cache toujours la
+   * moitié des combinaisons du jeu.
+   */
+  const hand: Card[] = [
+    { suit: 'D', rank: 7 },
+    { suit: 'S', rank: 7 },
+    { suit: 'S', rank: 5 },
+    { suit: 'H', rank: 7 },
+    { suit: 'S', rank: 6 },
+  ];
+
+  it('par couleur, la suite est contiguë', () => {
+    const sorted = sortHandBy(hand, 'suit');
+    const piques = sorted.filter((c) => c.suit === 'S').map((c) => c.rank);
+    expect(piques).toEqual([5, 6, 7]);
+    const first = sorted.findIndex((c) => c.suit === 'S');
+    expect(sorted.slice(first, first + 3).every((c) => c.suit === 'S')).toBe(true);
+  });
+
+  it('par rang, l’ensemble est contigu', () => {
+    const sorted = sortHandBy(hand, 'rank');
+    const start = sorted.findIndex((c) => c.rank === 7);
+    expect(sorted.slice(start, start + 3).every((c) => c.rank === 7)).toBe(true);
+  });
+
+  it('ne perd ni n’invente aucune carte', () => {
+    for (const order of ['suit', 'rank'] as const) {
+      const sorted = sortHandBy(hand, order);
+      expect(sorted).toHaveLength(hand.length);
+      expect(new Set(sorted.map(cardId))).toEqual(new Set(hand.map(cardId)));
+    }
+  });
+
+  it('ne modifie pas la main d’origine', () => {
+    const before = hand.map(cardId);
+    sortHandBy(hand, 'rank');
+    expect(hand.map(cardId)).toEqual(before);
+  });
+
+  it('laisse les jokers au bout, malgré leur rang nul', () => {
+    // Rangés parmi les as, ils n'aideraient personne : ils valent 0 point et ne
+    // forment un ensemble qu'entre eux.
+    const withJokers = sortHandBy([...hand, { suit: 'X', rank: 0 } as Card], 'rank');
+    expect(withJokers[withJokers.length - 1].suit).toBe('X');
   });
 });

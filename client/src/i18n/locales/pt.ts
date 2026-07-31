@@ -75,9 +75,7 @@ export const pt: Messages = {
     jokers: 'Jokers',
     without: 'Sem',
     with: 'Com',
-    endMode: 'O jogo acaba',
-    lastStanding: 'No último de pé',
-    firstOut: 'Na primeira eliminação',
+    endRule: 'O jogo acaba assim que um jogador passa dos 100 pontos. Ganha a pontuação mais baixa.',
   },
 
   invite: {
@@ -141,6 +139,9 @@ export const pt: Messages = {
     pt: (n) => `${n} pts`,
     seatSummary: (pseudo, cards, score) =>
       `${pseudo}, ${cards} carta${cards > 1 ? 's' : ''} na mão, ${score} pontos`,
+    myScore: (n, max) => `${n}/${max}`,
+    myScoreSpoken: (n, left) => `A tua pontuação: ${n} pontos, ${left} antes de seres eliminado`,
+    nearOut: (n) => `, a ${n} pontos de ser eliminado`,
     canZap: ' — pode anunciar',
     itsTheirTurn: ', é a vez dele',
     isPaused: ', em pausa, um robô joga por ele',
@@ -149,6 +150,10 @@ export const pt: Messages = {
   },
 
   hand: {
+    bySuit: 'Naipes',
+    byRank: 'Valores',
+    sortToRank: 'Ordenar a mão por valor, para ver os conjuntos',
+    sortToSuit: 'Ordenar a mão por naipe, para ver as sequências',
     dealing: 'A distribuição está a chegar…',
     yourHand: 'A sua mão',
     single: 'Carta solta',
@@ -243,6 +248,7 @@ export const pt: Messages = {
   },
 
   recap: {
+    seeResult: 'Ver o resultado final',
     callWon: 'Conseguiu!',
     callLost: 'Contra-atacado!',
     youSucceeded: 'Anúncio conseguido!',
@@ -388,7 +394,7 @@ export const pt: Messages = {
         title: 'O objetivo',
         body: [
           'Ao contrário da sueca ou do whist, não se procuram vazas. Procura-se ter a mão mais fraca, para poder anunciar **ZapZap** antes dos outros.',
-          'O primeiro jogador a chegar a 100 pontos é eliminado. Joga-se até restar um só.',
+          'O jogo acaba assim que um jogador passa dos 100 pontos — para todos ao mesmo tempo. Ganha a pontuação mais baixa, e começa-se outro.',
         ],
       },
       {

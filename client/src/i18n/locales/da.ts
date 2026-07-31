@@ -75,9 +75,7 @@ export const da: Messages = {
     jokers: 'Jokere',
     without: 'Uden',
     with: 'Med',
-    endMode: 'Spillet slutter',
-    lastStanding: 'Når én er tilbage',
-    firstOut: 'Ved første udslag',
+    endRule: 'Spillet slutter, så snart en spiller kommer over 100 point. Laveste score vinder.',
   },
 
   invite: {
@@ -140,6 +138,9 @@ export const da: Messages = {
     left: 'gik',
     pt: (n) => `${n} p`,
     seatSummary: (pseudo, cards, score) => `${pseudo}, ${cards} kort på hånden, ${score} point`,
+    myScore: (n, max) => `${n}/${max}`,
+    myScoreSpoken: (n, left) => `Din score: ${n} point, ${left} før du ryger ud`,
+    nearOut: (n) => `, ${n} point fra at ryge ud`,
     canZap: ' — kan melde',
     itsTheirTurn: ', det er deres tur',
     isPaused: ', på pause, en bot spiller for dem',
@@ -148,6 +149,10 @@ export const da: Messages = {
   },
 
   hand: {
+    bySuit: 'Farver',
+    byRank: 'Værdier',
+    sortToRank: 'Sortér hånden efter værdi for at se sæt',
+    sortToSuit: 'Sortér hånden efter farve for at se sekvenser',
     dealing: 'Givningen er på vej…',
     yourHand: 'Din hånd',
     single: 'Enkelt kort',
@@ -242,6 +247,7 @@ export const da: Messages = {
   },
 
   recap: {
+    seeResult: 'Se slutresultatet',
     callWon: 'Lykkedes!',
     callLost: 'Modmeldt!',
     youSucceeded: 'Meldingen holdt!',
@@ -386,7 +392,7 @@ export const da: Messages = {
         title: 'Målet',
         body: [
           'I modsætning til bridge eller whist handler det ikke om at tage stik. Det handler om at have den svageste hånd, så du kan melde **ZapZap** før de andre.',
-          'Den første, der når 100 point, er ude. Der spilles, indtil én er tilbage.',
+          'Spillet slutter, så snart en spiller kommer over 100 point — for alle på én gang. Laveste score vinder, og man starter et nyt.',
         ],
       },
       {

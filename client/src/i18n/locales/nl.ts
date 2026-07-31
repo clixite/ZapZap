@@ -75,9 +75,7 @@ export const nl: Messages = {
     jokers: 'Jokers',
     without: 'Zonder',
     with: 'Met',
-    endMode: 'Het spel eindigt',
-    lastStanding: 'Bij de laatste overblijver',
-    firstOut: 'Bij de eerste die afvalt',
+    endRule: 'Het spel eindigt zodra een speler boven de 100 punten komt. De laagste score wint.',
   },
 
   invite: {
@@ -141,6 +139,9 @@ export const nl: Messages = {
     pt: (n) => `${n} ptn`,
     seatSummary: (pseudo, cards, score) =>
       `${pseudo}, ${cards} kaart${cards > 1 ? 'en' : ''} in de hand, ${score} punten`,
+    myScore: (n, max) => `${n}/${max}`,
+    myScoreSpoken: (n, left) => `Jouw score: ${n} punten, nog ${left} voor uitschakeling`,
+    nearOut: (n) => `, nog ${n} punten voor uitschakeling`,
     canZap: ' — kan roepen',
     itsTheirTurn: ', hij is aan zet',
     isPaused: ', gepauzeerd, een bot speelt voor hem',
@@ -149,6 +150,10 @@ export const nl: Messages = {
   },
 
   hand: {
+    bySuit: 'Kleuren',
+    byRank: 'Waardes',
+    sortToRank: 'Sorteer mijn hand op waarde, om sets te zien',
+    sortToSuit: 'Sorteer mijn hand op kleur, om reeksen te zien',
     dealing: 'Er wordt gedeeld…',
     yourHand: 'Je hand',
     single: 'Losse kaart',
@@ -243,6 +248,7 @@ export const nl: Messages = {
   },
 
   recap: {
+    seeResult: 'Bekijk de eindstand',
     callWon: 'Gelukt!',
     callLost: 'Gecounterd!',
     youSucceeded: 'Geslaagd geroepen!',
@@ -388,7 +394,7 @@ export const nl: Messages = {
         title: 'Het doel',
         body: [
           'Anders dan bij bridge of whist probeer je geen slagen te halen. Je probeert de zwakste hand te hebben, om als eerste **ZapZap** te kunnen roepen.',
-          'De eerste speler die 100 punten bereikt, ligt eruit. Er wordt gespeeld tot er één overblijft.',
+          'Het spel eindigt zodra een speler boven de 100 punten komt — voor iedereen tegelijk. De laagste score wint, en je begint opnieuw.',
         ],
       },
       {

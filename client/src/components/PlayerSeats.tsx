@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { isBotId, type EmoteId, type GameView, type Player } from '@zapzap/shared';
+import { ELIMINATION_SCORE, isBotId, type EmoteId, type GameView, type Player } from '@zapzap/shared';
 import { useT } from '../i18n';
 import { MiniCards } from './CardFace';
 import { EMOTE_GLYPHS } from './LiveFeedback';
@@ -256,7 +256,31 @@ function Seat({
           {player.pseudo}
         </span>
       )}
-      <span className="text-[10px] text-paper-300">
+      {/*
+        Le score, et surtout à quelle distance du couperet.
+
+        C'est l'information qui commande toutes les décisions de la table, et
+        elle n'était qu'un nombre gris parmi d'autres. Or un joueur à 92 points
+        ne joue plus du tout le même jeu qu'un joueur à 10 : il ne peut plus
+        encaisser une manche ordinaire, il doit annoncer, et *tout le monde* a
+        intérêt à le savoir — le score de chacun est public depuis toujours,
+        c'est un jeu à information ouverte sur ce point.
+
+        Un carton rouge à moins de quinze points de la sortie, ambre à moins de
+        trente. Le seuil vient du jeu lui-même : trois figures en main, c'est
+        30 points, soit exactement ce qu'une annonce ratée coûte.
+      */}
+      <span
+        className={`rounded-full px-1.5 text-[10px] ${
+          player.eliminated
+            ? 'text-paper-300'
+            : ELIMINATION_SCORE - player.totalScore <= 15
+              ? 'bg-danger-solid font-bold text-white'
+              : ELIMINATION_SCORE - player.totalScore <= 30
+                ? 'font-bold text-flash-300'
+                : 'text-paper-300'
+        }`}
+      >
         {player.eliminated ? (player.forfeited ? t.table.left : t.table.eliminated) : t.table.pt(player.totalScore)}
       </span>
 
@@ -275,6 +299,10 @@ function Seat({
 
       <span className="sr-only">
         {t.table.seatSummary(player.pseudo, cards, player.totalScore)}
+        {/* Le danger se dit aussi : un lecteur d'écran ne voit pas le rouge. */}
+        {!player.eliminated && ELIMINATION_SCORE - player.totalScore <= 15
+          ? t.table.nearOut(ELIMINATION_SCORE - player.totalScore)
+          : ''}
         {cards <= 2 ? t.table.canZap : ''}
         {player.eliminated ? (player.forfeited ? t.table.hasLeft : t.table.isEliminated) : ''}
         {player.away ? t.table.isPaused : ''}

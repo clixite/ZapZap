@@ -279,7 +279,20 @@ describe('partie complète entre robots', () => {
     for (const n of [2, 3, 5, 6]) {
       const state = botGame(`table-${n}`, n);
       expect(state.phase).toBe('game-over');
-      expect(state.players.filter((p) => !p.eliminated)).toHaveLength(1);
+      /*
+       * La partie s'arrête au **premier** qui dépasse 100, pas quand il ne
+       * reste qu'un joueur : les autres sont encore debout à la fin, et c'est
+       * précisément ce qui garde tout le monde dans la partie jusqu'au bout.
+       */
+      const out = state.players.filter((p) => p.eliminated);
+      expect(out.length).toBeGreaterThanOrEqual(1);
+      expect(state.players.filter((p) => !p.eliminated).length).toBe(n - out.length);
+      // Et tout le monde est classé, sortis compris : c'est le classement qui
+      // fait la partie suivante.
+      expect(state.players.every((p) => p.finishRank !== undefined)).toBe(true);
+      expect([...state.players].map((p) => p.finishRank).sort((a, b) => a! - b!)).toEqual(
+        Array.from({ length: n }, (_, i) => i + 1),
+      );
     }
   });
 

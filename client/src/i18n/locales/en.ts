@@ -75,9 +75,7 @@ export const en: Messages = {
     jokers: 'Jokers',
     without: 'Without',
     with: 'With',
-    endMode: 'The game ends',
-    lastStanding: 'Last one standing',
-    firstOut: 'At the first knockout',
+    endRule: 'The game ends as soon as a player goes past 100 points. Lowest score wins.',
   },
 
   invite: {
@@ -141,6 +139,9 @@ export const en: Messages = {
     pt: (n) => `${n} pts`,
     seatSummary: (pseudo, cards, score) =>
       `${pseudo}, ${cards} card${cards > 1 ? 's' : ''} in hand, ${score} points`,
+    myScore: (n, max) => `${n}/${max}`,
+    myScoreSpoken: (n, left) => `Your score: ${n} points, ${left} before being knocked out`,
+    nearOut: (n) => `, ${n} points from being knocked out`,
     canZap: ' — can call',
     itsTheirTurn: ', it is their turn',
     isPaused: ', paused, a bot is playing for them',
@@ -149,6 +150,10 @@ export const en: Messages = {
   },
 
   hand: {
+    bySuit: 'Suits',
+    byRank: 'Ranks',
+    sortToRank: 'Sort my hand by rank, to spot sets',
+    sortToSuit: 'Sort my hand by suit, to spot runs',
     dealing: 'The deal is coming…',
     yourHand: 'Your hand',
     single: 'Single card',
@@ -243,6 +248,7 @@ export const en: Messages = {
   },
 
   recap: {
+    seeResult: 'See the final result',
     callWon: 'Made it!',
     callLost: 'Countered!',
     youSucceeded: 'Call stands!',
@@ -388,7 +394,7 @@ export const en: Messages = {
         title: 'The goal',
         body: [
           'Unlike bridge or whist, you are not trying to win tricks. You are trying to hold the weakest hand, so you can call **ZapZap** before anyone else.',
-          'The first player to reach 100 points is out. You play until one player is left standing.',
+          'The game ends as soon as a player goes past 100 points — for everyone at once. Lowest score wins, and you start another one.',
         ],
       },
       {

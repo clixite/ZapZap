@@ -217,15 +217,12 @@ export function Lobby() {
             ]}
             onChange={(v) => setVariants({ jokers: v === 'on' })}
           />
-          <Choice
-            label={t.lobby.endMode}
-            value={view.variants.endMode}
-            options={[
-              ['last-standing', t.lobby.lastStanding],
-              ['first-out', t.lobby.firstOut],
-            ]}
-            onChange={(v) => setVariants({ endMode: v as ZapVariants['endMode'] })}
-          />
+          {/*
+            La fin de partie n'est plus un choix : dès qu'un joueur dépasse 100,
+            la partie s'arrête pour tout le monde et on en relance une. C'est la
+            règle du jeu, elle est rappelée ici plutôt que proposée.
+          */}
+          <p className="pt-1 text-xs text-paper-300">{t.lobby.endRule}</p>
         </section>
       )}
 

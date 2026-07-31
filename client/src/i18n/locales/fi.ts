@@ -75,9 +75,7 @@ export const fi: Messages = {
     jokers: 'Jokerit',
     without: 'Ilman',
     with: 'Kanssa',
-    endMode: 'Peli päättyy',
-    lastStanding: 'Viimeiseen pystyssä olevaan',
-    firstOut: 'Ensimmäiseen putoamiseen',
+    endRule: 'Peli päättyy heti kun pelaaja ylittää 100 pistettä. Pienin pistemäärä voittaa.',
   },
 
   invite: {
@@ -140,6 +138,9 @@ export const fi: Messages = {
     left: 'lähti',
     pt: (n) => `${n} p`,
     seatSummary: (pseudo, cards, score) => `${pseudo}, ${cards} korttia kädessä, ${score} pistettä`,
+    myScore: (n, max) => `${n}/${max}`,
+    myScoreSpoken: (n, left) => `Pisteesi: ${n}, ${left} ennen putoamista`,
+    nearOut: (n) => `, ${n} pisteen päässä putoamisesta`,
     canZap: ' — voi huutaa',
     itsTheirTurn: ', hänen vuoronsa',
     isPaused: ', tauolla, botti pelaa hänen puolestaan',
@@ -148,6 +149,10 @@ export const fi: Messages = {
   },
 
   hand: {
+    bySuit: 'Maat',
+    byRank: 'Arvot',
+    sortToRank: 'Järjestä käsi arvon mukaan, niin näet sarjat',
+    sortToSuit: 'Järjestä käsi maan mukaan, niin näet suorat',
     dealing: 'Jako on tulossa…',
     yourHand: 'Kätesi',
     single: 'Yksittäinen kortti',
@@ -242,6 +247,7 @@ export const fi: Messages = {
   },
 
   recap: {
+    seeResult: 'Katso lopputulos',
     callWon: 'Onnistui!',
     callLost: 'Torjuttu!',
     youSucceeded: 'Huuto piti!',
@@ -386,7 +392,7 @@ export const fi: Messages = {
         title: 'Tavoite',
         body: [
           'Toisin kuin bridgessä tai whistissä, tikkejä ei kerätä. Tavoitteena on pitää heikointa kättä, jotta voit ilmoittaa **ZapZap** ennen muita.',
-          'Ensimmäinen 100 pisteeseen yltävä putoaa. Pelataan, kunnes yksi on jäljellä.',
+          'Peli päättyy heti kun pelaaja ylittää 100 pistettä — kaikilta yhtä aikaa. Pienin pistemäärä voittaa, ja aloitetaan uusi.',
         ],
       },
       {

@@ -93,9 +93,7 @@ export const fr = {
     jokers: 'Jokers',
     without: 'Sans',
     with: 'Avec',
-    endMode: 'La partie s’arrête',
-    lastStanding: 'Au dernier debout',
-    firstOut: 'À la 1re sortie',
+    endRule: 'La partie s’arrête dès qu’un joueur dépasse 100 points. Le plus bas score l’emporte.',
   },
 
   invite: {
@@ -164,6 +162,9 @@ export const fr = {
     pt: (n: number) => `${n} pt`,
     seatSummary: (pseudo: string, cards: number, score: number) =>
       `${pseudo}, ${cards} carte${cards > 1 ? 's' : ''} en main, ${score} points`,
+    myScore: (n: number, max: number) => `${n}/${max}`,
+    myScoreSpoken: (n: number, left: number) => `Votre score : ${n} points, ${left} avant l’élimination`,
+    nearOut: (n: number) => `, à ${n} points de l’élimination`,
     canZap: ' — peut annoncer',
     itsTheirTurn: ', c’est à lui de jouer',
     isPaused: ', en pause, un robot joue pour lui',
@@ -173,6 +174,10 @@ export const fr = {
 
   /* La main et ses combinaisons ------------------------------------ */
   hand: {
+    bySuit: 'Couleurs',
+    byRank: 'Rangs',
+    sortToRank: 'Trier ma main par rang, pour voir les ensembles',
+    sortToSuit: 'Trier ma main par couleur, pour voir les suites',
     dealing: 'La donne arrive…',
     yourHand: 'Votre main',
     single: 'Carte seule',
@@ -271,6 +276,7 @@ export const fr = {
 
   /* Décompte de manche -------------------------------------------- */
   recap: {
+    seeResult: 'Voir le résultat de la partie',
     callWon: 'Réussi !',
     callLost: 'Contré !',
     youSucceeded: 'Annonce réussie !',
@@ -422,7 +428,7 @@ export const fr = {
         title: 'Le but',
         body: [
           'Contrairement à la belote ou au whist, on ne cherche pas à faire des levées. On cherche à avoir la main la plus faible, pour pouvoir annoncer **ZapZap** avant les autres.',
-          'Le premier joueur à atteindre 100 points est éliminé. On joue jusqu’au dernier debout.',
+          'La partie s’arrête dès qu’un joueur dépasse 100 points — pour tout le monde en même temps. Le plus bas score l’emporte, et on en relance une.',
         ],
       },
       {
