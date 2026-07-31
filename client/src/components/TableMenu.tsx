@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { GameView } from '@zapzap/shared';
+import { useT } from '../i18n';
 
 /**
  * Le menu de la table : tout ce qui n'est pas un coup de jeu.
@@ -38,6 +39,7 @@ export interface TableMenuProps {
 }
 
 export function TableMenu({ view, onClose, onPause, onMenu, onQuit }: TableMenuProps) {
+  const t = useT();
   const [confirmQuit, setConfirmQuit] = useState(false);
   const me = view.players.find((p) => p.id === view.you);
   const away = me?.away ?? false;
@@ -46,7 +48,7 @@ export function TableMenu({ view, onClose, onPause, onMenu, onQuit }: TableMenuP
   return (
     <div className="absolute inset-0 z-40 flex flex-col justify-end bg-storm-950/70" role="dialog" aria-modal="true">
       {/* Toucher à côté referme : c'est le geste attendu d'une feuille. */}
-      <button type="button" className="flex-1" aria-label="Fermer le menu" onClick={onClose} />
+      <button type="button" className="flex-1" aria-label={t.menu.close} onClick={onClose} />
 
       <div className="zz-fade-up zz-scroll max-h-[85%] overflow-y-auto rounded-t-2xl bg-storm-900 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-storm-600" aria-hidden="true" />
@@ -56,33 +58,25 @@ export function TableMenu({ view, onClose, onPause, onMenu, onQuit }: TableMenuP
           onClick={onClose}
           className="mb-2 w-full rounded-xl bg-volt-500 py-3 font-display text-base font-bold text-storm-950"
         >
-          Reprendre la partie
+          {t.menu.resume}
         </button>
 
         {inGame && (
           <MenuRow
             onClick={() => void onPause(!away)}
-            title={away ? 'Reprendre ma place' : 'Faire une pause'}
-            detail={
-              away
-                ? 'Un robot joue vos tours en ce moment.'
-                : 'Un robot joue vos tours jusqu’à votre retour. Il n’annoncera jamais à votre place.'
-            }
+            title={away ? t.menu.unpause : t.menu.pause}
+            detail={away ? t.menu.unpauseDetail : t.menu.pauseDetail}
           />
         )}
 
         <MenuRow
           onClick={() => void onMenu()}
-          title="Retour au menu principal"
-          detail={
-            inGame
-              ? 'Votre place vous attend. Vous la retrouverez dans « Mes parties en cours ».'
-              : 'Vous gardez votre place à cette table.'
-          }
+          title={t.menu.mainMenu}
+          detail={inGame ? t.menu.mainMenuInGame : t.menu.mainMenuLobby}
         />
 
-        <MenuLink to="/regles" title="Les règles" detail="Comment on joue, et les points litigieux." />
-        <MenuLink to="/profil" title="Mon profil" detail="Pseudo, avatar, sauvegarde du compte." />
+        <MenuLink to="/regles" title={t.menu.rules} detail={t.menu.rulesDetail} />
+        <MenuLink to="/profil" title={t.menu.profile} detail={t.menu.profileDetail} />
 
         {/*
           Le départ définitif est en dernier, en rouge, et en deux temps : il ne
@@ -91,9 +85,7 @@ export function TableMenu({ view, onClose, onPause, onMenu, onQuit }: TableMenuP
         {confirmQuit ? (
           <div className="mt-2 rounded-xl bg-danger/15 p-3">
             <p className="text-sm text-paper-100">
-              {inGame
-                ? 'Vous sortez de cette partie. Elle continue sans vous, et votre score reste au tableau.'
-                : 'Vous quittez cette table.'}
+              {inGame ? t.menu.quitInGame : t.menu.quitLobby}
             </p>
             <div className="mt-2 flex gap-2">
               <button
@@ -101,14 +93,14 @@ export function TableMenu({ view, onClose, onPause, onMenu, onQuit }: TableMenuP
                 onClick={() => void onQuit()}
                 className="min-h-11 flex-1 rounded-lg bg-danger px-3 font-bold text-white"
               >
-                Quitter définitivement
+                {t.menu.quitConfirm}
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmQuit(false)}
                 className="min-h-11 rounded-lg px-4 text-sm text-paper-300"
               >
-                Annuler
+                {t.menu.cancel}
               </button>
             </div>
           </div>
@@ -118,7 +110,7 @@ export function TableMenu({ view, onClose, onPause, onMenu, onQuit }: TableMenuP
             onClick={() => setConfirmQuit(true)}
             className="mt-2 min-h-11 w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-danger"
           >
-            Quitter définitivement la partie
+            {t.menu.quit}
           </button>
         )}
       </div>

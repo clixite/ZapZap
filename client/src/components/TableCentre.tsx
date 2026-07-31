@@ -1,4 +1,5 @@
 import { cardId, type Card, type DrawOption, type DiscardSlot } from '@zapzap/shared';
+import { useT } from '../i18n';
 import { CardBack, CardFace } from './CardFace';
 import type { FeltLayout } from './tableLayout';
 
@@ -37,6 +38,7 @@ export function TableCentre({
   onDrawDiscard,
   busy,
 }: TableCentreProps) {
+  const t = useT();
   const canDraw = drawOptions !== null && !busy;
   const takeable = new Set((drawOptions ?? []).map((o) => o.cardId));
   const discardCards = lastDiscard?.combo.cards ?? [];
@@ -57,14 +59,14 @@ export function TableCentre({
       <Pile
         x={layout.stock.x}
         y={layout.stock.y}
-        label="Pioche"
-        caption={`${stockCount} carte${stockCount > 1 ? 's' : ''}`}
+        label={t.table.stock}
+        caption={t.table.cardsLeft(stockCount)}
       >
         <button
           type="button"
           onClick={canDraw ? onDrawStock : undefined}
           disabled={!canDraw}
-          aria-label={`Piocher à l’aveugle, ${stockCount} cartes restantes`}
+          aria-label={t.table.drawBlind(stockCount)}
           className={`block rounded-lg transition-transform ${canDraw ? 'zz-turn active:scale-95' : ''}`}
         >
           <CardBack width={layout.cardW} />
@@ -85,11 +87,11 @@ export function TableCentre({
          */
         label={
           lastDiscard === null
-            ? 'Défausse'
+            ? t.table.discard
             : author === null
-              ? 'Carte retournée'
+              ? t.table.turnedUp
               : author.isMe
-                ? 'Vous avez posé'
+                ? t.table.youPlayed
                 : `${author.avatar} ${author.pseudo}`
         }
         caption={
@@ -97,9 +99,9 @@ export function TableCentre({
             ? '—'
             : takeable.size > 0 && canDraw
               ? takeable.size < discardCards.length
-                ? 'Tête ou queue'
-                : 'À prendre'
-              : `${discardCards.length} carte${discardCards.length > 1 ? 's' : ''}`
+                ? t.table.headOrTail
+                : t.table.takeable
+              : t.table.cardsLeft(discardCards.length)
         }
       >
         <span className="flex items-end" style={{ marginRight: spread }}>

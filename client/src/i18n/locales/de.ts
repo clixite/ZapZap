@@ -132,6 +132,23 @@ export const de: Messages = {
     isEliminated: ', raus',
   },
 
+  hand: {
+    dealing: 'Es wird gegeben…',
+    yourHand: 'Deine Hand',
+    single: 'Einzelkarte',
+    set: 'Satz',
+    run: 'Folge',
+    dropped: (kind, value) => `${kind} — ${value} Punkt${value > 1 ? 'e' : ''} los`,
+    choose: 'Wähle eine Karte, einen Satz oder eine Folge.',
+    worth: (n) => `Deine Hand ist ${n} Punkte wert.`,
+    whyJoker: 'Ein Joker geht allein, oder als Jokerpaar.',
+    whyFour: 'Höchstens vier Karten für einen Vierling.',
+    whyPair: 'Zwei Karten sind nur ein Paar, wenn sie den gleichen Wert haben.',
+    whySuit: 'Eine Folge muss aus einer Farbe sein.',
+    whyAce: 'Das Ass ist niedrig: A-2-3 ja, Dame-König-Ass nein.',
+    whyGap: 'Es fehlt eine Karte, damit die Folge hält.',
+  },
+
   menu: {
     resume: 'Zurück zur Partie',
     pause: 'Pause machen',
@@ -154,6 +171,8 @@ export const de: Messages = {
   },
 
   deal: {
+    question: 'Wie viele Karten für alle? Du bekommst genauso viele.',
+    you: ' (du)',
     yourChoice: 'Du gibst',
     explain: 'Kurz ist ein Sprint. Lang gibt Raum zum Aufbauen.',
     waiting: (pseudo) => `${pseudo} wählt, wie viele Karten gegeben werden…`,
@@ -161,6 +180,10 @@ export const de: Messages = {
   },
 
   recap: {
+    youSucceeded: 'Ansage geglückt!',
+    youFailed: 'Ansage danebengegangen',
+    beatenBy: (n, pseudo) =>
+      `${n === 1 ? 'Ein Spieler liegt' : `${n} Spieler liegen`} gleichauf oder darunter. ${pseudo} bekommt 30.`,
     stuck: 'Runde festgefahren',
     stuckDetail: 'Niemand hat angesagt: Jeder zählt seine Hand.',
     success: (pseudo) => `${pseudo} kommt damit durch`,

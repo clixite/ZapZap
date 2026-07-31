@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { EmoteId, GameView, TransientEvent } from '@zapzap/shared';
+import { t as messages, useT } from '../i18n';
 
 /**
  * Ce que la table raconte pendant qu'on joue.
@@ -36,41 +37,41 @@ function shortCard(card: { suit: string; rank: number }): string {
 
 /** Le texte d'un événement, avec les pseudos de la table. */
 export function eventText(event: TransientEvent, view: GameView): string | null {
+  const f = messages().feed;
   const name = (id: string) => view.players.find((p) => p.id === id)?.pseudo ?? '…';
   const isMe = (id: string) => id === view.you;
 
   switch (event.type) {
     case 'player-joined':
-      return `${event.pseudo} rejoint la table`;
+      return f.joined(event.pseudo);
     case 'player-left':
-      return `${event.pseudo} quitte la table`;
+      return f.leftTable(event.pseudo);
     case 'dealt':
-      return `${isMe(event.dealerId) ? 'Vous donnez' : `${name(event.dealerId)} donne`} ${event.handSize} cartes`;
+      return isMe(event.dealerId) ? f.youDeal(event.handSize) : f.deals(name(event.dealerId), event.handSize);
     case 'discarded': {
       if (isMe(event.playerId)) return null; // on vient de le faire soi-même
-      const cards = event.combo.cards.map(shortCard).join(' ');
-      return `${name(event.playerId)} pose ${cards}`;
+      return f.plays(name(event.playerId), event.combo.cards.map(shortCard).join(' '));
     }
     case 'drew-stock':
-      return isMe(event.playerId) ? null : `${name(event.playerId)} pioche à l’aveugle`;
+      return isMe(event.playerId) ? null : f.drawsBlind(name(event.playerId));
     case 'drew-discard':
       // Information de jeu capitale : tout le monde doit savoir ce qui a été
       // ramassé, c'est le « il construit quelque chose » du §9.2.
-      return `${isMe(event.playerId) ? 'Vous ramassez' : `${name(event.playerId)} ramasse`} le ${shortCard(event.card)}`;
+      return isMe(event.playerId)
+        ? f.youTake(shortCard(event.card))
+        : f.takes(name(event.playerId), shortCard(event.card));
     case 'zap-called':
-      return `⚡ ${name(event.playerId)} annonce ZapZap — ${event.success ? 'réussi !' : 'contré !'}`;
+      return event.success ? f.zapWon(name(event.playerId)) : f.zapLost(name(event.playerId));
     case 'player-eliminated':
-      return `${name(event.playerId)} est éliminé`;
+      return f.eliminated(name(event.playerId));
     case 'player-disconnected':
-      return `${name(event.playerId)} a perdu la connexion`;
+      return f.disconnected(name(event.playerId));
     case 'player-reconnected':
-      return `${name(event.playerId)} est de retour`;
+      return f.reconnected(name(event.playerId));
     case 'player-away':
-      return event.away
-        ? `${name(event.playerId)} fait une pause — un robot joue pour lui`
-        : `${name(event.playerId)} reprend sa place`;
+      return event.away ? f.away(name(event.playerId)) : f.back(name(event.playerId));
     case 'host-changed':
-      return `${name(event.hostId)} devient l’hôte`;
+      return f.newHost(name(event.hostId));
     case 'round-scored':
     case 'rematch':
     case 'emote':
@@ -143,6 +144,7 @@ export function useEmoteBubbles(lastEvent: TransientEvent | null): Record<string
  * texte est annoncé aux lecteurs d'écran au même moment.
  */
 export function TurnCountdown({ deadline, mine }: { deadline: number; mine: boolean }) {
+  const t = useT();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -171,7 +173,7 @@ export function TurnCountdown({ deadline, mine }: { deadline: number; mine: bool
       </div>
       {mine && urgent && (
         <span className="text-[11px] font-bold text-flash-300" role="status" aria-live="assertive">
-          {seconds} s avant que le tour ne se joue tout seul
+          {t.table.secondsLeft(seconds)}
         </span>
       )}
     </div>

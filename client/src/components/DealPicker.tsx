@@ -1,4 +1,5 @@
 import type { GameView } from '@zapzap/shared';
+import { useT } from '../i18n';
 
 /**
  * Le choix du donneur.
@@ -20,15 +21,16 @@ export interface DealPickerProps {
 }
 
 export function DealPicker({ view, onDeal, busy }: DealPickerProps) {
+  const t = useT();
   const choices = view.round?.dealChoices ?? [];
   const standings = [...view.players].filter((p) => !p.eliminated).sort((a, b) => a.totalScore - b.totalScore);
 
   return (
     <div className="zz-fade-up flex flex-col items-center gap-4 px-5 py-6">
       <div className="text-center">
-        <h2 className="font-display text-xl font-bold">À vous de donner</h2>
+        <h2 className="font-display text-xl font-bold">{t.deal.yourChoice}</h2>
         <p className="mt-1 text-sm text-paper-300">
-          Combien de cartes pour tout le monde&nbsp;? Vous vous servez pareil.
+          {t.deal.question}
         </p>
       </div>
 
@@ -37,9 +39,9 @@ export function DealPicker({ view, onDeal, busy }: DealPickerProps) {
           <li key={p.id} className="flex justify-between text-sm">
             <span className="truncate">
               {p.avatar} {p.pseudo}
-              {p.id === view.you && <span className="text-paper-300"> (vous)</span>}
+              {p.id === view.you && <span className="text-paper-300">{t.deal.you}</span>}
             </span>
-            <span className="tabular-nums text-paper-300">{p.totalScore} pt</span>
+            <span className="tabular-nums text-paper-300">{t.table.pt(p.totalScore)}</span>
           </li>
         ))}
       </ol>
@@ -54,14 +56,13 @@ export function DealPicker({ view, onDeal, busy }: DealPickerProps) {
             className="flex h-16 w-16 flex-col items-center justify-center rounded-xl bg-volt-500 font-display text-2xl font-bold text-storm-950 transition-transform active:scale-95 disabled:opacity-50"
           >
             {size}
-            <span className="text-[10px] font-medium tracking-wide uppercase">cartes</span>
+            <span className="text-[10px] font-medium tracking-wide uppercase">{t.deal.cardsUnit}</span>
           </button>
         ))}
       </div>
 
       <p className="max-w-xs text-center text-xs text-paper-300">
-        Court, on descend vite mais on construit peu. Long, on a de quoi faire des suites — et beaucoup à
-        encaisser si quelqu’un annonce.
+        {t.deal.explain}
       </p>
     </div>
   );
@@ -69,13 +70,13 @@ export function DealPicker({ view, onDeal, busy }: DealPickerProps) {
 
 /** Ce que voient les autres pendant que le donneur choisit. */
 export function DealWaiting({ dealerPseudo }: { dealerPseudo: string }) {
+  const t = useT();
   return (
     <div className="zz-fade-up flex flex-col items-center gap-2 px-5 py-8 text-center">
       <span className="text-3xl" aria-hidden="true">
         🎴
       </span>
-      <h2 className="font-display text-lg font-bold">{dealerPseudo} donne</h2>
-      <p className="text-sm text-paper-300">Il choisit combien de cartes tout le monde recevra.</p>
+      <h2 className="font-display text-lg font-bold">{t.deal.waiting(dealerPseudo)}</h2>
     </div>
   );
 }

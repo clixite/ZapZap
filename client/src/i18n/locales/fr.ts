@@ -151,6 +151,25 @@ export const fr = {
     isEliminated: ', éliminé',
   },
 
+  /* La main et ses combinaisons ------------------------------------ */
+  hand: {
+    dealing: 'La donne arrive…',
+    yourHand: 'Votre main',
+    single: 'Carte seule',
+    set: 'Ensemble',
+    run: 'Suite',
+    dropped: (kind: string, value: number) =>
+      `${kind} — ${value} point${value > 1 ? 's' : ''} lâché${value > 1 ? 's' : ''}`,
+    choose: 'Choisissez une carte, un ensemble ou une suite.',
+    worth: (n: number) => `Votre main vaut ${n} points.`,
+    whyJoker: 'Un joker se pose seul, ou par paire de jokers.',
+    whyFour: 'Quatre cartes au maximum pour un carré.',
+    whyPair: 'Deux cartes ne font une paire que si elles ont le même rang.',
+    whySuit: 'Une suite doit être d’une seule couleur.',
+    whyAce: 'L’As est bas : A-2-3 oui, Dame-Roi-As non.',
+    whyGap: 'Il manque une carte pour que la suite se tienne.',
+  },
+
   /* Menu de la table ---------------------------------------------- */
   menu: {
     resume: 'Reprendre la partie',
@@ -175,6 +194,8 @@ export const fr = {
 
   /* La donne ------------------------------------------------------ */
   deal: {
+    question: 'Combien de cartes pour tout le monde ? Vous vous servez pareil.',
+    you: ' (vous)',
     yourChoice: 'À vous de donner',
     explain: 'Court, c’est une course. Long, c’est de quoi construire.',
     waiting: (pseudo: string) => `${pseudo} choisit combien de cartes distribuer…`,
@@ -183,6 +204,10 @@ export const fr = {
 
   /* Décompte de manche -------------------------------------------- */
   recap: {
+    youSucceeded: 'Annonce réussie !',
+    youFailed: 'Annonce ratée',
+    beatenBy: (n: number, pseudo: string) =>
+      `${n === 1 ? 'Un joueur fait' : `${n} joueurs font`} aussi bien ou mieux. ${pseudo} prend 30.`,
     stuck: 'Manche bloquée',
     stuckDetail: 'Personne n’a annoncé : chacun compte sa main.',
     success: (pseudo: string) => `${pseudo} passe`,

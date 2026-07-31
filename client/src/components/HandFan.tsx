@@ -8,6 +8,7 @@ import {
   type Card,
   type ZapVariants,
 } from '@zapzap/shared';
+import { t as messages } from '../i18n';
 import { CardFace } from './CardFace';
 
 /**
@@ -126,7 +127,7 @@ export function HandFan({ hand, selected, onToggle, interactive, variants, width
         className="relative"
         style={{ width: totalW, height: reserved }}
         role="group"
-        aria-label="Votre main"
+        aria-label={messages().hand.yourHand}
       >
         {hand.map((card, i) => {
           const id = cardId(card);
@@ -182,11 +183,11 @@ export function HandFan({ hand, selected, onToggle, interactive, variants, width
   );
 }
 
-const KIND_LABEL: Record<string, string> = {
-  single: 'Carte seule',
-  set: 'Ensemble',
-  run: 'Suite',
-};
+const KIND_LABEL = (): Record<string, string> => ({
+  single: messages().hand.single,
+  set: messages().hand.set,
+  run: messages().hand.run,
+});
 
 /**
  * Ce que vaut la sélection, et pourquoi elle est refusée le cas échéant.
@@ -208,23 +209,23 @@ function ComboHint({
   if (chosen.length === 0 && handTotal === 0 && !interactive) {
     // Avant la donne il n'y a rien à dire : afficher « votre main vaut 0 »
     // ferait croire à une main vide plutôt qu'à une main pas encore servie.
-    return <p className="text-sm text-paper-300">La donne arrive…</p>;
+    return <p className="text-sm text-paper-300">{messages().hand.dealing}</p>;
   }
   if (!interactive) {
     return (
       <p className="text-sm text-paper-300">
-        Votre main vaut <strong className="text-paper-100">{handTotal}</strong> points.
+        {messages().hand.worth(handTotal)}
       </p>
     );
   }
   if (chosen.length === 0) {
-    return <p className="text-sm text-paper-300">Choisissez une carte, un ensemble ou une suite.</p>;
+    return <p className="text-sm text-paper-300">{messages().hand.choose}</p>;
   }
   if (kind) {
     const value = handValue(chosen);
     return (
       <p className="text-sm font-medium text-volt-300">
-        {KIND_LABEL[kind]} — {value} point{value > 1 ? 's' : ''} lâché{value > 1 ? 's' : ''}
+        {messages().hand.dropped(KIND_LABEL()[kind] ?? kind, value)}
       </p>
     );
   }
@@ -233,15 +234,15 @@ function ComboHint({
 
 function whyNot(chosen: Card[]): string {
   if (chosen.some((c) => c.suit === 'X')) {
-    return 'Un joker se pose seul, ou par paire de jokers.';
+    return messages().hand.whyJoker;
   }
   const ranks = new Set(chosen.map((c) => c.rank));
-  if (ranks.size === 1) return 'Quatre cartes au maximum pour un carré.';
-  if (chosen.length === 2) return 'Deux cartes ne font une paire que si elles ont le même rang.';
+  if (ranks.size === 1) return messages().hand.whyFour;
+  if (chosen.length === 2) return messages().hand.whyPair;
 
   const suits = new Set(chosen.map((c) => c.suit));
-  if (suits.size > 1) return 'Une suite doit être d’une seule couleur.';
+  if (suits.size > 1) return messages().hand.whySuit;
   const sorted = [...chosen].map((c) => c.rank).sort((a, b) => a - b);
-  if (sorted.at(-1) === 13 && sorted.includes(1)) return 'L’As est bas : A-2-3 oui, Dame-Roi-As non.';
-  return 'Il manque une carte pour que la suite se tienne.';
+  if (sorted.at(-1) === 13 && sorted.includes(1)) return messages().hand.whyAce;
+  return messages().hand.whyGap;
 }

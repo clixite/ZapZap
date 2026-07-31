@@ -208,6 +208,23 @@ story('changer de langue', async () => {
     'le choix de langue survit au rechargement',
   );
 
+  // La table aussi, pas seulement les écrans d'entrée : c'est là qu'on passe
+  // son temps, et c'est là qu'un mot non traduit se voit à chaque tour.
+  await page.getByRole('button', { name: /tafel maken/i }).click();
+  await page.waitForURL(/\/salon\//, { timeout: 15_000 });
+  check(
+    await page.getByText('Nodig je vrienden uit').isVisible().catch(() => false),
+    'le salon est traduit',
+  );
+  await page.getByRole('button', { name: '+ Bot toevoegen' }).click();
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: 'Beginnen' }).click();
+  await page.waitForURL(/\/table\//, { timeout: 15_000 });
+  await page.waitForTimeout(1_500);
+  const felt = (await page.locator('body').innerText()) ?? '';
+  check(/Stok|Aflegstapel|beurt|Jij deelt/i.test(felt), 'le tapis est traduit');
+  await capture(page, 'table-nl');
+
   await page.goto('/profil');
   await page.getByRole('button', { name: /Taal/ }).click();
   await page.locator('[data-locale="fr"]').click();

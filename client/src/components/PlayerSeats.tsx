@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { isBotId, type EmoteId, type GameView, type Player } from '@zapzap/shared';
+import { useT } from '../i18n';
 import { MiniCards } from './CardFace';
 import { EMOTE_GLYPHS } from './LiveFeedback';
 import type { FeltLayout } from './tableLayout';
@@ -147,6 +148,7 @@ function Seat({
   cards: number;
   bubble: EmoteId | null;
 }) {
+  const t = useT();
   const round = view.round;
   const isPending =
     round !== null &&
@@ -225,16 +227,16 @@ function Seat({
         {player.away && (
           <span
             className="absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-storm-950/90 px-1.5 text-[9px] font-bold text-flash-300"
-            title="En pause — un robot joue"
+            title={t.table.pausedBanner}
           >
-            PAUSE
+            {t.table.paused}
           </span>
         )}
 
         {isDealer && (
           <span
             className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-flash-400 text-[9px] font-bold text-storm-950"
-            title="Donneur"
+            title={t.table.dealer}
             aria-hidden="true"
           >
             D
@@ -255,7 +257,7 @@ function Seat({
         </span>
       )}
       <span className="text-[10px] text-paper-300">
-        {player.eliminated ? (player.forfeited ? 'parti' : 'éliminé') : `${player.totalScore} pt`}
+        {player.eliminated ? (player.forfeited ? t.table.left : t.table.eliminated) : t.table.pt(player.totalScore)}
       </span>
 
       {/*
@@ -272,11 +274,11 @@ function Seat({
       )}
 
       <span className="sr-only">
-        {player.pseudo}, {cards} carte{cards > 1 ? 's' : ''} en main
-        {cards <= 2 ? ' — peut annoncer' : ''}, {player.totalScore} points
-        {player.eliminated ? (player.forfeited ? ', a quitté la partie' : ', éliminé') : ''}
-        {player.away ? ', en pause, un robot joue pour lui' : ''}
-        {isPending ? ', c’est à lui de jouer' : ''}
+        {t.table.seatSummary(player.pseudo, cards, player.totalScore)}
+        {cards <= 2 ? t.table.canZap : ''}
+        {player.eliminated ? (player.forfeited ? t.table.hasLeft : t.table.isEliminated) : ''}
+        {player.away ? t.table.isPaused : ''}
+        {isPending ? t.table.itsTheirTurn : ''}
       </span>
     </div>
   );

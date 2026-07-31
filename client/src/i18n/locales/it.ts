@@ -132,6 +132,23 @@ export const it: Messages = {
     isEliminated: ', fuori',
   },
 
+  hand: {
+    dealing: 'Si sta distribuendo…',
+    yourHand: 'La tua mano',
+    single: 'Carta singola',
+    set: 'Tris',
+    run: 'Scala',
+    dropped: (kind, value) => `${kind} — ${value} punt${value > 1 ? 'i' : 'o'} in meno`,
+    choose: 'Scegli una carta, un tris o una scala.',
+    worth: (n) => `La tua mano vale ${n} punti.`,
+    whyJoker: 'Un jolly si cala da solo, o in coppia di jolly.',
+    whyFour: 'Al massimo quattro carte per un poker.',
+    whyPair: 'Due carte fanno coppia solo se hanno lo stesso valore.',
+    whySuit: 'Una scala dev’essere di un solo seme.',
+    whyAce: 'L’asso è basso: A-2-3 sì, donna-re-asso no.',
+    whyGap: 'Manca una carta perché la scala tenga.',
+  },
+
   menu: {
     resume: 'Torna alla partita',
     pause: 'Fare una pausa',
@@ -154,6 +171,8 @@ export const it: Messages = {
   },
 
   deal: {
+    question: 'Quante carte per tutti? Tu ne prendi altrettante.',
+    you: ' (tu)',
     yourChoice: 'Tocca a te dare',
     explain: 'Corta è una corsa. Lunga dà spazio per costruire.',
     waiting: (pseudo) => `${pseudo} sceglie quante carte distribuire…`,
@@ -161,6 +180,10 @@ export const it: Messages = {
   },
 
   recap: {
+    youSucceeded: 'Dichiarazione riuscita!',
+    youFailed: 'Dichiarazione fallita',
+    beatenBy: (n, pseudo) =>
+      `${n === 1 ? 'Un giocatore sta' : `${n} giocatori stanno`} alla pari o sotto. ${pseudo} prende 30.`,
     stuck: 'Mano bloccata',
     stuckDetail: 'Nessuno ha dichiarato: ognuno conta la sua mano.',
     success: (pseudo) => `${pseudo} la spunta`,

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { MAX_PLAYERS, MIN_PLAYERS, isBotId, type ZapVariants } from '@zapzap/shared';
 import { InviteButtons } from '../components/InviteButtons';
+import { useT } from '../i18n';
 import { useGame, useGameChannel, useView } from '../store/game';
 import { useSession } from '../store/session';
 
@@ -14,6 +15,7 @@ import { useSession } from '../store/session';
  * « minRun = 2 » non.
  */
 export function Lobby() {
+  const t = useT();
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const error = useGame((s) => s.error);
@@ -44,7 +46,7 @@ export function Lobby() {
     if (view && view.phase !== 'lobby') navigate(`/table/${view.code}`, { replace: true });
   }, [view?.phase, view?.code, navigate, view]);
 
-  if (!view || !user) return <Centered error={error}>{error ?? 'Connexion au salon…'}</Centered>;
+  if (!view || !user) return <Centered error={error}>{error ?? t.lobby.connecting}</Centered>;
 
   const isHost = view.hostId === view.you;
   const enough = view.players.length >= MIN_PLAYERS;
@@ -70,7 +72,7 @@ export function Lobby() {
           to="/"
           className="flex min-h-11 items-center rounded-xl px-2 text-sm text-paper-300 underline underline-offset-4"
         >
-          ← Menu principal
+          {t.lobby.mainMenu}
         </Link>
         <Link
           to="/profil"
@@ -79,14 +81,14 @@ export function Lobby() {
           <span className="text-lg" aria-hidden="true">
             {user.avatar}
           </span>
-          <span className="underline underline-offset-4">Profil</span>
+          <span className="underline underline-offset-4">{t.lobby.profile}</span>
         </Link>
       </div>
 
       <header className="rounded-2xl bg-storm-900/70 px-4 py-4 text-center">
-        <p className="text-sm font-medium text-paper-100">Invitez vos amis</p>
+        <p className="text-sm font-medium text-paper-100">{t.lobby.inviteTitle}</p>
         <p className="mt-0.5 text-xs text-paper-300">
-          Envoyez-leur ce code : ils l’entrent à l’accueil et arrivent ici.
+          {t.lobby.inviteDetail}
         </p>
         <p className="mt-2 font-display text-5xl font-bold tracking-[0.2em] text-volt-300">{view.code}</p>
         <div className="mt-3">
@@ -96,14 +98,13 @@ export function Lobby() {
 
       {!isHost && (
         <p className="rounded-xl bg-storm-800 px-4 py-3 text-center text-sm text-paper-300">
-          {view.players.find((p) => p.id === view.hostId)?.pseudo ?? 'L’hôte'} règle la partie et donne le
-          coup d’envoi.
+          {t.lobby.hostRuns(view.players.find((p) => p.id === view.hostId)?.pseudo ?? t.lobby.theHost)}
         </p>
       )}
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xs font-medium tracking-wide text-paper-300 uppercase">
-          Joueurs {view.players.length}/{MAX_PLAYERS}
+          {t.lobby.players(view.players.length, MAX_PLAYERS)}
         </h2>
         {view.players.map((player) => (
           <div key={player.id} className="flex items-center gap-3 rounded-xl bg-storm-800 px-4 py-2.5">
@@ -112,8 +113,8 @@ export function Lobby() {
             </span>
             <span className="min-w-0 flex-1 truncate">
               {player.pseudo}
-              {player.id === view.hostId && <span className="ml-1 text-xs text-flash-300">hôte</span>}
-              {player.id === view.you && <span className="ml-1 text-xs text-paper-300">vous</span>}
+              {player.id === view.hostId && <span className="ml-1 text-xs text-flash-300">{t.lobby.host}</span>}
+              {player.id === view.you && <span className="ml-1 text-xs text-paper-300">{t.lobby.you}</span>}
             </span>
             {isHost && player.id !== view.you && (
               <button
@@ -121,10 +122,10 @@ export function Lobby() {
                 onClick={() =>
                   void send(isBotId(player.id) ? 'room:removeBot' : 'room:kick', { playerId: player.id })
                 }
-                aria-label={`Retirer ${player.pseudo}`}
+                aria-label={t.lobby.removeNamed(player.pseudo)}
                 className="-my-2.5 flex h-11 shrink-0 items-center px-3 text-xs text-paper-300 underline underline-offset-2"
               >
-                retirer
+                {t.lobby.remove}
               </button>
             )}
           </div>
@@ -137,84 +138,84 @@ export function Lobby() {
             disabled={busy}
             className="min-h-11 rounded-xl border border-dashed border-storm-500 py-3 text-sm text-paper-300 disabled:opacity-50"
           >
-            + Ajouter un robot
+            {t.lobby.addBot}
           </button>
         )}
       </section>
 
       {isHost && (
         <section className="flex flex-col gap-2">
-          <h2 className="text-xs font-medium tracking-wide text-paper-300 uppercase">Réglages</h2>
+          <h2 className="text-xs font-medium tracking-wide text-paper-300 uppercase">{t.lobby.settings}</h2>
 
           <Choice
-            label="Qui peut entrer"
+            label={t.lobby.whoCanEnter}
             value={view.visibility}
             options={[
-              ['private', 'Sur code'],
-              ['public', 'Tout le monde'],
+              ['private', t.lobby.onCode],
+              ['public', t.lobby.everyone],
             ]}
             onChange={(v) => void send('room:setVisibility', { visibility: v })}
           />
           <Choice
-            label="Rythme"
+            label={t.lobby.pace}
             value={view.pace}
             options={[
-              ['live', 'En direct'],
-              ['async', 'Chacun son heure'],
+              ['live', t.lobby.live],
+              ['async', t.lobby.async],
             ]}
             onChange={(v) => void send('room:setPace', { pace: v })}
           />
           <Choice
-            label="On annonce à"
+            label={t.lobby.zapAt}
             value={String(view.variants.zapThreshold)}
             options={[
-              ['5', '5 points'],
-              ['7', '7 points'],
+              ['5', t.lobby.points(5)],
+              ['7', t.lobby.points(7)],
             ]}
             onChange={(v) => setVariants({ zapThreshold: Number(v) as 5 | 7 })}
           />
           <Choice
-            label="Suites"
+            label={t.lobby.runs}
             value={view.variants.sameSuitRuns ? 'same' : 'any'}
             options={[
-              ['same', 'Même couleur'],
-              ['any', 'Toutes couleurs'],
+              ['same', t.lobby.sameSuit],
+              ['any', t.lobby.anySuit],
             ]}
             onChange={(v) => setVariants({ sameSuitRuns: v === 'same' })}
           />
           <Choice
-            label="Suite minimale"
+            label={t.lobby.minRun}
             value={String(view.variants.minRun)}
             options={[
-              ['3', '3 cartes'],
-              ['2', '2 cartes'],
+              ['3', t.lobby.cards(3)],
+              ['2', t.lobby.cards(2)],
             ]}
             onChange={(v) => setVariants({ minRun: Number(v) as 2 | 3 })}
           />
           <Choice
-            label="Rebond à 50 et 100"
+            label={t.lobby.rebound}
             value={view.variants.rebound ? 'on' : 'off'}
             options={[
-              ['on', 'Oui'],
-              ['off', 'Non'],
+              ['on', t.lobby.yes],
+              ['off', t.lobby.no],
             ]}
             onChange={(v) => setVariants({ rebound: v === 'on' })}
           />
           <Choice
-            label="Jokers"
+            label={t.lobby.jokers}
             value={view.variants.jokers ? 'on' : 'off'}
             options={[
-              ['off', 'Sans'],
-              ['on', 'Avec'],
+              ['off', t.lobby.without],
+              ['on', t.lobby.with],
             ]}
             onChange={(v) => setVariants({ jokers: v === 'on' })}
           />
           <Choice
-            label="La partie s’arrête"
+            label={t.lobby.endMode}
             value={view.variants.endMode}
             options={[
-              ['last-standing', 'Au dernier debout'],
-              ['first-out', 'À la 1re sortie'],
+              ['last-standing', t.lobby.lastStanding],
+              ['first-out', t.lobby.firstOut],
             ]}
             onChange={(v) => setVariants({ endMode: v as ZapVariants['endMode'] })}
           />
@@ -231,10 +232,10 @@ export function Lobby() {
             disabled={!enough || busy}
             className="rounded-xl bg-volt-500 py-3.5 font-display text-lg font-bold text-storm-950 disabled:opacity-40"
           >
-            {enough ? 'Commencer' : `Il faut ${MIN_PLAYERS} joueurs`}
+            {enough ? t.lobby.start : t.lobby.needPlayers(MIN_PLAYERS)}
           </button>
         ) : (
-          <p className="text-center text-sm text-paper-300">En attente de l’hôte…</p>
+          <p className="text-center text-sm text-paper-300">{t.lobby.waitingHost}</p>
         )}
         <button
           type="button"
@@ -245,7 +246,7 @@ export function Lobby() {
           }}
           className="min-h-11 py-3 text-sm text-paper-300 underline underline-offset-4"
         >
-          Quitter la partie
+          {t.lobby.leave}
         </button>
       </div>
     </div>
@@ -295,12 +296,13 @@ function Choice<T extends string>({
  * recours était de fermer l'application.
  */
 function Centered({ children, error }: { children: React.ReactNode; error?: string | null }) {
+  const t = useT();
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center text-paper-300">
       <p>{children}</p>
       {error && (
         <Link to="/" className="min-h-11 rounded-xl bg-storm-700 px-5 py-3 text-sm font-medium text-paper-100">
-          Retour à l’accueil
+          {t.table.backHome}
         </Link>
       )}
     </div>

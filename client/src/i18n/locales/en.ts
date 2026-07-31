@@ -132,6 +132,23 @@ export const en: Messages = {
     isEliminated: ', out',
   },
 
+  hand: {
+    dealing: 'The deal is coming…',
+    yourHand: 'Your hand',
+    single: 'Single card',
+    set: 'Set',
+    run: 'Run',
+    dropped: (kind, value) => `${kind} — ${value} point${value > 1 ? 's' : ''} shed`,
+    choose: 'Pick a card, a set or a run.',
+    worth: (n) => `Your hand is worth ${n} points.`,
+    whyJoker: 'A joker goes down alone, or as a pair of jokers.',
+    whyFour: 'Four cards at most for a four of a kind.',
+    whyPair: 'Two cards only make a pair if they share a rank.',
+    whySuit: 'A run must be all one suit.',
+    whyAce: 'The ace is low: A-2-3 yes, Queen-King-Ace no.',
+    whyGap: 'One card is missing for the run to hold.',
+  },
+
   menu: {
     resume: 'Back to the game',
     pause: 'Take a break',
@@ -154,6 +171,8 @@ export const en: Messages = {
   },
 
   deal: {
+    question: 'How many cards for everyone? You deal yourself the same.',
+    you: ' (you)',
     yourChoice: 'Your deal',
     explain: 'Short is a sprint. Long gives you room to build.',
     waiting: (pseudo) => `${pseudo} is choosing how many cards to deal…`,
@@ -161,6 +180,10 @@ export const en: Messages = {
   },
 
   recap: {
+    youSucceeded: 'Call stands!',
+    youFailed: 'Call beaten',
+    beatenBy: (n, pseudo) =>
+      `${n === 1 ? 'One player is' : `${n} players are`} level or lower. ${pseudo} takes 30.`,
     stuck: 'Round stuck',
     stuckDetail: 'Nobody called: everyone counts their hand.',
     success: (pseudo) => `${pseudo} gets away with it`,

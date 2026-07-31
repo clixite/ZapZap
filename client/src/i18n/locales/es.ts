@@ -132,6 +132,23 @@ export const es: Messages = {
     isEliminated: ', fuera',
   },
 
+  hand: {
+    dealing: 'Están repartiendo…',
+    yourHand: 'Tu mano',
+    single: 'Carta suelta',
+    set: 'Grupo',
+    run: 'Escalera',
+    dropped: (kind, value) => `${kind} — ${value} punto${value > 1 ? 's' : ''} fuera`,
+    choose: 'Elige una carta, un grupo o una escalera.',
+    worth: (n) => `Tu mano vale ${n} puntos.`,
+    whyJoker: 'Un comodín se baja solo, o en pareja de comodines.',
+    whyFour: 'Cuatro cartas como mucho para un póquer.',
+    whyPair: 'Dos cartas solo hacen pareja si comparten valor.',
+    whySuit: 'Una escalera tiene que ser de un solo palo.',
+    whyAce: 'El as va bajo: A-2-3 sí, dama-rey-as no.',
+    whyGap: 'Falta una carta para que la escalera se sostenga.',
+  },
+
   menu: {
     resume: 'Volver a la partida',
     pause: 'Hacer una pausa',
@@ -154,6 +171,8 @@ export const es: Messages = {
   },
 
   deal: {
+    question: '¿Cuántas cartas para todos? Tú te sirves lo mismo.',
+    you: ' (tú)',
     yourChoice: 'Te toca repartir',
     explain: 'Corto es una carrera. Largo da margen para construir.',
     waiting: (pseudo) => `${pseudo} elige cuántas cartas repartir…`,
@@ -161,6 +180,10 @@ export const es: Messages = {
   },
 
   recap: {
+    youSucceeded: '¡Cante logrado!',
+    youFailed: 'Cante fallado',
+    beatenBy: (n, pseudo) =>
+      `${n === 1 ? 'Un jugador va' : `${n} jugadores van`} igual o por debajo. ${pseudo} se lleva 30.`,
     stuck: 'Ronda atascada',
     stuckDetail: 'Nadie cantó: cada cual cuenta su mano.',
     success: (pseudo) => `${pseudo} se sale con la suya`,

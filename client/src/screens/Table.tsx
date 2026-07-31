@@ -5,6 +5,7 @@ import { isMuted, play, setMuted } from '../audio';
 import { MiniCards } from '../components/CardFace';
 import { DealPicker, DealWaiting } from '../components/DealPicker';
 import { HandFan } from '../components/HandFan';
+import { useT } from '../i18n';
 import { EMOTE_GLYPHS, EventTicker, TurnCountdown, useEmoteBubbles } from '../components/LiveFeedback';
 import { IconBack, IconHistory, IconMuted, IconSmile, IconSound } from '../components/icons';
 import { PassedCards } from '../components/PassedCards';
@@ -27,6 +28,7 @@ import { useSession } from '../store/session';
  * panneau joue mal.
  */
 export function Table() {
+  const t = useT();
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   // Sélecteurs unitaires : `send` bascule `busy` deux fois par coup, et
@@ -174,7 +176,7 @@ export function Table() {
   const [feltRef, layout] = useFeltLayout(Math.max(0, (view?.players.length ?? 1) - 1));
 
   if (!view || !user) {
-    return <Centered error={error}>{error ?? 'Connexion à la table…'}</Centered>;
+    return <Centered error={error}>{error ?? t.table.connecting}</Centered>;
   }
 
   const round = view.round;
@@ -239,7 +241,7 @@ export function Table() {
           <button
             type="button"
             onClick={() => setShowMenu(true)}
-            aria-label="Menu de la partie"
+            aria-label={t.table.menu}
             className="flex h-11 w-11 items-center justify-center rounded-xl bg-storm-950/60 text-paper-300"
           >
             <IconBack />
@@ -328,7 +330,7 @@ export function Table() {
             <button
               type="button"
               onClick={() => setShowLog(true)}
-              aria-label="Voir les cartes déjà passées"
+              aria-label={t.table.seenCards}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-storm-800/80 text-paper-300"
             >
               <IconHistory />
@@ -351,7 +353,7 @@ export function Table() {
             <button
               type="button"
               onClick={() => setShowEmotes((s) => !s)}
-              aria-label="Envoyer une réaction"
+              aria-label={t.table.react}
               aria-expanded={showEmotes}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-storm-800/80 text-paper-300"
             >
@@ -366,7 +368,7 @@ export function Table() {
             className="zz-fade-up absolute inset-x-2 z-20 flex justify-center gap-1 rounded-2xl bg-storm-950/95 p-2"
             style={{ bottom: STATUS_H + 4 }}
             role="menu"
-            aria-label="Réactions"
+            aria-label={t.table.reactions}
           >
             {EMOTES.map((id) => (
               <button
@@ -374,7 +376,7 @@ export function Table() {
                 type="button"
                 role="menuitem"
                 onClick={() => void emote(id)}
-                aria-label={`Réaction ${EMOTE_GLYPHS[id]}`}
+                aria-label={t.table.reactionNamed(EMOTE_GLYPHS[id])}
                 className="flex h-11 w-11 items-center justify-center rounded-xl text-2xl transition-transform active:scale-90"
               >
                 {EMOTE_GLYPHS[id]}
@@ -388,7 +390,7 @@ export function Table() {
                 setMuted(next);
                 setMutedState(next);
               }}
-              aria-label={muted ? 'Réactiver le son' : 'Couper le son'}
+              aria-label={muted ? t.table.unmute : t.table.mute}
               aria-pressed={muted}
               className="flex h-11 w-11 items-center justify-center rounded-xl bg-storm-800 text-paper-300"
             >
@@ -413,7 +415,7 @@ export function Table() {
             onClick={() => void send('game:away', { away: false })}
             className="zz-turn flex min-h-9 w-full items-center justify-center gap-2 rounded-t-2xl bg-flash-400 px-3 py-1.5 text-sm font-bold text-storm-950"
           >
-            En pause — un robot joue pour vous · <span className="underline">reprendre</span>
+            {t.table.pausedBanner} · <span className="underline">{t.table.resume}</span>
           </button>
         ) : (
           <TurnBanner view={view} myTurn={myTurn} pending={pending} />
@@ -489,6 +491,7 @@ function HandArea({
   total: number;
   dealing: boolean;
 }) {
+  const t = useT();
   const width = useViewportWidth();
   const round = view.round;
   const hand = round?.myHand ?? [];
@@ -525,11 +528,11 @@ function HandArea({
           >
             {zapArmed ? (
               <>
-                Confirmer&nbsp;? <span className="text-sm font-medium">({total} pt — raté = +30)</span>
+                {t.table.zapConfirm(total)}
               </>
             ) : (
               <>
-                ZapZap&nbsp;! <span className="text-sm font-medium">({total} pt)</span>
+                {t.table.zap(total)}
               </>
             )}
           </button>
@@ -547,7 +550,7 @@ function HandArea({
             disabled={!interactive || selected.length === 0 || busy}
             className="flex-1 rounded-xl bg-volt-500 py-3 font-display text-lg font-bold text-storm-950 transition-transform active:scale-[0.98] disabled:opacity-40"
           >
-            Défausser
+            {t.table.discardAction}
           </button>
         )}
       </div>
@@ -578,25 +581,26 @@ function authorOf(view: GameView, playerId: string | undefined) {
  * n'existaient nulle part.
  */
 function TurnBanner({ view, myTurn, pending }: { view: GameView; myTurn: boolean; pending: Player | null }) {
+  const t = useT();
   const round = view.round;
   const myPose = round?.pendingDiscard?.playerId === view.you ? round.pendingDiscard : null;
 
   let text: string;
   if (view.phase === 'dealing') {
-    text = myTurn ? 'À vous de donner' : `${pending?.pseudo ?? '…'} choisit la donne`;
+    text = myTurn ? t.table.yourDeal : t.table.theirDeal(pending?.pseudo ?? '…');
   } else if (view.phase === 'round-scoring') {
-    text = 'Manche terminée';
+    text = t.table.roundOver;
   } else if (myTurn) {
-    text = round?.turnStep === 'discard' ? 'À vous — posez vos cartes' : 'À vous — piochez une carte';
+    text = round?.turnStep === 'discard' ? t.table.yourTurnDiscard : t.table.yourTurnDraw;
   } else {
-    text = `Au tour de ${pending?.pseudo ?? '…'}`;
+    text = t.table.theirTurn(pending?.pseudo ?? '…');
   }
 
   const hint =
     !myTurn && view.phase === 'playing'
       ? round?.turnStep === 'discard'
-        ? 'il défausse'
-        : 'il pioche'
+        ? t.table.heDiscards
+        : t.table.heDraws
       : null;
 
   return (
@@ -618,7 +622,7 @@ function TurnBanner({ view, myTurn, pending }: { view: GameView; myTurn: boolean
       {hint && <span className="shrink-0 text-xs font-medium text-paper-300">· {hint}</span>}
       {myPose && (
         <span className="flex shrink-0 items-center gap-1.5">
-          <span className="text-xs font-medium">vous avez posé</span>
+          <span className="text-xs font-medium">{t.table.youPlayedShort}</span>
           <MiniCards cards={myPose.combo.cards} size={11} />
         </span>
       )}
@@ -628,12 +632,13 @@ function TurnBanner({ view, myTurn, pending }: { view: GameView; myTurn: boolean
 
 /** Même porte de sortie qu'au salon : un message d'erreur seul enferme. */
 function Centered({ children, error }: { children: React.ReactNode; error?: string | null }) {
+  const t = useT();
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center text-paper-300">
       <p>{children}</p>
       {error && (
         <Link to="/" className="min-h-11 rounded-xl bg-storm-700 px-5 py-3 text-sm font-medium text-paper-100">
-          Retour à l’accueil
+          {t.table.backHome}
         </Link>
       )}
     </div>

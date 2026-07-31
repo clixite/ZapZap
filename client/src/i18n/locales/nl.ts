@@ -132,6 +132,23 @@ export const nl: Messages = {
     isEliminated: ', uit',
   },
 
+  hand: {
+    dealing: 'Er wordt gedeeld…',
+    yourHand: 'Je hand',
+    single: 'Losse kaart',
+    set: 'Set',
+    run: 'Reeks',
+    dropped: (kind, value) => `${kind} — ${value} punt${value > 1 ? 'en' : ''} kwijt`,
+    choose: 'Kies een kaart, een set of een reeks.',
+    worth: (n) => `Je hand is ${n} punten waard.`,
+    whyJoker: 'Een joker leg je alleen, of als paar jokers.',
+    whyFour: 'Hoogstens vier kaarten voor een carré.',
+    whyPair: 'Twee kaarten vormen alleen een paar bij dezelfde waarde.',
+    whySuit: 'Een reeks moet uit één kleur bestaan.',
+    whyAce: 'De aas is laag: A-2-3 wel, vrouw-heer-aas niet.',
+    whyGap: 'Er ontbreekt een kaart om de reeks te sluiten.',
+  },
+
   menu: {
     resume: 'Terug naar het spel',
     pause: 'Even pauzeren',
@@ -154,6 +171,8 @@ export const nl: Messages = {
   },
 
   deal: {
+    question: 'Hoeveel kaarten voor iedereen? Jij krijgt er evenveel.',
+    you: ' (jij)',
     yourChoice: 'Jij deelt',
     explain: 'Kort is een sprint. Lang geeft ruimte om op te bouwen.',
     waiting: (pseudo) => `${pseudo} kiest hoeveel kaarten er gedeeld worden…`,
@@ -161,6 +180,10 @@ export const nl: Messages = {
   },
 
   recap: {
+    youSucceeded: 'Geslaagd geroepen!',
+    youFailed: 'Geroepen en geklopt',
+    beatenBy: (n, pseudo) =>
+      `${n === 1 ? 'Eén speler zit' : `${n} spelers zitten`} even laag of lager. ${pseudo} krijgt er 30.`,
     stuck: 'Ronde vastgelopen',
     stuckDetail: 'Niemand riep: iedereen telt zijn hand.',
     success: (pseudo) => `${pseudo} komt ermee weg`,

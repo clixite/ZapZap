@@ -1,4 +1,5 @@
 import { cardId, handValue, type GameView } from '@zapzap/shared';
+import { useT } from '../i18n';
 import { CardFace } from './CardFace';
 
 /**
@@ -18,6 +19,7 @@ export interface RoundRecapProps {
 }
 
 export function RoundRecap({ view, onNext, canAdvance, busy }: RoundRecapProps) {
+  const t = useT();
   const round = view.round!;
   const call = round.zapCall;
   const scores = round.roundScores ?? {};
@@ -32,28 +34,23 @@ export function RoundRecap({ view, onNext, canAdvance, busy }: RoundRecapProps) 
       <header className="text-center">
         {call === null ? (
           <>
-            <h2 className="font-display text-xl font-bold">Manche bloquée</h2>
-            <p className="mt-1 text-sm text-paper-300">
-              Plus personne ne pouvait annoncer. Chacun compte sa main, sans pénalité.
-            </p>
+            <h2 className="font-display text-xl font-bold">{t.recap.stuck}</h2>
+            <p className="mt-1 text-sm text-paper-300">{t.recap.stuckDetail}</p>
           </>
         ) : call.success ? (
           <>
             <h2 className="zz-zap font-display text-2xl font-bold text-success">
-              {iCalled ? 'Annonce réussie !' : `${caller?.pseudo} passe`}
+              {iCalled ? t.recap.youSucceeded : t.recap.success(caller?.pseudo ?? '…')}
             </h2>
-            <p className="mt-1 text-sm text-paper-300">
-              {call.value} point{call.value > 1 ? 's' : ''} en main, personne en dessous.
-            </p>
+            <p className="mt-1 text-sm text-paper-300">{t.recap.successDetail(call.value)}</p>
           </>
         ) : (
           <>
             <h2 className="zz-zap font-display text-2xl font-bold text-danger">
-              {iCalled ? 'Annonce ratée' : `${caller?.pseudo} se fait contrer`}
+              {iCalled ? t.recap.youFailed : t.recap.failed(caller?.pseudo ?? '…')}
             </h2>
             <p className="mt-1 text-sm text-paper-300">
-              {call.beatenBy.length === 1 ? 'Un joueur fait' : `${call.beatenBy.length} joueurs font`} aussi bien
-              ou mieux. {caller?.pseudo} prend 30.
+              {t.recap.beatenBy(call.beatenBy.length, caller?.pseudo ?? '…')}
             </p>
           </>
         )}
@@ -77,11 +74,11 @@ export function RoundRecap({ view, onNext, canAdvance, busy }: RoundRecapProps) 
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-sm font-medium">
                     {player.avatar} {player.pseudo}
-                    {isCaller && <span className="ml-1 text-flash-300">annonce</span>}
-                    {beat && <span className="ml-1 text-success">contre</span>}
+                    {isCaller && <span className="ml-1 text-flash-300">{t.recap.announces}</span>}
+                    {beat && <span className="ml-1 text-success">{t.recap.counters}</span>}
                   </span>
                   <span className="shrink-0 text-sm tabular-nums">
-                    <span className="text-paper-300">{handValue(hand)} en main →</span>{' '}
+                    <span className="text-paper-300">{t.recap.inHand(handValue(hand))}</span>{' '}
                     <strong className={scores[player.id] > 0 ? 'text-danger' : 'text-success'}>
                       +{scores[player.id] ?? 0}
                     </strong>
@@ -89,7 +86,7 @@ export function RoundRecap({ view, onNext, canAdvance, busy }: RoundRecapProps) 
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {hand.length === 0 ? (
-                    <span className="text-xs text-paper-300">Main vide</span>
+                    <span className="text-xs text-paper-300">{t.recap.emptyHand}</span>
                   ) : (
                     hand.map((card) => <CardFace key={cardId(card)} card={card} width={30} />)
                   )}
@@ -113,7 +110,7 @@ export function RoundRecap({ view, onNext, canAdvance, busy }: RoundRecapProps) 
           disabled={!canAdvance || busy}
           className="w-full rounded-xl bg-volt-500 py-3 font-display text-lg font-bold text-storm-950 transition-transform active:scale-[0.98] disabled:opacity-40"
         >
-          {canAdvance ? 'Manche suivante' : 'En attente de l’hôte…'}
+          {canAdvance ? t.recap.next : t.recap.waitingHost}
         </button>
       </div>
     </div>
