@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { ActiveGame, OpenTable } from '@zapzap/shared';
 import { fetchActiveGames } from '../api';
+import { SignIn } from '../components/SignIn';
 import { request } from '../socket';
 import { useGame } from '../store/game';
-import { AVATAR_CHOICES, randomAvatar, useSession } from '../store/session';
+import { useSession } from '../store/session';
 
 /**
  * L'accueil.
@@ -297,84 +298,6 @@ export function Home() {
       </nav>
       <p className="text-center text-[10px] text-paper-300/60">{__APP_VERSION__}</p>
     </div>
-  );
-}
-
-/**
- * Le compte, en cinq secondes.
- *
- * Un pseudo, un avatar, et c'est tout. Demander une inscription pour une partie
- * de cartes, c'est perdre la moitié de la table avant le premier coup.
- */
-function SignIn({ onSubmit }: { onSubmit: (pseudo: string, avatar: string) => Promise<void> }) {
-  const [pseudo, setPseudo] = useState('');
-  const [avatar, setAvatar] = useState(randomAvatar);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  return (
-    <form
-      className="mx-auto flex min-h-full w-full max-w-sm flex-col justify-center gap-5 px-6 py-10"
-      onSubmit={async (e) => {
-        e.preventDefault();
-        if (!pseudo.trim()) return;
-        setBusy(true);
-        setError(null);
-        try {
-          await onSubmit(pseudo.trim(), avatar);
-        } catch (cause) {
-          // Le message vient de l'API quand elle en a un — « trop de comptes
-          // depuis cette connexion » se répare en attendant, « impossible de
-          // créer le compte » non : les confondre, c'est faire abandonner.
-          setError(cause instanceof Error ? cause.message : 'Impossible de créer le compte. Réessayez.');
-        } finally {
-          setBusy(false);
-        }
-      }}
-    >
-      <h1 className="text-center font-display text-4xl font-bold">
-        Zap<span className="text-volt-400">Zap</span>
-      </h1>
-      <p className="text-center text-sm text-paper-300">Choisissez un nom, on joue tout de suite.</p>
-
-      <input
-        value={pseudo}
-        onChange={(e) => setPseudo(e.target.value)}
-        placeholder="Votre pseudo"
-        maxLength={20}
-        autoFocus
-        aria-label="Votre pseudo"
-        className="rounded-xl bg-storm-800 px-4 py-3 text-center text-lg"
-      />
-
-      <div className="flex flex-wrap justify-center gap-2" role="radiogroup" aria-label="Votre avatar">
-        {AVATAR_CHOICES.map((choice) => (
-          <button
-            key={choice}
-            type="button"
-            role="radio"
-            aria-checked={avatar === choice}
-            aria-label={`Avatar ${choice}`}
-            onClick={() => setAvatar(choice)}
-            className={`flex h-11 w-11 items-center justify-center rounded-full text-xl transition-transform ${
-              avatar === choice ? 'bg-volt-500 scale-110' : 'bg-storm-800'
-            }`}
-          >
-            {choice}
-          </button>
-        ))}
-      </div>
-
-      {error && <p className="text-center text-sm text-danger">{error}</p>}
-
-      <button
-        type="submit"
-        disabled={busy || !pseudo.trim()}
-        className="rounded-xl bg-volt-500 py-3 font-display text-lg font-bold text-storm-950 disabled:opacity-40"
-      >
-        C’est parti
-      </button>
-    </form>
   );
 }
 

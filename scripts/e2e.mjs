@@ -287,6 +287,34 @@ story('rejoindre par code et par lien', async () => {
   await closePlayer(host);
 });
 
+story('invité sans compte', async () => {
+  // Le cas le plus coûteux de tous : celui qu'on invite est, par définition, un
+  // nouveau joueur. Le lien menait à un écran d'attente sans issue faute de
+  // compte — l'invitation ne servait à rien.
+  const host = await newPlayer('Inviteur');
+  await host.page.getByRole('button', { name: /Créer une table/ }).click();
+  await host.page.waitForURL(/\/salon\//, { timeout: 15_000 });
+  const code = codeOf(host.page);
+
+  const context = await browser.newContext({ ...phone, baseURL: BASE_URL });
+  const guest = await context.newPage();
+  await guest.goto(`/j/${code}`);
+  check(
+    await guest.getByText(`Vous êtes invité à la table`).isVisible({ timeout: 10_000 }).catch(() => false),
+    'le lien d’invitation propose de créer un compte, en nommant la table',
+  );
+  await capture(guest, 'invitation-sans-compte');
+  await guest.getByLabel('Votre pseudo').fill('Invité');
+  await guest.getByRole('button', { name: 'C’est parti' }).click();
+  await guest.getByText('Invitez vos amis').waitFor({ timeout: 15_000 });
+  check(codeOf(guest) === code, 'après inscription, il entre directement dans la table');
+  await host.page.waitForTimeout(800);
+  check(await host.page.getByText('Invité').isVisible(), 'l’hôte le voit arriver');
+
+  await context.close();
+  await closePlayer(host);
+});
+
 story('deux tables à la fois', async () => {
   // Le bug qui a motivé cette histoire : après avoir créé une deuxième table,
   // les robots et le coup d'envoi partaient encore sur la première.

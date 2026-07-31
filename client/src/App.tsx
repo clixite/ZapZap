@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, Route, BrowserRouter as Router, Routes, useParams } from 'react-router-dom';
-import { usePwa } from './pwa';
+import { SignIn } from './components/SignIn';
+import { isLaunching, usePwa } from './pwa';
 import { Home } from './screens/Home';
 import { Lobby } from './screens/Lobby';
 import { Table } from './screens/Table';
@@ -37,17 +38,22 @@ export function App() {
   }, [restore]);
 
   /*
-   * La nouvelle version s'installe d'elle-même dès que c'est sans conséquence.
+   * La nouvelle version s'installe d'elle-même.
    *
    * Demander « voulez-vous recharger ? » revenait à faire arbitrer au joueur un
    * détail d'installation dont il ne peut rien savoir — et à laisser tourner des
    * versions anciennes chez ceux qui répondent non, ou qui ne lisent pas le
-   * bandeau. Hors partie, le rechargement est invisible : on le fait. En pleine
-   * manche, on ne touche à rien, et cet effet se redéclenchera à la fin de la
-   * partie, quand `inGame` retombera.
+   * bandeau.
+   *
+   * **Au lancement, c'est sans condition** : c'est précisément le moment où l'on
+   * veut la certitude de tourner sur la dernière version, et il n'y a rien à
+   * perdre — pas de sélection de cartes en cours, pas de tour entamé. Passé les
+   * premières secondes, la prudence revient : une version qui arrive en pleine
+   * manche attend la fin de la partie, et cet effet se redéclenche quand
+   * `inGame` retombe.
    */
   useEffect(() => {
-    if (updateReady && !inGame) applyUpdate();
+    if (updateReady && (isLaunching() || !inGame)) applyUpdate();
   }, [updateReady, inGame, applyUpdate]);
 
   return (
@@ -81,12 +87,47 @@ export function App() {
       <Suspense fallback={<div className="h-full" />}>
           <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/salon/:code" element={<Lobby />} />
-          <Route path="/table/:code" element={<Table />} />
-          <Route path="/fin/:code" element={<GameOver />} />
+          <Route
+            path="/salon/:code"
+            element={
+              <RequireAccount>
+                <Lobby />
+              </RequireAccount>
+            }
+          />
+          <Route
+            path="/table/:code"
+            element={
+              <RequireAccount>
+                <Table />
+              </RequireAccount>
+            }
+          />
+          <Route
+            path="/fin/:code"
+            element={
+              <RequireAccount>
+                <GameOver />
+              </RequireAccount>
+            }
+          />
           <Route path="/regles" element={<Rules />} />
-          <Route path="/historique" element={<History />} />
-          <Route path="/profil" element={<Profile />} />
+          <Route
+            path="/historique"
+            element={
+              <RequireAccount>
+                <History />
+              </RequireAccount>
+            }
+          />
+          <Route
+            path="/profil"
+            element={
+              <RequireAccount>
+                <Profile />
+              </RequireAccount>
+            }
+          />
         {/* L'atterrissage du lien magique reçu par e-mail. */}
           <Route path="/verify" element={<VerifyEmail />} />
         {/* Lien d'invitation court : /j/CODE ouvre directement le salon. */}
@@ -101,4 +142,43 @@ export function App() {
 function InviteLink() {
   const { code } = useParams<{ code: string }>();
   return <Navigate to={`/salon/${(code ?? '').toUpperCase()}`} replace />;
+}
+
+/**
+ * Le passage obligé par le compte — et le point de rupture de l'invitation.
+ *
+ * Un ami reçoit le lien par WhatsApp, le touche, arrive sur `/salon/ABCD` et…
+ * n'a pas de compte. L'écran attendait une session qui ne viendrait jamais et
+ * affichait « Connexion au salon… » indéfiniment : l'invitation ne menait
+ * nulle part, et c'est celui qu'on invite — donc le nouveau joueur, celui qu'on
+ * ne peut pas se permettre de perdre — qui restait dehors.
+ *
+ * L'inscription se fait donc **sur place**, sans détour par l'accueil et sans
+ * perdre le code : le formulaire s'affiche à la place de l'écran demandé, en
+ * disant à quelle table on est attendu, puis l'écran s'ouvre de lui-même — la
+ * route n'a pas changé, seul le compte manquait.
+ */
+function RequireAccount({ children }: { children: React.ReactNode }) {
+  const { user, loading, signIn } = useSession();
+  const { code } = useParams<{ code: string }>();
+
+  if (loading) {
+    return <div className="flex h-full items-center justify-center text-paper-300">Un instant…</div>;
+  }
+  if (user) return <>{children}</>;
+
+  return (
+    <SignIn
+      onSubmit={signIn}
+      intro={
+        code ? (
+          <p className="text-center text-sm text-paper-300">
+            Vous êtes invité à la table{' '}
+            <strong className="font-display tracking-widest text-volt-300">{code}</strong>. Choisissez un
+            nom et entrez.
+          </p>
+        ) : undefined
+      }
+    />
+  );
 }
