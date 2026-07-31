@@ -58,6 +58,7 @@ function ensureContext(): AudioContext | null {
  */
 const SAMPLE_URLS = {
   zapzap: '/sounds/zapzap.mp3',
+  launch: '/sounds/launch.mp3',
 } as const;
 
 export type SampleName = keyof typeof SAMPLE_URLS;
@@ -90,15 +91,30 @@ function playSample(name: SampleName, volume = 0.9): boolean {
   return true;
 }
 
-/** À appeler une fois au démarrage : arme le déverrouillage sur premier geste. */
+/** Le générique a-t-il déjà retenti dans cette session ? */
+let launched = false;
+
+/**
+ * À appeler une fois au démarrage : arme le déverrouillage sur premier geste.
+ *
+ * Aucun navigateur ne laisse une page émettre du son avant que l'utilisateur ne
+ * l'ait touchée — c'est une protection contre les publicités sonores, et elle
+ * s'applique aussi à nous. Le générique part donc au **premier geste**, pas au
+ * chargement : en pratique, le tout premier appui sur l'écran d'accueil.
+ */
 export function initAudio(): void {
   if (typeof window === 'undefined') return;
   const unlock = () => {
     unlocked = true;
     ensureContext();
     // Le décodage demande un contexte audio vivant : on ne peut donc précharger
-    // qu'après le premier geste. L'annonce arrive bien plus tard dans la partie,
-    // le son est prêt largement à temps.
+    // qu'après le premier geste.
+    void loadSample('launch').then(() => {
+      if (!launched && !isMuted()) {
+        launched = true;
+        playSample('launch', 0.85);
+      }
+    });
     void loadSample('zapzap');
   };
   window.addEventListener('pointerdown', unlock, { once: true, passive: true });
