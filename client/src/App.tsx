@@ -27,14 +27,28 @@ export function App() {
   const user = useSession((s) => s.user);
   const updateReady = usePwa((s) => s.updateReady);
   const applyUpdate = usePwa((s) => s.apply);
-  // Le bandeau de mise à jour attend la fin de la manche : recharger en plein
-  // tour, même volontairement, ferait perdre la sélection en cours.
+  // La mise à jour attend la fin de la manche : recharger en plein tour ferait
+  // perdre la sélection de cartes et le tour de jeu.
   const view = useView();
   const inGame = view !== null && view.phase !== 'lobby' && view.phase !== 'game-over';
 
   useEffect(() => {
     void restore();
   }, [restore]);
+
+  /*
+   * La nouvelle version s'installe d'elle-même dès que c'est sans conséquence.
+   *
+   * Demander « voulez-vous recharger ? » revenait à faire arbitrer au joueur un
+   * détail d'installation dont il ne peut rien savoir — et à laisser tourner des
+   * versions anciennes chez ceux qui répondent non, ou qui ne lisent pas le
+   * bandeau. Hors partie, le rechargement est invisible : on le fait. En pleine
+   * manche, on ne touche à rien, et cet effet se redéclenchera à la fin de la
+   * partie, quand `inGame` retombera.
+   */
+  useEffect(() => {
+    if (updateReady && !inGame) applyUpdate();
+  }, [updateReady, inGame, applyUpdate]);
 
   return (
     <Router>
@@ -51,14 +65,17 @@ export function App() {
           Reconnexion…
         </div>
       )}
-      {/* La nouvelle version attend le geste du joueur — jamais en plein tour. */}
-      {updateReady && !inGame && (
+      {/*
+        En pleine partie, la version prête ne s'installe pas : on la signale, et
+        celui qui préfère ne pas attendre la fin peut la prendre tout de suite.
+      */}
+      {updateReady && inGame && (
         <button
           type="button"
           onClick={applyUpdate}
           className="fixed inset-x-4 top-2 z-50 rounded-xl bg-volt-500 px-4 py-3 text-sm font-bold text-storm-950 shadow-lg"
         >
-          Nouvelle version disponible — toucher pour recharger
+          Nouvelle version prête — elle s’installera après la partie
         </button>
       )}
       <Suspense fallback={<div className="h-full" />}>
