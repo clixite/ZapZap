@@ -493,7 +493,7 @@ story('partie complète jusqu’à la revanche', async () => {
   }
   const { player } = await tableWithBots('Marathon', 3);
   const { page } = player;
-  const deadline = Date.now() + 6 * 60_000;
+  const deadline = Date.now() + 10 * 60_000;
   let zapSeen = false;
   let recapSeen = false;
 
@@ -535,7 +535,25 @@ story('partie complète jusqu’à la revanche', async () => {
     }
 
     if (await shown(page.getByText('À vous — posez vos cartes'))) {
-      await tap(page.locator('[aria-label="Votre main"] [data-card]').first());
+      /*
+       * Poser le plus gros ensemble possible, pas la première carte venue.
+       *
+       * On repioche toujours exactement une carte : lâcher une carte à la fois
+       * laisse la main à taille constante, et le scénario ne descendait jamais
+       * sous le seuil d'annonce — la partie n'avançait pas et ZapZap n'était
+       * jamais testé. Les cartes de même rang forment un ensemble légal, donc
+       * la main perd `n − 1` cartes d'un coup.
+       */
+      const ids = await page.locator('[aria-label="Votre main"] [data-card]').evaluateAll((els) =>
+        els.map((el) => el.getAttribute('data-card') ?? ''),
+      );
+      const byRank = new Map();
+      for (const id of ids) {
+        const rank = id.slice(1);
+        byRank.set(rank, [...(byRank.get(rank) ?? []), id]);
+      }
+      const best = [...byRank.values()].sort((a, b) => b.length - a.length)[0] ?? [ids[0]];
+      for (const id of best) await tap(page.locator(`[aria-label="Votre main"] [data-card="${id}"]`));
       await tap(page.getByRole('button', { name: 'Défausser' }));
       await page.waitForTimeout(500);
       await tap(page.getByLabel(/Piocher à l’aveugle/));

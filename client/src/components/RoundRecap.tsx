@@ -26,7 +26,9 @@ export function RoundRecap({ view, onNext, canAdvance, busy }: RoundRecapProps) 
   const iCalled = call?.playerId === view.you;
 
   return (
-    <div className="zz-fade-up flex flex-col gap-4 px-4 py-5">
+    // `pt-14` : la sortie de table occupe le coin haut gauche du tapis, et la
+    // première main abattue passait dessous.
+    <div className="zz-fade-up flex flex-col gap-4 px-4 pt-14 pb-5">
       <header className="text-center">
         {call === null ? (
           <>
