@@ -1,6 +1,6 @@
 {
   "name": "zapzap",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "private": true,
   "description": "Jeu de ZapZap multijoueur : créez une partie, partagez un code à 4 lettres, jouez chacun depuis son téléphone.",
   "author": "Nicolas Simon",

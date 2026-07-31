@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, Route, BrowserRouter as Router, Routes, useParams } from 'react-router-dom';
 import { SignIn } from './components/SignIn';
+import { useT } from './i18n';
 import { isLaunching, usePwa } from './pwa';
 import { Home } from './screens/Home';
 import { Lobby } from './screens/Lobby';
@@ -23,6 +24,7 @@ const Rules = lazy(() => import('./screens/Rules').then((m) => ({ default: m.Rul
 const VerifyEmail = lazy(() => import('./screens/VerifyEmail').then((m) => ({ default: m.VerifyEmail })));
 
 export function App() {
+  const t = useT();
   const restore = useSession((s) => s.restore);
   const connected = useSession((s) => s.connected);
   const user = useSession((s) => s.user);
@@ -68,7 +70,7 @@ export function App() {
           className="fixed inset-x-0 top-0 z-50 bg-flash-400 py-1 text-center text-xs font-medium text-storm-950"
           role="status"
         >
-          Reconnexion…
+          {t.app.reconnecting}
         </div>
       )}
       {/*
@@ -81,7 +83,7 @@ export function App() {
           onClick={applyUpdate}
           className="fixed inset-x-4 top-2 z-50 rounded-xl bg-volt-500 px-4 py-3 text-sm font-bold text-storm-950 shadow-lg"
         >
-          Nouvelle version prête — elle s’installera après la partie
+          {t.app.updateReady}
         </button>
       )}
       <Suspense fallback={<div className="h-full" />}>
@@ -159,11 +161,12 @@ function InviteLink() {
  * route n'a pas changé, seul le compte manquait.
  */
 function RequireAccount({ children }: { children: React.ReactNode }) {
+  const t = useT();
   const { user, loading, signIn } = useSession();
   const { code } = useParams<{ code: string }>();
 
   if (loading) {
-    return <div className="flex h-full items-center justify-center text-paper-300">Un instant…</div>;
+    return <div className="flex h-full items-center justify-center text-paper-300">{t.app.loading}</div>;
   }
   if (user) return <>{children}</>;
 
@@ -172,11 +175,7 @@ function RequireAccount({ children }: { children: React.ReactNode }) {
       onSubmit={signIn}
       intro={
         code ? (
-          <p className="text-center text-sm text-paper-300">
-            Vous êtes invité à la table{' '}
-            <strong className="font-display tracking-widest text-volt-300">{code}</strong>. Choisissez un
-            nom et entrez.
-          </p>
+          <p className="text-center text-sm text-paper-300">{t.signIn.invited(code)}</p>
         ) : undefined
       }
     />

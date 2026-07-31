@@ -79,8 +79,23 @@ const browser = await chromium.launch(existsSync(PRESET_CHROME) ? { executablePa
  * Contexte séparé et non simple onglet : le compte invité vit dans le stockage
  * local, deux joueurs dans un même contexte seraient la même personne.
  */
+/**
+ * Les vérifications sont écrites en français : on fixe la langue avant le
+ * premier rendu, sinon un navigateur configuré autrement ferait échouer chaque
+ * assertion de texte pour une bonne raison — l'application est traduite.
+ */
+async function newContext() {
+  const context = await browser.newContext({ ...phone, baseURL: BASE_URL, locale: 'fr-BE' });
+  // Seulement si rien n'est encore choisi : sinon ce script réécrirait « fr »
+  // à chaque navigation et le changement de langue ne survivrait à rien.
+  await context.addInitScript(() => {
+    if (localStorage.getItem('zapzap.locale') === null) localStorage.setItem('zapzap.locale', 'fr');
+  });
+  return context;
+}
+
 async function newPlayer(pseudo) {
-  const context = await browser.newContext({ ...phone, baseURL: BASE_URL });
+  const context = await newContext();
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -141,7 +156,7 @@ const story = (name, fn) => stories.push({ name, fn });
 /* ------------------------------------------------------------------ */
 
 story('compte invité', async () => {
-  const context = await browser.newContext({ ...phone, baseURL: BASE_URL });
+  const context = await newContext();
   const page = await context.newPage();
   await page.goto('/');
   check(await page.getByLabel('Votre pseudo').isVisible(), 'l’inscription ne demande qu’un pseudo');
@@ -165,6 +180,44 @@ story('compte invité', async () => {
   await page.getByRole('button', { name: /Jouer maintenant/ }).waitFor({ timeout: 15_000 });
   check(true, 'le compte survit au rechargement');
   await context.close();
+});
+
+story('changer de langue', async () => {
+  const player = await newPlayer('Polyglotte');
+  const { page } = player;
+  await page.goto('/profil');
+  await page.getByRole('button', { name: /Langue/ }).click();
+  await page.locator('[data-locale="nl"]').click();
+  await page.waitForTimeout(600);
+  check(
+    (await page.locator('html').getAttribute('lang')) === 'nl',
+    'la langue du document suit le choix — les lecteurs d’écran changent de voix',
+  );
+  await page.goto('/');
+  check(
+    await page.getByRole('button', { name: /Nu spelen/ }).isVisible({ timeout: 10_000 }).catch(() => false),
+    'l’accueil est traduit en néerlandais',
+  );
+  await capture(page, 'accueil-nl');
+
+  // Et le choix survit au rechargement : sinon il faudrait le refaire à chaque
+  // ouverture, ce qui revient à ne pas l'avoir.
+  await page.reload();
+  check(
+    await page.getByRole('button', { name: /Nu spelen/ }).isVisible({ timeout: 10_000 }).catch(() => false),
+    'le choix de langue survit au rechargement',
+  );
+
+  await page.goto('/profil');
+  await page.getByRole('button', { name: /Taal/ }).click();
+  await page.locator('[data-locale="fr"]').click();
+  await page.waitForTimeout(600);
+  await page.goto('/');
+  check(
+    await page.getByRole('button', { name: /Jouer maintenant/ }).isVisible({ timeout: 10_000 }).catch(() => false),
+    'on revient au français d’un geste',
+  );
+  await closePlayer(player);
 });
 
 story('accueil', async () => {
@@ -304,7 +357,7 @@ story('invité sans compte', async () => {
   await host.page.waitForURL(/\/salon\//, { timeout: 15_000 });
   const code = codeOf(host.page);
 
-  const context = await browser.newContext({ ...phone, baseURL: BASE_URL });
+  const context = await newContext();
   const guest = await context.newPage();
   await guest.goto(`/j/${code}`);
   check(
@@ -546,7 +599,7 @@ story('règles, historique, profil', async () => {
 });
 
 story('manifeste et hors-ligne', async () => {
-  const context = await browser.newContext({ ...phone, baseURL: BASE_URL });
+  const context = await newContext();
   const manifest = await context.request.get('/manifest.webmanifest');
   check(manifest.ok(), 'le manifeste est servi');
   const body = manifest.ok() ? await manifest.json() : {};

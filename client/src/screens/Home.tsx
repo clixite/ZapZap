@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { ActiveGame, OpenTable } from '@zapzap/shared';
 import { fetchActiveGames } from '../api';
 import { SignIn } from '../components/SignIn';
+import { useT } from '../i18n';
 import { request } from '../socket';
 import { useGame } from '../store/game';
 import { useSession } from '../store/session';
@@ -32,6 +33,7 @@ import { useSession } from '../store/session';
  * pas passer par un salon vide qu'il faut comprendre avant de jouer.
  */
 export function Home() {
+  const t = useT();
   const { user, loading, signIn } = useSession();
   const navigate = useNavigate();
   const clear = useGame((s) => s.clear);
@@ -78,7 +80,7 @@ export function Home() {
     };
   }, [user]);
 
-  if (loading) return <Centered>Un instant…</Centered>;
+  if (loading) return <Centered>{t.app.loading}</Centered>;
   if (!user) return <SignIn onSubmit={signIn} />;
 
   const go = async (event: 'room:create' | 'room:quickMatch') => {
@@ -148,11 +150,11 @@ export function Home() {
           <h1 className="font-display text-4xl font-bold tracking-tight">
             Zap<span className="text-volt-400">Zap</span>
           </h1>
-          <p className="mt-1 text-sm text-paper-300">Défaussez, annoncez, le plus bas gagne.</p>
+          <p className="mt-1 text-sm text-paper-300">{t.home.tagline}</p>
         </div>
         <Link
           to="/profil"
-          aria-label={`Mon profil — ${user.pseudo}`}
+          aria-label={t.home.myProfile(user.pseudo)}
           className="flex shrink-0 items-center gap-2 rounded-full bg-storm-800 py-1.5 pr-3 pl-1.5"
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-storm-700 text-lg">
@@ -168,7 +170,7 @@ export function Home() {
 
       {myGames !== null && myGames.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="text-xs font-medium tracking-wide text-paper-300 uppercase">Mes parties en cours</h2>
+          <h2 className="text-xs font-medium tracking-wide text-paper-300 uppercase">{t.home.ongoing}</h2>
           {myGames.map((game) => (
             <button
               key={game.code}
@@ -181,17 +183,17 @@ export function Home() {
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium">
                   {game.myTurn ? (
-                    <span className="text-volt-300">⚡ À vous de jouer</span>
+                    <span className="text-volt-300">{t.home.yourTurn}</span>
                   ) : game.waitingFor ? (
-                    `En attente de ${game.waitingFor}`
+                    t.home.waitingFor(game.waitingFor)
                   ) : game.phase === 'lobby' ? (
-                    'Au salon'
+                    t.home.inLobby
                   ) : (
-                    'Manche terminée'
+                    t.home.roundOver
                   )}
                 </span>
                 <span className="block text-xs text-paper-300">
-                  Manche {game.round} · {game.playersCount} joueurs · {game.myScore}/100 pt
+                  {t.home.gameLine(game.round, game.playersCount, game.myScore)}
                 </span>
               </span>
               <span className="shrink-0 font-display text-sm font-bold tracking-widest text-paper-300">
@@ -210,17 +212,16 @@ export function Home() {
         className="rounded-2xl bg-volt-500 px-4 py-4 text-left transition-transform active:scale-[0.98] disabled:opacity-50"
       >
         <span className="flex items-center gap-2 font-display text-2xl font-bold text-storm-950">
-          <span aria-hidden="true">⚡</span> Jouer maintenant
+          <span aria-hidden="true">⚡</span> {t.home.playNow}
         </span>
         <span className="mt-0.5 block text-xs font-medium text-storm-800">
-          On vous place à une table ouverte. S’il n’y en a pas, on en ouvre une et les autres vous
-          rejoignent.
+          {t.home.playNowDetail}
         </span>
       </button>
 
       {/* 3. Entre amis — inviter et être invité, côte à côte. */}
       <section className="flex flex-col gap-2 rounded-2xl bg-storm-900/70 p-3">
-        <h2 className="text-xs font-medium tracking-wide text-paper-300 uppercase">Entre amis</h2>
+        <h2 className="text-xs font-medium tracking-wide text-paper-300 uppercase">{t.home.withFriends}</h2>
 
         <button
           type="button"
@@ -228,9 +229,9 @@ export function Home() {
           disabled={busy}
           className="rounded-xl bg-storm-700 px-4 py-3 text-left transition-transform active:scale-[0.99] disabled:opacity-50"
         >
-          <span className="font-display text-base font-bold">Créer une table</span>
+          <span className="font-display text-base font-bold">{t.home.createTable}</span>
           <span className="mt-0.5 block text-xs text-paper-300">
-            Vous recevez un code à envoyer par WhatsApp ou SMS — et vous choisissez les règles.
+            {t.home.createTableDetail}
           </span>
         </button>
 
@@ -242,7 +243,7 @@ export function Home() {
           }}
         >
           <label htmlFor="join-code" className="font-display text-base font-bold">
-            On vous a envoyé un code&nbsp;?
+            {t.home.gotCode}
           </label>
           <div className="flex gap-2">
             <input
@@ -262,7 +263,7 @@ export function Home() {
               disabled={busy || code.trim().length < 4}
               className="shrink-0 rounded-lg bg-volt-500 px-5 font-display font-bold text-storm-950 disabled:opacity-30"
             >
-              Entrer
+              {t.home.enter}
             </button>
           </div>
         </form>
@@ -275,7 +276,7 @@ export function Home() {
         disabled={busy}
         className="min-h-11 rounded-xl border border-storm-600 py-3 text-sm font-medium text-paper-100 transition-transform active:scale-[0.99] disabled:opacity-50"
       >
-        S’entraîner contre deux robots
+        {t.home.againstBots}
       </button>
 
       {error && <p className="rounded-xl bg-danger/20 px-4 py-2 text-sm text-danger">{error}</p>}
@@ -283,7 +284,7 @@ export function Home() {
       {tables.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="text-xs font-medium tracking-wide text-paper-300 uppercase">
-            Tables ouvertes en ce moment
+            {t.home.openTables}
           </h2>
           {tables.map((table) => (
             <button
@@ -297,7 +298,7 @@ export function Home() {
                 <span className="text-sm">
                   {table.hostAvatar} {table.hostPseudo}
                 </span>
-                <span className="block text-xs text-paper-300">Table de {table.hostPseudo} · ouverte à tous</span>
+                <span className="block text-xs text-paper-300">{t.home.tableOf(table.hostPseudo)}</span>
               </span>
               <span className="shrink-0 rounded-full bg-storm-700 px-2 py-1 text-xs text-paper-100">
                 {table.playersCount}/{table.maxPlayers}
@@ -309,10 +310,10 @@ export function Home() {
 
       <nav className="mt-auto flex justify-center gap-4 pt-4 text-sm text-paper-300">
         <Link to="/regles" className="underline underline-offset-4">
-          Comment on joue
+          {t.home.howToPlay}
         </Link>
         <Link to="/historique" className="underline underline-offset-4">
-          Historique
+          {t.home.history}
         </Link>
       </nav>
       <p className="text-center text-[10px] text-paper-300/60">{__APP_VERSION__}</p>

@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { deleteAccount, requestMagicLink, updateProfile, uploadPhoto } from '../api';
+import { LocalePicker } from '../components/LocalePicker';
+import { useT } from '../i18n';
 import { toAvatarPhoto } from '../photo';
 import { AVATAR_CHOICES, useSession } from '../store/session';
 
@@ -13,6 +15,7 @@ import { AVATAR_CHOICES, useSession } from '../store/session';
  * temps parce qu'elle emporte l'historique avec elle.
  */
 export function Profile() {
+  const t = useT();
   const user = useSession((s) => s.user);
   const setUser = useSession((s) => s.setUser);
   const [pseudo, setPseudo] = useState(user?.pseudo ?? '');
@@ -85,11 +88,18 @@ export function Profile() {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 py-8">
       <header>
-        <Link to="/" className="text-sm text-paper-300 underline underline-offset-4">
-          ← Retour
+        <Link to="/" className="inline-flex min-h-11 items-center text-sm text-paper-300 underline underline-offset-4">
+          {t.profile.back}
         </Link>
-        <h1 className="mt-3 font-display text-3xl font-bold">Votre profil</h1>
+        <h1 className="mt-3 font-display text-3xl font-bold">{t.profile.title}</h1>
       </header>
+
+      {/*
+        La langue vit ici, en haut du profil : c'est l'écran où l'on va quand
+        quelque chose ne va pas dans son compte, et une interface qu'on ne lit
+        pas est le premier de ces problèmes.
+      */}
+      <LocalePicker />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center gap-4">
