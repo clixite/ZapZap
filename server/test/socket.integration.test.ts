@@ -37,6 +37,7 @@ beforeEach(async () => {
     botDelayMs: 1,
     turnTimeoutMs: 50,
     disconnectGraceMs: 40,
+    scoringAutoAdvanceMs: 20,
   });
   registerHandlers({ io: ioServer, rooms, users: new UsersRepo(db) });
   await new Promise<void>((resolve) => http.listen(0, resolve));
@@ -855,5 +856,64 @@ describe('persistance', () => {
     room!.attach(alice.id, fakeSocket as never);
     expect(room!.state.players.find((p) => p.id === alice.id)!.connected).toBe(true);
     revived.stop();
+  });
+});
+
+describe('la pause ne bloque pas la table', () => {
+  /**
+   * Se mettre en pause, c'est laisser un robot jouer à sa place — y compris
+   * pour relancer la manche suivante.
+   *
+   * En temps réel, seul l'hôte peut relancer depuis l'écran de décompte. Tant
+   * que le robot ne couvrait que le tour de jeu, un hôte en pause laissait la
+   * table figée sur les scores, sans aucune issue, jusqu'à expiration : mettre
+   * sa place en pause arrêtait la partie de tout le monde.
+   */
+
+  /** Amène la table au décompte de manche, hôte compris. */
+  function tableAuDecompte(manager: RoomManager) {
+    const room = manager.create({ id: 'u_a', pseudo: 'a', avatar: '⚡' });
+    room.apply({ type: 'ADD_PLAYER', player: { id: 'u_b', pseudo: 'b', avatar: '⚡' } });
+    room.apply({ type: 'START_GAME', playerId: 'u_a' });
+    const dealer = room.state.players.find((p) => p.seat === room.state.round!.dealerSeat)!;
+    room.apply({ type: 'DEAL', playerId: dealer.id, handSize: 3 });
+
+    // Une annonce clôt la manche : on force une main gagnante à celui qui joue.
+    const me = room.state.players.find((p) => p.seat === room.state.round!.currentSeat)!;
+    room.state.round!.hands[me.id] = [{ suit: 'S', rank: 1 }];
+    room.apply({ type: 'CALL_ZAP', playerId: me.id });
+    return room;
+  }
+
+  it('l’hôte en pause n’immobilise plus l’écran des scores', async () => {
+    const room = tableAuDecompte(rooms);
+    expect(room.state.phase).toBe('round-scoring');
+    const roundBefore = room.state.roundIndex;
+
+    room.apply({ type: 'SET_AWAY', playerId: room.state.hostId, away: true });
+    await new Promise((r) => setTimeout(r, 120));
+
+    // La partie a repris son cours : manche suivante, ou fin si quelqu'un a
+    // dépassé 100 — dans les deux cas, on n'est plus coincé sur le décompte.
+    expect(room.state.phase).not.toBe('round-scoring');
+    if (room.state.phase === 'dealing') expect(room.state.roundIndex).toBe(roundBefore + 1);
+  });
+
+  it('mais un hôte présent garde la main sur le rythme', async () => {
+    // L'écran de décompte est celui qu'on lit : tant qu'un humain tient la
+    // barre, la table lit ses scores aussi longtemps qu'elle veut.
+    const room = tableAuDecompte(rooms);
+    expect(room.state.phase).toBe('round-scoring');
+    await new Promise((r) => setTimeout(r, 120));
+    expect(room.state.phase).toBe('round-scoring');
+  });
+
+  it('et le retour de l’hôte annule l’enchaînement automatique', async () => {
+    const room = tableAuDecompte(rooms);
+    room.apply({ type: 'SET_AWAY', playerId: room.state.hostId, away: true });
+    // Il reprend sa place avant l'échéance : c'est de nouveau à lui de décider.
+    room.apply({ type: 'SET_AWAY', playerId: room.state.hostId, away: false });
+    await new Promise((r) => setTimeout(r, 120));
+    expect(room.state.phase).toBe('round-scoring');
   });
 });

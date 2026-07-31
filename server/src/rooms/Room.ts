@@ -38,6 +38,7 @@ export interface RoomOptions {
   botDelayMs?: number;
   turnTimeoutMs?: number;
   disconnectGraceMs?: number;
+  scoringAutoAdvanceMs?: number;
 }
 
 /**
@@ -334,8 +335,71 @@ export class Room {
     return isBotId(player.id) || player.away === true;
   }
 
+  /**
+   * Qui doit relancer la manche suivante, quand personne ne le fait.
+   *
+   * Le décompte de manche n'attend **personne** au sens du tour : ni donneur ni
+   * joueur actif. `pendingPlayer` y rend donc `null`, et ni le robot ni le
+   * minuteur ne s'armaient. Or en temps réel, seul l'hôte peut relancer : dès
+   * qu'il se met en pause, la table restait figée sur l'écran des scores, sans
+   * aucune issue, jusqu'à ce qu'elle expire. Se mettre en pause revenait à
+   * arrêter la partie de tout le monde — l'exact contraire de ce que la pause
+   * promet, puisqu'un robot est censé jouer à votre place.
+   *
+   * Rend le joueur au nom duquel le serveur doit relancer, ou `null` quand un
+   * humain est en mesure de le faire lui-même — c'est alors à lui de donner le
+   * rythme, et la table lit ses scores tant qu'elle veut.
+   */
+  private scoringAdvancer(): Player | null {
+    if (this.state.phase !== 'round-scoring') return null;
+
+    if (this.state.pace === 'async') {
+      // Chacun peut relancer : la table n'est bloquée que si plus personne
+      // n'est en mesure de le faire.
+      const awake = this.state.players.filter(
+        (p) => !p.eliminated && !isBotId(p.id) && !p.away,
+      );
+      if (awake.length > 0) return null;
+      return this.state.players.find((p) => !p.eliminated) ?? null;
+    }
+
+    // En direct, la barre est à l'hôte, et à lui seul.
+    const host = this.state.players.find((p) => p.id === this.state.hostId);
+    if (!host) return null;
+    return this.playsItself(host) || host.eliminated ? host : null;
+  }
+
   private scheduleAutoplay(): void {
     if (this.autoplayTimer) return;
+
+    /*
+     * Le décompte s'enchaîne tout seul quand celui qui devrait le faire n'est
+     * pas là. Traité avant le tour de jeu parce que c'est une autre phase, avec
+     * un autre rythme : on laisse le temps de lire les scores.
+     */
+    const advancer = this.scoringAdvancer();
+    if (advancer) {
+      if (this.state.pace === 'async' && this.connectedCount() === 0) return;
+      this.autoplayTimer = setTimeout(() => {
+        this.autoplayTimer = null;
+        if (this.disposed) return;
+        /*
+         * On redemande au dernier moment plutôt que de croire la photo prise
+         * six secondes plus tôt : l'hôte a pu reprendre sa place entre-temps,
+         * et lui arracher l'écran des scores au moment où il revient dessus
+         * serait exactement ce qu'on cherchait à éviter.
+         */
+        const still = this.scoringAdvancer();
+        if (!still) return;
+        try {
+          this.apply({ type: 'NEXT_ROUND', playerId: still.id });
+        } catch (error) {
+          console.error(`[room ${this.code}] enchaînement de manche impossible`, error);
+        }
+      }, this.options.scoringAutoAdvanceMs ?? config.scoringAutoAdvanceMs);
+      return;
+    }
+
     const pending = this.pendingPlayer();
     if (!pending || !this.playsItself(pending)) return;
     /*

@@ -67,6 +67,19 @@ export const config = {
   botDelayMs: num('BOT_DELAY_MS', 800),
 
   /**
+   * Délai avant que le décompte de manche ne s'enchaîne tout seul.
+   *
+   * Bien plus long que le délai d'un coup : l'écran de décompte est celui qu'on
+   * lit — qui a annoncé, qui l'a contré, ce que chacun prend. L'enchaîner au
+   * rythme d'un robot le ferait disparaître avant que la table ait compris ce
+   * qui vient de se passer.
+   *
+   * Il ne sert que quand celui qui devrait relancer n'est pas là pour le faire.
+   * Tant qu'un humain tient la barre, c'est lui qui donne le rythme.
+   */
+  scoringAutoAdvanceMs: num('SCORING_AUTO_ADVANCE_MS', 6_000),
+
+  /**
    * Temps laissé à un joueur avant que son tour ne se joue tout seul.
    *
    * En temps réel seulement : en asynchrone, personne n'est jamais joué à sa
