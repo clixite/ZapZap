@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CARD_RATIO, STATUS_H, computeLayout } from '../src/components/tableLayout';
+import { CARD_RATIO, CORNER_H, CORNER_W, STATUS_H, computeLayout } from '../src/components/tableLayout';
 
 /**
  * La géométrie du tapis, verrouillée.
@@ -39,6 +39,30 @@ describe('sièges', () => {
         expect(seat.y + layout.seatH / 2).toBeLessThanOrEqual(h + 1);
       }
     });
+  });
+
+  it('ne passe jamais sous les boutons de coin', () => {
+    // La sortie de table vit en haut à gauche, les réactions en haut à droite :
+    // un siège qui passe dessous devient à moitié cliquable. Soit il les
+    // contourne en largeur, soit toute la rangée descend dessous.
+    everyCase((w, h, opp) => {
+      const layout = computeLayout(w, h, opp);
+      for (const seat of layout.seats) {
+        const left = seat.x - layout.seatW / 2;
+        const right = seat.x + layout.seatW / 2;
+        const top = seat.y - layout.seatH / 2;
+        const clearsHorizontally = left >= CORNER_W - 1 && right <= w - CORNER_W + 1;
+        const clearsVertically = top >= CORNER_H - 1;
+        expect(clearsHorizontally || clearsVertically).toBe(true);
+      }
+    });
+  });
+
+  it('descend la rangée seulement quand elle ne peut pas contourner', () => {
+    // Écran large, deux adversaires : la place ne manque pas, on contourne.
+    expect(computeLayout(414, 840, 2).seatsBelowCorners).toBe(false);
+    // Petit écran, cinq adversaires : contourner donnerait 39 px par siège.
+    expect(computeLayout(320, 640, 5).seatsBelowCorners).toBe(true);
   });
 
   it('ne fait jamais chevaucher deux voisins', () => {

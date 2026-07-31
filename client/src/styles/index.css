@@ -1,6 +1,39 @@
 @import 'tailwindcss';
 
 /*
+ * Outfit, auto-hébergée.
+ *
+ * `ui-rounded` n'existe que sur les appareils Apple : partout ailleurs le jeu
+ * retombait sur la sans-serif du système, sans aucune personnalité. Une police
+ * variable de 47 Ko couvre 400 à 800 — une seule requête pour toutes les
+ * graisses, et rien à charger depuis un domaine tiers (donc rien à casser hors
+ * ligne, ni à déclarer côté vie privée).
+ *
+ * `font-display: swap` : le texte s'affiche immédiatement dans la police de
+ * secours puis bascule. Sur un jeu, attendre la police en fixant un écran vide
+ * serait pire que la brève substitution.
+ */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('/fonts/outfit-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('/fonts/outfit-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+
+/*
  * Design system ZapZap
  *
  * Parti pris : un tapis d'orage, pas une interface d'application générique.
@@ -46,7 +79,13 @@
   --color-success: #2fbf8f;
   --color-danger: #f4635a;
 
-  --font-display: ui-rounded, 'SF Pro Rounded', 'Segoe UI Variable Display', system-ui, sans-serif;
+  /*
+   * Une seule famille pour tout : les titres en 700/800 très resserrés, le
+   * texte courant en 400/500. Deux polices sur une interface aussi dense
+   * fragmenteraient la lecture sans rien apporter.
+   */
+  --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Outfit', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   /* Élévations : deux couches pour un rendu physique */
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 14px -4px rgb(0 0 0 / 0.4);
@@ -65,7 +104,7 @@ body,
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
   /* Halo central : l'éclairage au-dessus d'une table de jeu */
   background:
     radial-gradient(ellipse 120% 80% at 50% 20%, var(--color-storm-700) 0%, transparent 60%),
@@ -158,8 +197,62 @@ a[role='button'] {
   }
 }
 
+/*
+ * Le vocabulaire de mouvement du jeu.
+ *
+ * Trois durées, pas une de plus — c'est ce qui fait qu'un ensemble d'animations
+ * se lit comme une seule intention plutôt que comme une collection d'effets :
+ *   · 140 ms pour ce qui répond au doigt (sélection, appui) ;
+ *   · 240 ms pour ce qui se déplace (une carte qui part, un panneau) ;
+ *   · 380 ms pour ce qui se raconte (annonce, distribution, fin de manche).
+ * Au-delà, le joueur attend l'animation au lieu de jouer.
+ */
+
+/** Une carte qui arrive sur la table : elle tombe et se pose. */
+@keyframes zz-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(-28px) scale(0.86) rotate(-6deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/** La distribution : chaque carte entre depuis la pioche, décalée. */
+@keyframes zz-deal-in {
+  from {
+    opacity: 0;
+    transform: translate(0, -40vh) scale(0.7) rotate(-14deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/** Le tas de pioche quand on y puise : un léger enfoncement. */
+@keyframes zz-press {
+  50% {
+    transform: scale(0.94);
+  }
+}
+
 .zz-fade-up {
   animation: zz-fade-up 0.32s var(--ease-out-quint) both;
+}
+
+.zz-card-in {
+  animation: zz-card-in 0.24s var(--ease-out-quint) both;
+}
+
+.zz-deal-in {
+  animation: zz-deal-in 0.38s var(--ease-out-quint) both;
+}
+
+.zz-press {
+  animation: zz-press 0.14s ease-out;
 }
 
 .zz-sheet-in {

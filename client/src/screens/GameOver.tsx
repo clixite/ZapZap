@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { play } from '../audio';
+import { IconShare } from '../components/icons';
 import { shareResult } from '../shareCard';
-import { useGame } from '../store/game';
+import { useGame, useView } from '../store/game';
 
 /** Le classement final. Le vainqueur est celui qui reste, pas celui qui marque. */
 export function GameOver() {
-  const { view, listen, clear, send, busy } = useGame();
+  const listen = useGame((s) => s.listen);
+  const clear = useGame((s) => s.clear);
+  const send = useGame((s) => s.send);
+  const busy = useGame((s) => s.busy);
+  const view = useView();
   const navigate = useNavigate();
   const [shared, setShared] = useState(false);
 
@@ -90,9 +95,10 @@ export function GameOver() {
       <button
         type="button"
         onClick={() => void share()}
-        className="rounded-xl bg-storm-700 py-3 font-display font-bold"
+        className="flex items-center justify-center gap-2 rounded-xl bg-storm-700 py-3 font-display font-bold"
       >
-        {shared ? 'Parti ! ✓' : 'Partager le résultat 📸'}
+        <IconShare size={20} />
+        {shared ? 'Partagé' : 'Partager le résultat'}
       </button>
 
       <div className="mt-auto flex flex-col gap-2">

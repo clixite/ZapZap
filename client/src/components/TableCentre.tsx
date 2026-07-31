@@ -38,11 +38,16 @@ export function TableCentre({
   const takeable = new Set((drawOptions ?? []).map((o) => o.cardId));
   const discardCards = lastDiscard?.combo.cards ?? [];
 
-  // Une suite de trois cartes doit tenir dans la moitié du tapis : on les
-  // chevauche plutôt que de rétrécir la carte. Chaque carte est recouverte par
-  // sa droite, et son index vit en haut à gauche : à 45 %, il reste lisible sur
-  // toutes les cartes de la pose.
-  const spread = discardCards.length > 1 ? Math.round(layout.cardW * 0.45) : 0;
+  /*
+   * Une pose de plusieurs cartes doit se lire comme plusieurs cartes.
+   *
+   * Un simple recouvrement horizontal, même léger, donnait une paire qui
+   * ressemblait à une grande carte unique. On décale donc aussi en hauteur et
+   * on incline légèrement chaque carte : c'est le geste de quelqu'un qui pose
+   * une combinaison sur la table, et l'œil compte les cartes sans effort.
+   */
+  const spread = discardCards.length > 1 ? Math.round(layout.cardW * 0.32) : 0;
+  const stagger = Math.round(layout.cardW * 0.08);
 
   return (
     <>
@@ -81,8 +86,19 @@ export function TableCentre({
           {discardCards.length === 0 ? (
             <EmptySlot width={layout.cardW} />
           ) : (
-            discardCards.map((card) => (
-              <span key={cardId(card)} style={{ marginRight: -spread }}>
+            discardCards.map((card, i) => (
+              <span
+                key={cardId(card)}
+                // `key` sur l'identifiant de carte : une pose remplace la
+                // précédente, donc React démonte et remonte — l'animation
+                // d'entrée se rejoue d'elle-même à chaque nouvelle défausse.
+                className="zz-card-in"
+                style={{
+                  marginRight: -spread,
+                  animationDelay: `${i * 60}ms`,
+                  transform: `translateY(${i * stagger}px) rotate(${(i - (discardCards.length - 1) / 2) * 3}deg)`,
+                }}
+              >
                 <DiscardCard
                   card={card}
                   width={layout.cardW}

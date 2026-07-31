@@ -117,9 +117,23 @@ function Seat({
           {player.avatar}
         </div>
 
-        {/* Cartes en main : l'indicateur de danger */}
+        {/*
+          Cartes en main : l'indicateur de danger.
+
+          C'est la seule information publique qui permette d'évaluer le risque
+          avant d'annoncer, et elle se lit d'autant plus vite qu'elle est
+          colorée. Deux cartes ou moins, l'adversaire peut annoncer au prochain
+          tour : la pastille passe au rouge et pulse. Le chiffre seul obligeait
+          à faire le tour de la table et à comparer.
+        */}
         <span
-          className="absolute -right-1 -bottom-1 flex min-w-5 items-center justify-center rounded-full bg-volt-500 px-1 text-[11px] font-bold text-storm-950"
+          className={`absolute -right-1 -bottom-1 flex min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold ${
+            cards <= 2
+              ? 'zz-turn bg-danger text-white'
+              : cards <= 4
+                ? 'bg-flash-400 text-storm-950'
+                : 'bg-volt-500 text-storm-950'
+          }`}
           aria-hidden="true"
         >
           {cards}
@@ -144,7 +158,8 @@ function Seat({
       </span>
 
       <span className="sr-only">
-        {player.pseudo}, {cards} carte{cards > 1 ? 's' : ''} en main, {player.totalScore} points
+        {player.pseudo}, {cards} carte{cards > 1 ? 's' : ''} en main
+        {cards <= 2 ? ' — peut annoncer' : ''}, {player.totalScore} points
         {player.eliminated ? ', éliminé' : ''}
         {isPending ? ', c’est à lui de jouer' : ''}
       </span>

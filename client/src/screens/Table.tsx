@@ -5,6 +5,7 @@ import { isMuted, play, setMuted } from '../audio';
 import { DealPicker, DealWaiting } from '../components/DealPicker';
 import { HandFan } from '../components/HandFan';
 import { EMOTE_GLYPHS, EventTicker, TurnCountdown, useEmoteBubbles } from '../components/LiveFeedback';
+import { IconBack, IconHistory, IconMuted, IconSmile, IconSound } from '../components/icons';
 import { PassedCards } from '../components/PassedCards';
 import { PlayerSeats } from '../components/PlayerSeats';
 import { RoundRecap } from '../components/RoundRecap';
@@ -12,7 +13,7 @@ import { TableCentre } from '../components/TableCentre';
 import { STATUS_H, useFeltLayout } from '../components/tableLayout';
 import { vibrate } from '../haptics';
 import { useWakeLock } from '../hooks/useWakeLock';
-import { useGame } from '../store/game';
+import { useGame, useView } from '../store/game';
 import { useSession } from '../store/session';
 
 /**
@@ -26,7 +27,16 @@ import { useSession } from '../store/session';
 export function Table() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
-  const { view, error, busy, send, setError, listen, lastEvent } = useGame();
+  // Sélecteurs unitaires : `send` bascule `busy` deux fois par coup, et
+  // prendre le store entier faisait re-rendre tout le tapis à chaque bascule.
+  const error = useGame((s) => s.error);
+  const busy = useGame((s) => s.busy);
+  const send = useGame((s) => s.send);
+  const playMove = useGame((s) => s.play);
+  const setError = useGame((s) => s.setError);
+  const listen = useGame((s) => s.listen);
+  const lastEvent = useGame((s) => s.lastEvent);
+  const view = useView();
   const user = useSession((s) => s.user);
   const [selected, setSelected] = useState<string[]>([]);
   /** Premier tap sur ZapZap : armé. Deuxième : envoyé. Un raté coûte 30 points. */
@@ -36,6 +46,8 @@ export function Table() {
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [muted, setMutedState] = useState(isMuted);
   const bubbles = useEmoteBubbles(lastEvent);
+  /** Vrai pendant la seconde qui suit la donne : la main entre carte par carte. */
+  const [dealing, setDealing] = useState(false);
 
   useEffect(() => listen(), [listen]);
 
@@ -100,6 +112,16 @@ export function Table() {
     }
   }, [pendingIsMe]);
 
+  // La distribution s'anime une fois par manche, au passage en jeu.
+  const roundIndex = view?.round?.roundIndex;
+  const inPlay = view?.phase === 'playing';
+  useEffect(() => {
+    if (!inPlay) return;
+    setDealing(true);
+    const timer = setTimeout(() => setDealing(false), 900);
+    return () => clearTimeout(timer);
+  }, [inPlay, roundIndex]);
+
   useEffect(() => {
     if (!zapArmed) return;
     const timer = setTimeout(() => setZapArmed(false), 3000);
@@ -132,12 +154,22 @@ export function Table() {
 
   const discard = async () => {
     if (selected.length === 0) return;
-    const done = await send('game:discard', { cardIds: selected });
-    if (done) {
-      setSelected([]);
-      play('discard');
-      vibrate('play');
-    }
+    // Le son et l'haptique partent avec le geste, pas avec la réponse : c'est
+    // le doigt qui doit être récompensé, pas le réseau.
+    play('discard');
+    vibrate('play');
+    setSelected([]);
+    await playMove('game:discard', { cardIds: selected }, { kind: 'discard', cardIds: selected });
+  };
+
+  const draw = async (from: { source: 'stock' } | { source: 'discard'; cardId: string }) => {
+    play('draw');
+    vibrate('play');
+    await playMove('game:draw', from, {
+      kind: 'draw',
+      from: from.source,
+      cardId: from.source === 'discard' ? from.cardId : undefined,
+    });
   };
 
   const zap = async () => {
@@ -146,7 +178,7 @@ export function Table() {
       return;
     }
     setZapArmed(false);
-    await send('game:zap');
+    await playMove('game:zap', undefined, { kind: 'zap' });
   };
 
   const emote = async (id: EmoteId) => {
@@ -157,7 +189,12 @@ export function Table() {
   return (
     <div className="flex h-full flex-col">
       {/* Le tapis */}
-      <div ref={feltRef} className="relative min-h-0 flex-1">
+      <div
+        ref={feltRef}
+        // Le feutre a sa propre matière, distincte du fond de l'application :
+        // sans elle, la table n'était qu'une zone du dégradé général.
+        className="relative min-h-0 flex-1 bg-[radial-gradient(ellipse_75%_60%_at_50%_42%,var(--color-storm-800),transparent_72%)] shadow-[inset_0_0_70px_rgba(0,0,0,0.3)]"
+      >
         {/* Sortie de partie : discrète, en deux temps — elle affecte toute la table. */}
         <div className="absolute top-1 left-1 z-20">
           {confirmLeave ? (
@@ -186,9 +223,9 @@ export function Table() {
               type="button"
               onClick={() => setConfirmLeave(true)}
               aria-label="Quitter la partie"
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-storm-950/60 text-lg text-paper-300"
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-storm-950/60 text-paper-300"
             >
-              ←
+              <IconBack />
             </button>
           )}
         </div>
@@ -199,8 +236,8 @@ export function Table() {
             stockCount={round.stockCount}
             lastDiscard={round.lastDiscard}
             drawOptions={round.drawOptions}
-            onDrawStock={() => void send('game:draw', { source: 'stock' })}
-            onDrawDiscard={(id) => void send('game:draw', { source: 'discard', cardId: id })}
+            onDrawStock={() => void draw({ source: 'stock' })}
+            onDrawDiscard={(id) => void draw({ source: 'discard', cardId: id })}
             busy={busy}
           />
         )}
@@ -243,9 +280,9 @@ export function Table() {
               type="button"
               onClick={() => setShowLog(true)}
               aria-label="Voir les cartes déjà passées"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-storm-800/80 text-lg"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-storm-800/80 text-paper-300"
             >
-              🗂️
+              <IconHistory />
             </button>
           )}
 
@@ -262,9 +299,9 @@ export function Table() {
               onClick={() => setShowEmotes((s) => !s)}
               aria-label="Envoyer une réaction"
               aria-expanded={showEmotes}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-storm-800/80 text-lg"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-storm-800/80 text-paper-300"
             >
-              😀
+              <IconSmile />
             </button>
           )}
         </div>
@@ -299,9 +336,9 @@ export function Table() {
               }}
               aria-label={muted ? 'Réactiver le son' : 'Couper le son'}
               aria-pressed={muted}
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-storm-800 text-xl"
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-storm-800 text-paper-300"
             >
-              {muted ? '🔇' : '🔊'}
+              {muted ? <IconMuted /> : <IconSound />}
             </button>
           </div>
         )}
@@ -322,6 +359,7 @@ export function Table() {
           zapArmed={zapArmed}
           busy={busy}
           total={total}
+          dealing={dealing}
         />
       </div>
 
@@ -369,6 +407,7 @@ function HandArea({
   zapArmed,
   busy,
   total,
+  dealing,
 }: {
   view: GameView;
   selected: string[];
@@ -379,6 +418,7 @@ function HandArea({
   zapArmed: boolean;
   busy: boolean;
   total: number;
+  dealing: boolean;
 }) {
   const width = useViewportWidth();
   const round = view.round;
@@ -394,9 +434,10 @@ function HandArea({
         interactive={interactive}
         variants={view.variants}
         width={width}
+        dealing={dealing}
       />
 
-      <div className="flex gap-2 px-3">
+      <div className="flex gap-3 px-3">
         {/*
           L'annonce est à part, en ambre, et en deux temps : un raté coûte 30
           points, un pari pareil ne se déclenche pas d'un pouce qui glisse. Le
@@ -409,7 +450,7 @@ function HandArea({
             onClick={onZap}
             disabled={busy}
             aria-live="polite"
-            className={`zz-zap flex-1 rounded-xl py-3 font-display text-lg font-bold text-storm-950 transition-transform active:scale-[0.98] disabled:opacity-50 ${
+            className={`zz-zap w-32 flex-none rounded-xl py-3 font-display text-base font-bold text-storm-950 transition-transform active:scale-[0.98] disabled:opacity-50 ${
               zapArmed ? 'bg-danger text-white' : 'bg-flash-400'
             }`}
           >

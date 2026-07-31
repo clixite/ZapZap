@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MAX_PLAYERS, MIN_PLAYERS, isBotId, type ZapVariants } from '@zapzap/shared';
 import { InviteButtons } from '../components/InviteButtons';
-import { useGame } from '../store/game';
+import { useGame, useView } from '../store/game';
 import { useSession } from '../store/session';
 
 /**
@@ -16,7 +16,12 @@ import { useSession } from '../store/session';
 export function Lobby() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
-  const { view, error, busy, send, setError, listen } = useGame();
+  const error = useGame((s) => s.error);
+  const busy = useGame((s) => s.busy);
+  const send = useGame((s) => s.send);
+  const setError = useGame((s) => s.setError);
+  const listen = useGame((s) => s.listen);
+  const view = useView();
   const user = useSession((s) => s.user);
 
   useEffect(() => listen(), [listen]);

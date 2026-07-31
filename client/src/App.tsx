@@ -1,16 +1,25 @@
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, Route, BrowserRouter as Router, Routes, useParams } from 'react-router-dom';
 import { usePwa } from './pwa';
-import { GameOver } from './screens/GameOver';
-import { History } from './screens/History';
 import { Home } from './screens/Home';
 import { Lobby } from './screens/Lobby';
-import { Profile } from './screens/Profile';
-import { Rules } from './screens/Rules';
 import { Table } from './screens/Table';
-import { VerifyEmail } from './screens/VerifyEmail';
-import { useGame } from './store/game';
+import { useView } from './store/game';
 import { useSession } from './store/session';
+
+/*
+ * Chargés à la demande.
+ *
+ * Accueil, salon et table sont le chemin critique : on les garde dans le
+ * premier paquet. Les autres écrans — règles, historique, profil, fin de
+ * partie, vérification d'e-mail — ne sont visités qu'occasionnellement et
+ * n'ont aucune raison de retarder l'affichage du jeu.
+ */
+const GameOver = lazy(() => import('./screens/GameOver').then((m) => ({ default: m.GameOver })));
+const History = lazy(() => import('./screens/History').then((m) => ({ default: m.History })));
+const Profile = lazy(() => import('./screens/Profile').then((m) => ({ default: m.Profile })));
+const Rules = lazy(() => import('./screens/Rules').then((m) => ({ default: m.Rules })));
+const VerifyEmail = lazy(() => import('./screens/VerifyEmail').then((m) => ({ default: m.VerifyEmail })));
 
 export function App() {
   const restore = useSession((s) => s.restore);
@@ -20,7 +29,7 @@ export function App() {
   const applyUpdate = usePwa((s) => s.apply);
   // Le bandeau de mise à jour attend la fin de la manche : recharger en plein
   // tour, même volontairement, ferait perdre la sélection en cours.
-  const view = useGame((s) => s.view);
+  const view = useView();
   const inGame = view !== null && view.phase !== 'lobby' && view.phase !== 'game-over';
 
   useEffect(() => {
@@ -52,20 +61,22 @@ export function App() {
           Nouvelle version disponible — toucher pour recharger
         </button>
       )}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/salon/:code" element={<Lobby />} />
-        <Route path="/table/:code" element={<Table />} />
-        <Route path="/fin/:code" element={<GameOver />} />
-        <Route path="/regles" element={<Rules />} />
-        <Route path="/historique" element={<History />} />
-        <Route path="/profil" element={<Profile />} />
+      <Suspense fallback={<div className="h-full" />}>
+          <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/salon/:code" element={<Lobby />} />
+          <Route path="/table/:code" element={<Table />} />
+          <Route path="/fin/:code" element={<GameOver />} />
+          <Route path="/regles" element={<Rules />} />
+          <Route path="/historique" element={<History />} />
+          <Route path="/profil" element={<Profile />} />
         {/* L'atterrissage du lien magique reçu par e-mail. */}
-        <Route path="/verify" element={<VerifyEmail />} />
+          <Route path="/verify" element={<VerifyEmail />} />
         {/* Lien d'invitation court : /j/CODE ouvre directement le salon. */}
-        <Route path="/j/:code" element={<InviteLink />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="/j/:code" element={<InviteLink />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }
