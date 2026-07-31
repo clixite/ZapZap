@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { MAX_PLAYERS, MIN_PLAYERS, isBotId, type ZapVariants } from '@zapzap/shared';
 import { InviteButtons } from '../components/InviteButtons';
 import { useGame, useGameChannel, useView } from '../store/game';
@@ -44,7 +44,7 @@ export function Lobby() {
     if (view && view.phase !== 'lobby') navigate(`/table/${view.code}`, { replace: true });
   }, [view?.phase, view?.code, navigate, view]);
 
-  if (!view || !user) return <Centered>{error ?? 'Connexion au salon…'}</Centered>;
+  if (!view || !user) return <Centered error={error}>{error ?? 'Connexion au salon…'}</Centered>;
 
   const isHost = view.hostId === view.you;
   const enough = view.players.length >= MIN_PLAYERS;
@@ -264,6 +264,23 @@ function Choice<T extends string>({
   );
 }
 
-function Centered({ children }: { children: React.ReactNode }) {
-  return <div className="flex h-full items-center justify-center px-6 text-center text-paper-300">{children}</div>;
+/*
+ * Un écran d'attente qui échoue doit offrir une porte.
+ *
+ * Un code périmé, une partie déjà commencée, une table fermée : le message
+ * s'affichait seul au milieu de l'écran, sans rien à toucher. Il n'y a pas de
+ * barre de navigation dans une application plein écran — sans ce lien, le seul
+ * recours était de fermer l'application.
+ */
+function Centered({ children, error }: { children: React.ReactNode; error?: string | null }) {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center text-paper-300">
+      <p>{children}</p>
+      {error && (
+        <Link to="/" className="min-h-11 rounded-xl bg-storm-700 px-5 py-3 text-sm font-medium text-paper-100">
+          Retour à l’accueil
+        </Link>
+      )}
+    </div>
+  );
 }

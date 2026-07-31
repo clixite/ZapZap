@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { EMOTES, handValue, type EmoteId, type GameView, type Player } from '@zapzap/shared';
 import { isMuted, play, setMuted } from '../audio';
 import { MiniCards } from '../components/CardFace';
@@ -154,7 +154,7 @@ export function Table() {
   const [feltRef, layout] = useFeltLayout(Math.max(0, (view?.players.length ?? 1) - 1));
 
   if (!view || !user) {
-    return <Centered>{error ?? 'Connexion à la table…'}</Centered>;
+    return <Centered error={error}>{error ?? 'Connexion à la table…'}</Centered>;
   }
 
   const round = view.round;
@@ -589,6 +589,16 @@ function TurnBanner({ view, myTurn, pending }: { view: GameView; myTurn: boolean
   );
 }
 
-function Centered({ children }: { children: React.ReactNode }) {
-  return <div className="flex h-full items-center justify-center px-6 text-center text-paper-300">{children}</div>;
+/** Même porte de sortie qu'au salon : un message d'erreur seul enferme. */
+function Centered({ children, error }: { children: React.ReactNode; error?: string | null }) {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center text-paper-300">
+      <p>{children}</p>
+      {error && (
+        <Link to="/" className="min-h-11 rounded-xl bg-storm-700 px-5 py-3 text-sm font-medium text-paper-100">
+          Retour à l’accueil
+        </Link>
+      )}
+    </div>
+  );
 }
