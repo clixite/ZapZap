@@ -63,6 +63,8 @@ export type GameAction =
   | { type: 'REMOVE_PLAYER'; playerId: string }
   | { type: 'UPDATE_PROFILE'; playerId: string; pseudo: string; avatar: string; photo?: string | null }
   | { type: 'SET_CONNECTED'; playerId: string; connected: boolean }
+  | { type: 'SET_AWAY'; playerId: string; away: boolean }
+  | { type: 'FORFEIT'; playerId: string }
   | { type: 'SET_VARIANTS'; playerId: string; variants: ZapVariants }
   | { type: 'SET_PACE'; playerId: string; pace: GamePace }
   | { type: 'SET_VISIBILITY'; playerId: string; visibility: Visibility }
@@ -90,7 +92,7 @@ export function createGame(
     code,
     hostId: host.id,
     phase: 'lobby',
-    players: [{ ...host, seat: 0, connected: true, totalScore: 0, eliminated: false }],
+    players: [{ ...host, seat: 0, connected: true, totalScore: 0, eliminated: false, away: false }],
     maxPlayers: MAX_PLAYERS,
     variants: { ...DEFAULT_VARIANTS },
     pace: DEFAULT_PACE,
@@ -313,6 +315,7 @@ export function applyAction(prev: GameState, action: GameAction): EngineResult {
         connected: true,
         totalScore: 0,
         eliminated: false,
+        away: false,
       });
       return { ok: true, state };
     }
@@ -344,6 +347,70 @@ export function applyAction(prev: GameState, action: GameAction): EngineResult {
       const p = state.players.find((pl) => pl.id === action.playerId);
       if (!p) return err('PLAYER_NOT_FOUND');
       p.connected = action.connected;
+      return { ok: true, state };
+    }
+
+    case 'SET_AWAY': {
+      const p = state.players.find((pl) => pl.id === action.playerId);
+      if (!p) return err('PLAYER_NOT_FOUND');
+      p.away = action.away;
+      return { ok: true, state };
+    }
+
+    /*
+     * Quitter la partie pour de bon, en cours de jeu.
+     *
+     * Au salon, partir c'est libérer son siège — `REMOVE_PLAYER` s'en charge.
+     * Une fois la partie lancée, les sièges et les scores en dépendent : on ne
+     * peut pas retirer quelqu'un du tableau sans réécrire la manche. Le départ
+     * prend donc la même forme qu'une élimination, avec la mention qu'il était
+     * volontaire.
+     *
+     * Trois choses à démêler, et chacune bloquait la table si on l'oubliait :
+     * la main du partant retourne à la défausse — elle reviendra en jeu au
+     * remélange plutôt que de disparaître du paquet ; son tour, s'il l'avait,
+     * passe au suivant ; et sa charge de donneur passe elle aussi, sans quoi la
+     * manche attendait indéfiniment une donne qui ne viendrait jamais.
+     */
+    case 'FORFEIT': {
+      const p = state.players.find((pl) => pl.id === action.playerId);
+      if (!p) return err('PLAYER_NOT_FOUND');
+      if (state.phase === 'lobby') return applyAction(prev, { type: 'REMOVE_PLAYER', playerId: p.id });
+      if (state.phase === 'game-over' || p.eliminated) return { ok: true, state };
+
+      p.eliminated = true;
+      p.forfeited = true;
+      p.away = false;
+      // Dernier du classement parmi ceux encore en lice au moment du départ.
+      p.finishRank = activePlayers(state).length + 1;
+
+      const round = state.round;
+      if (round) {
+        const hand = round.hands[p.id] ?? [];
+        if (hand.length > 0) round.discardPile.push(...hand);
+        round.hands[p.id] = [];
+        // Sa pose en suspens revient à la défausse : personne n'en héritera.
+        if (round.pendingDiscard?.playerId === p.id) {
+          round.discardPile.push(...round.pendingDiscard.combo.cards);
+          round.pendingDiscard = null;
+        }
+      }
+
+      if (activePlayers(state).length <= 1) {
+        rankSurvivors(state);
+        state.phase = 'game-over';
+        return { ok: true, state };
+      }
+
+      if (round) {
+        if (state.phase === 'dealing' && round.dealerSeat === p.seat) {
+          round.dealerSeat = nextActiveSeat(state, p.seat);
+        }
+        if (state.phase === 'playing' && round.currentSeat === p.seat) {
+          round.currentSeat = nextActiveSeat(state, p.seat);
+          round.turnStep = 'discard';
+        }
+      }
       return { ok: true, state };
     }
 

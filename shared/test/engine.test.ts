@@ -753,3 +753,84 @@ describe('partie complète', () => {
     expect(['playing', 'round-scoring']).toContain(state.phase);
   });
 });
+
+describe('pause et départ volontaire', () => {
+  it('met un joueur en pause et l’en sort', () => {
+    let state = playing(['a', 'b', 'c']);
+    state = ok(state, { type: 'SET_AWAY', playerId: 'b', away: true });
+    expect(state.players.find((p) => p.id === 'b')!.away).toBe(true);
+    state = ok(state, { type: 'SET_AWAY', playerId: 'b', away: false });
+    expect(state.players.find((p) => p.id === 'b')!.away).toBe(false);
+  });
+
+  it('la pause ne change rien à l’ordre du tour', () => {
+    let state = playing(['a', 'b', 'c']);
+    const before = state.round!.currentSeat;
+    state = ok(state, { type: 'SET_AWAY', playerId: current(state), away: true });
+    expect(state.round!.currentSeat).toBe(before);
+  });
+
+  it('au salon, partir libère le siège', () => {
+    let state = lobby(['a', 'b', 'c']);
+    state = ok(state, { type: 'FORFEIT', playerId: 'b' });
+    expect(state.players.map((p) => p.id)).toEqual(['a', 'c']);
+    expect(state.players.map((p) => p.seat)).toEqual([0, 1]);
+  });
+
+  it('en partie, partir vaut sortie sans effacer le tableau', () => {
+    let state = playing(['a', 'b', 'c']);
+    state = ok(state, { type: 'FORFEIT', playerId: 'b' });
+    const b = state.players.find((p) => p.id === 'b')!;
+    expect(b.eliminated).toBe(true);
+    expect(b.forfeited).toBe(true);
+    // Le siège reste : les scores des autres en dépendent.
+    expect(state.players).toHaveLength(3);
+  });
+
+  it('rend les cartes du partant à la défausse', () => {
+    let state = playing(['a', 'b', 'c'], 5);
+    const before = state.round!.discardPile.length;
+    state = ok(state, { type: 'FORFEIT', playerId: 'b' });
+    expect(state.round!.discardPile.length).toBe(before + 5);
+    expect(state.round!.hands['b']).toEqual([]);
+  });
+
+  it('passe la main quand c’est le partant qui devait jouer', () => {
+    let state = playing(['a', 'b', 'c']);
+    const leaver = current(state);
+    state = ok(state, { type: 'FORFEIT', playerId: leaver });
+    expect(current(state)).not.toBe(leaver);
+    expect(state.round!.turnStep).toBe('discard');
+    // Et la table repart : le suivant peut jouer.
+    expect(() => playNeutralTurn(state)).not.toThrow();
+  });
+
+  it('passe la donne quand c’est le donneur qui part', () => {
+    // Sans cela, la manche attendait une donne qui ne viendrait jamais.
+    let state = ok(lobby(['a', 'b', 'c']), { type: 'START_GAME', playerId: 'a' });
+    const dealer = state.players.find((p) => p.seat === state.round!.dealerSeat)!;
+    state = ok(state, { type: 'FORFEIT', playerId: dealer.id });
+    const next = state.players.find((p) => p.seat === state.round!.dealerSeat)!;
+    expect(next.id).not.toBe(dealer.id);
+    expect(() => ok(state, { type: 'DEAL', playerId: next.id, handSize: 5 })).not.toThrow();
+  });
+
+  it('termine la partie quand il ne reste qu’un joueur', () => {
+    let state = playing(['a', 'b']);
+    state = ok(state, { type: 'FORFEIT', playerId: 'b' });
+    expect(state.phase).toBe('game-over');
+    expect(state.players.find((p) => p.id === 'a')!.finishRank).toBe(1);
+  });
+
+  it('ne fait rien si le joueur est déjà sorti', () => {
+    let state = playing(['a', 'b', 'c']);
+    state = ok(state, { type: 'FORFEIT', playerId: 'b' });
+    const snapshot = structuredClone(state);
+    state = ok(state, { type: 'FORFEIT', playerId: 'b' });
+    expect(state).toEqual(snapshot);
+  });
+
+  it('refuse de faire partir un inconnu', () => {
+    fails(playing(['a', 'b', 'c']), { type: 'FORFEIT', playerId: 'zzz' }, 'PLAYER_NOT_FOUND');
+  });
+});

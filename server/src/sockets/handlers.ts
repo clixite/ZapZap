@@ -221,6 +221,29 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
       }),
     );
 
+    socket.on('room:forfeit', (ack) =>
+      limited(ack, () => {
+        const room = myRoom();
+        if (!room) return fail('NOT_IN_ROOM');
+        const result = room.forfeit(userId, socket);
+        socket.data.roomCode = undefined;
+        return result.ok ? { ok: true } : fail(result.error);
+      }),
+    );
+
+    socket.on('game:away', (payload, ack) =>
+      limited(ack, () => {
+        const room = myRoom();
+        if (!room) return fail('NOT_IN_ROOM');
+        const away = (payload as { away?: unknown } | undefined)?.away;
+        if (typeof away !== 'boolean') return fail('INVALID_PAYLOAD');
+        const result = room.apply({ type: 'SET_AWAY', playerId: userId, away });
+        if (!result.ok) return fail(result.error);
+        room.emitEvent({ type: 'player-away', playerId: userId, away });
+        return { ok: true };
+      }),
+    );
+
     socket.on('room:addBot', (ack) =>
       limited(ack, () => {
         const room = myRoom();

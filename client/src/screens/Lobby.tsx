@@ -61,6 +61,28 @@ export function Lobby() {
         phrase — « envoyez ce code, ils l'entrent à l'accueil » — et elle
         transforme un nombre affiché en une action à faire.
       */}
+      {/*
+        Le retour au menu ne dépend d'aucun état : c'est la première chose qu'on
+        cherche quand on ne sait plus où l'on est.
+      */}
+      <div className="-mb-2 flex items-center justify-between">
+        <Link
+          to="/"
+          className="flex min-h-11 items-center rounded-xl px-2 text-sm text-paper-300 underline underline-offset-4"
+        >
+          ← Menu principal
+        </Link>
+        <Link
+          to="/profil"
+          className="flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-sm text-paper-300"
+        >
+          <span className="text-lg" aria-hidden="true">
+            {user.avatar}
+          </span>
+          <span className="underline underline-offset-4">Profil</span>
+        </Link>
+      </div>
+
       <header className="rounded-2xl bg-storm-900/70 px-4 py-4 text-center">
         <p className="text-sm font-medium text-paper-100">Invitez vos amis</p>
         <p className="mt-0.5 text-xs text-paper-300">

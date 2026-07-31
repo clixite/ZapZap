@@ -65,6 +65,10 @@ export function eventText(event: TransientEvent, view: GameView): string | null 
       return `${name(event.playerId)} a perdu la connexion`;
     case 'player-reconnected':
       return `${name(event.playerId)} est de retour`;
+    case 'player-away':
+      return event.away
+        ? `${name(event.playerId)} fait une pause — un robot joue pour lui`
+        : `${name(event.playerId)} reprend sa place`;
     case 'host-changed':
       return `${name(event.hostId)} devient l’hôte`;
     case 'round-scored':

@@ -331,6 +331,72 @@ describe('tables publiques', () => {
   });
 });
 
+describe('pause et départ définitif', () => {
+  it('met sa place en pause et laisse un robot jouer', async () => {
+    const alice = await join('alice');
+    expectOk(await alice.emit('room:create'));
+    expectOk(await alice.emit('room:addBot'));
+    expectOk(await alice.emit('game:start'));
+
+    expectOk(await alice.emit('game:away', { away: true }));
+    const paused = await alice.nextView((v) => v.players.some((p) => p.id === v.you && p.away));
+    expect(paused.players.find((p) => p.id === paused.you)!.away).toBe(true);
+
+    // La table avance sans elle : la manche se joue jusqu'à son terme.
+    const moved = await alice.nextView(
+      (v) => v.phase === 'round-scoring' || (v.round?.turnsPlayed ?? 0) >= 2,
+    );
+    expect(moved.round).not.toBeNull();
+  });
+
+  it('reprend sa place quand on revient', async () => {
+    const alice = await join('alice');
+    expectOk(await alice.emit('room:create'));
+    expectOk(await alice.emit('room:addBot'));
+    expectOk(await alice.emit('game:start'));
+    expectOk(await alice.emit('game:away', { away: true }));
+    await alice.nextView((v) => v.players.some((p) => p.id === v.you && p.away));
+
+    expectOk(await alice.emit('game:away', { away: false }));
+    const back = await alice.nextView((v) => v.players.every((p) => p.id !== v.you || !p.away));
+    expect(back.players.find((p) => p.id === back.you)!.away).toBe(false);
+  });
+
+  it('refuse une pause hors de toute table', async () => {
+    const alice = await join('alice');
+    const ack = await alice.emit('game:away', { away: true });
+    expect(ack.ok).toBe(false);
+  });
+
+  it('quitte définitivement une partie commencée', async () => {
+    const alice = await join('alice');
+    const { code } = expectOk(await alice.emit<{ code: string }>('room:create'));
+    const bob = await join('bob');
+    expectOk(await bob.emit('room:join', { code }));
+    expectOk(await alice.emit('room:addBot'));
+    expectOk(await alice.emit('game:start'));
+
+    expectOk(await bob.emit('room:forfeit'));
+    const view = await alice.nextView((v) => v.players.some((p) => p.pseudo === 'bob' && p.eliminated));
+    const gone = view.players.find((p) => p.pseudo === 'bob')!;
+    // Sorti, mais toujours au tableau : les scores des autres en dépendent.
+    expect(gone.eliminated).toBe(true);
+    expect(gone.forfeited).toBe(true);
+    expect(view.players).toHaveLength(3);
+  });
+
+  it('libère le siège quand on part du salon', async () => {
+    const alice = await join('alice');
+    const { code } = expectOk(await alice.emit<{ code: string }>('room:create'));
+    const bob = await join('bob');
+    expectOk(await bob.emit('room:join', { code }));
+
+    expectOk(await bob.emit('room:forfeit'));
+    const view = await alice.nextView((v) => v.players.length === 1);
+    expect(view.players.map((p) => p.pseudo)).toEqual(['alice']);
+  });
+});
+
 describe('anti-triche', () => {
   async function startedGame() {
     const alice = await join('alice');

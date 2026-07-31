@@ -135,13 +135,35 @@ export function Home() {
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-md flex-col gap-5 px-5 py-8">
-      <header className="text-center">
-        <h1 className="font-display text-4xl font-bold tracking-tight">
-          Zap<span className="text-volt-400">Zap</span>
-        </h1>
-        <p className="mt-1 text-sm text-paper-300">
-          Défaussez, annoncez, le plus bas gagne. Bonjour {user.pseudo}&nbsp;{user.avatar}
-        </p>
+      {/*
+        Le profil est une **cible**, pas une phrase.
+        
+        Son avatar et son pseudo se lisaient dans le texte d'accueil, et le seul
+        chemin vers le profil était un lien discret tout en bas de l'écran. On
+        ne trouve pas ce qu'on ne peut pas toucher : la pastille est en haut à
+        droite, à l'endroit où toutes les applications la mettent.
+      */}
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-4xl font-bold tracking-tight">
+            Zap<span className="text-volt-400">Zap</span>
+          </h1>
+          <p className="mt-1 text-sm text-paper-300">Défaussez, annoncez, le plus bas gagne.</p>
+        </div>
+        <Link
+          to="/profil"
+          aria-label={`Mon profil — ${user.pseudo}`}
+          className="flex shrink-0 items-center gap-2 rounded-full bg-storm-800 py-1.5 pr-3 pl-1.5"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-storm-700 text-lg">
+            {user.photo ? (
+              <img src={user.photo} alt="" className="h-9 w-9 rounded-full object-cover" />
+            ) : (
+              user.avatar
+            )}
+          </span>
+          <span className="max-w-20 truncate text-xs font-medium">{user.pseudo}</span>
+        </Link>
       </header>
 
       {myGames !== null && myGames.length > 0 && (
@@ -291,9 +313,6 @@ export function Home() {
         </Link>
         <Link to="/historique" className="underline underline-offset-4">
           Historique
-        </Link>
-        <Link to="/profil" className="underline underline-offset-4">
-          Profil
         </Link>
       </nav>
       <p className="text-center text-[10px] text-paper-300/60">{__APP_VERSION__}</p>

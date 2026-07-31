@@ -71,6 +71,27 @@ export interface Player {
    * scores — c'est le sel de la fin de partie.
    */
   eliminated: boolean;
+  /**
+   * En pause : un robot joue à sa place, jusqu'à ce qu'il revienne.
+   *
+   * Différent de `connected`, qui subit la coupure réseau : celui-ci est un
+   * choix. On quitte une table sans quitter la partie — le téléphone sonne, le
+   * bus arrive, le repas est prêt — et la table continue de tourner à la même
+   * vitesse au lieu d'attendre trente secondes de minuteur à chaque tour.
+   *
+   * Le remplaçant ne fait qu'une chose de moins que le joueur : il n'annonce
+   * jamais. Une annonce est un pari à trente points, elle appartient à celui
+   * qui la prend.
+   */
+  away: boolean;
+  /**
+   * Parti pour de bon, de son plein gré.
+   *
+   * `eliminated` sans `forfeited` veut dire « sorti à 100 points » ; les deux
+   * ensemble, « a quitté la partie ». La distinction se lit au tableau des
+   * scores, et elle évite de faire passer un départ pour une défaite.
+   */
+  forfeited?: boolean;
   /** Rang final (1 = vainqueur), renseigné à mesure que les joueurs sortent. */
   finishRank?: number;
 }

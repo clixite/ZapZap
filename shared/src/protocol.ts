@@ -34,6 +34,8 @@ export type TransientEvent =
   | { type: 'round-scored' }
   | { type: 'player-disconnected'; playerId: string; graceSeconds: number }
   | { type: 'player-reconnected'; playerId: string }
+  /** Mise en pause : un robot prend la main jusqu'au retour du joueur. */
+  | { type: 'player-away'; playerId: string; away: boolean }
   | { type: 'host-changed'; hostId: string }
   | { type: 'rematch'; code: string }
   | { type: 'emote'; playerId: string; emote: EmoteId };
@@ -63,6 +65,16 @@ export interface ClientToServerEvents {
   /** Les tables publiques qui attendent des joueurs. */
   'room:openTables': (ack: (res: Ack<{ tables: OpenTable[] }>) => void) => void;
   'room:leave': (ack: (res: Ack) => void) => void;
+  /**
+   * Quitter pour de bon, partie commencée comprise.
+   *
+   * `room:leave` rend le siège au salon, mais une fois la partie lancée il ne
+   * fait que marquer absent : la table continuait d'attendre un joueur qui ne
+   * reviendrait pas. Celui-ci sort vraiment.
+   */
+  'room:forfeit': (ack: (res: Ack) => void) => void;
+  /** Mettre sa place en pause, ou la reprendre : un robot joue l'intervalle. */
+  'game:away': (payload: { away: boolean }, ack: (res: Ack) => void) => void;
   'room:kick': (payload: { playerId: string }, ack: (res: Ack) => void) => void;
   'room:addBot': (ack: (res: Ack<{ playerId: string }>) => void) => void;
   'room:removeBot': (payload: { playerId: string }, ack: (res: Ack) => void) => void;

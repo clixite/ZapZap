@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { EMOTES, handValue, type EmoteId, type GameView, type Player } from '@zapzap/shared';
 import { isMuted, play, setMuted } from '../audio';
@@ -11,6 +11,7 @@ import { PassedCards } from '../components/PassedCards';
 import { PlayerSeats } from '../components/PlayerSeats';
 import { RoundRecap } from '../components/RoundRecap';
 import { TableCentre } from '../components/TableCentre';
+import { TableMenu } from '../components/TableMenu';
 import { STATUS_H, useFeltLayout } from '../components/tableLayout';
 import { vibrate } from '../haptics';
 import { useWakeLock } from '../hooks/useWakeLock';
@@ -46,7 +47,7 @@ export function Table() {
   const [zapArmed, setZapArmed] = useState(false);
   const [showLog, setShowLog] = useState(false);
   const [showEmotes, setShowEmotes] = useState(false);
-  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [muted, setMutedState] = useState(isMuted);
   const bubbles = useEmoteBubbles(lastEvent);
   /** Vrai pendant la seconde qui suit la donne : la main entre carte par carte. */
@@ -109,6 +110,25 @@ export function Table() {
   useEffect(() => {
     if (denied === code) navigate('/', { replace: true });
   }, [denied, code, navigate]);
+
+  /*
+   * Revenir à table, c'est reprendre sa place.
+   *
+   * Quitter vers le menu principal met la place en pause — un robot joue
+   * l'intervalle. Rouvrir la table doit donc la rendre, sans un geste de plus :
+   * personne ne pense à « reprendre » avant de jouer, et découvrir qu'un robot
+   * a joué son tour alors qu'on regardait l'écran serait insupportable.
+   *
+   * Une seule fois par arrivée : sinon la pause demandée depuis cet écran même
+   * serait annulée dans la seconde.
+   */
+  const resumed = useRef(false);
+  const iAmAway = view?.players.find((p) => p.id === view.you)?.away ?? false;
+  useEffect(() => {
+    if (!view || resumed.current) return;
+    resumed.current = true;
+    if (iAmAway) void send('game:away', { away: false });
+  }, [view, iAmAway, send]);
 
   // Ni la sélection ni l'annonce armée ne survivent au tour : garder l'une
   // ferait poser autre chose que ce qu'on croit, garder l'autre ferait annoncer
@@ -214,40 +234,43 @@ export function Table() {
         // sans elle, la table n'était qu'une zone du dégradé général.
         className="relative min-h-0 flex-1 bg-[radial-gradient(ellipse_75%_60%_at_50%_42%,var(--color-storm-800),transparent_72%)] shadow-[inset_0_0_70px_rgba(0,0,0,0.3)]"
       >
-        {/* Sortie de partie : discrète, en deux temps — elle affecte toute la table. */}
+        {/* Le menu : la porte de sortie, et tout ce qui n'est pas un coup de jeu. */}
         <div className="absolute top-1 left-1 z-20">
-          {confirmLeave ? (
-            <div className="zz-fade-up flex items-center gap-1 rounded-xl bg-storm-950/95 p-1">
-              <button
-                type="button"
-                onClick={async () => {
-                  await send('room:leave');
-                  setError(null);
-                  navigate('/');
-                }}
-                className="flex h-11 items-center rounded-lg bg-danger px-3 text-xs font-bold text-white"
-              >
-                Quitter la table
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmLeave(false)}
-                className="flex h-11 items-center rounded-lg px-3 text-xs text-paper-300"
-              >
-                Rester
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setConfirmLeave(true)}
-              aria-label="Quitter la partie"
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-storm-950/60 text-paper-300"
-            >
-              <IconBack />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowMenu(true)}
+            aria-label="Menu de la partie"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-storm-950/60 text-paper-300"
+          >
+            <IconBack />
+          </button>
         </div>
+
+        {showMenu && (
+          <TableMenu
+            view={view}
+            onClose={() => setShowMenu(false)}
+            onPause={async (away) => {
+              setShowMenu(false);
+              await send('game:away', { away });
+            }}
+            onMenu={async () => {
+              setShowMenu(false);
+              // On garde sa place, on la met en pause : la table continue de
+              // tourner à son rythme au lieu d'attendre trente secondes par tour.
+              if (view.phase !== 'game-over') await send('game:away', { away: true });
+              setError(null);
+              navigate('/');
+            }}
+            onQuit={async () => {
+              setShowMenu(false);
+              await send('room:forfeit');
+              setError(null);
+              navigate('/');
+            }}
+          />
+        )}
+
         {round && view.phase !== 'dealing' && <PlayerSeats view={view} layout={layout} bubbles={bubbles} />}
         {round && view.phase === 'playing' && (
           <TableCentre
@@ -380,7 +403,21 @@ export function Table() {
         className="shrink-0 rounded-t-2xl bg-storm-800/80 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         style={{ boxShadow: 'var(--shadow-panel)' }}
       >
-        <TurnBanner view={view} myTurn={myTurn} pending={pending} />
+        {/*
+          Ma propre pause passe avant tout le reste : tant qu'elle dure, savoir
+          de qui c'est le tour n'a aucun intérêt — mes tours ne m'attendent pas.
+        */}
+        {iAmAway ? (
+          <button
+            type="button"
+            onClick={() => void send('game:away', { away: false })}
+            className="zz-turn flex min-h-9 w-full items-center justify-center gap-2 rounded-t-2xl bg-flash-400 px-3 py-1.5 text-sm font-bold text-storm-950"
+          >
+            En pause — un robot joue pour vous · <span className="underline">reprendre</span>
+          </button>
+        ) : (
+          <TurnBanner view={view} myTurn={myTurn} pending={pending} />
+        )}
         <HandArea
           view={view}
           selected={selected}

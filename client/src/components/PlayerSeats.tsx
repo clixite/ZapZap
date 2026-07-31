@@ -188,7 +188,7 @@ function Seat({
             fontSize: layout.avatar * 0.5,
             // Un joueur absent est estompé : la table doit voir qu'on l'attend
             // pour rien plutôt que de croire qu'il réfléchit.
-            opacity: player.connected || isBotId(player.id) ? 1 : 0.45,
+            opacity: player.away || (!player.connected && !isBotId(player.id)) ? 0.45 : 1,
           }}
           aria-hidden="true"
         >
@@ -217,6 +217,20 @@ function Seat({
           {cards}
         </span>
 
+        {/*
+          En pause : la table doit savoir qu'elle joue contre un robot sur ce
+          siège. Le cacher serait mentir sur qui joue — et le rythme régulier du
+          remplaçant trahirait l'absence de toute façon.
+        */}
+        {player.away && (
+          <span
+            className="absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-storm-950/90 px-1.5 text-[9px] font-bold text-flash-300"
+            title="En pause — un robot joue"
+          >
+            PAUSE
+          </span>
+        )}
+
         {isDealer && (
           <span
             className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-flash-400 text-[9px] font-bold text-storm-950"
@@ -241,7 +255,7 @@ function Seat({
         </span>
       )}
       <span className="text-[10px] text-paper-300">
-        {player.eliminated ? 'éliminé' : `${player.totalScore} pt`}
+        {player.eliminated ? (player.forfeited ? 'parti' : 'éliminé') : `${player.totalScore} pt`}
       </span>
 
       {/*
@@ -260,7 +274,8 @@ function Seat({
       <span className="sr-only">
         {player.pseudo}, {cards} carte{cards > 1 ? 's' : ''} en main
         {cards <= 2 ? ' — peut annoncer' : ''}, {player.totalScore} points
-        {player.eliminated ? ', éliminé' : ''}
+        {player.eliminated ? (player.forfeited ? ', a quitté la partie' : ', éliminé') : ''}
+        {player.away ? ', en pause, un robot joue pour lui' : ''}
         {isPending ? ', c’est à lui de jouer' : ''}
       </span>
     </div>

@@ -254,10 +254,21 @@ export class Room {
   /* Robots                                                            */
   /* ---------------------------------------------------------------- */
 
+  /**
+   * Qui laisse la machine jouer : les robots, et les joueurs en pause.
+   *
+   * Le remplaçant d'un joueur en pause est le même robot que les adversaires
+   * artificiels — il lit le journal public, pas la main des autres. Ce n'est
+   * donc pas un avantage : c'est exactement ce que la table sait déjà.
+   */
+  private playsItself(player: { id: string; away?: boolean }): boolean {
+    return isBotId(player.id) || player.away === true;
+  }
+
   private scheduleAutoplay(): void {
     if (this.autoplayTimer) return;
     const pending = this.pendingPlayer();
-    if (!pending || !isBotId(pending.id)) return;
+    if (!pending || !this.playsItself(pending)) return;
 
     const delay = this.options.botDelayMs ?? config.botDelayMs;
     this.autoplayTimer = setTimeout(() => {
@@ -269,9 +280,9 @@ export class Room {
 
   private playBotTurn(): void {
     const pending = this.pendingPlayer();
-    if (!pending || !isBotId(pending.id)) return;
+    if (!pending || !this.playsItself(pending)) return;
 
-    const move = botMove(this.state, pending.id);
+    const move = botMove(this.state, pending.id, { announce: isBotId(pending.id) });
     if (!move) return;
 
     switch (move.kind) {
@@ -445,6 +456,37 @@ export class Room {
       this.apply({ type: 'SET_CONNECTED', playerId: userId, connected: false });
     }
     if (this.connectedCount() === 0) this.callbacks.onEmpty?.(this);
+  }
+
+  /**
+   * Le départ définitif, quel que soit l'état de la partie.
+   *
+   * `leave` rend le siège au salon, mais en cours de partie il ne fait que
+   * marquer absent : la table gardait le joueur, jouait ses tours à sa place et
+   * l'attendait à la manche suivante. Il n'y avait donc aucun moyen de dire
+   * « je ne reviens pas » — et c'est pourtant la seule chose qu'on veut dire
+   * quand on ferme l'application au milieu d'une partie qui traîne.
+   *
+   * Le siège reste au tableau des scores : les points des autres en dépendent.
+   * Seule change la mention — parti, et non éliminé à cent points.
+   */
+  forfeit(userId: string, socket?: Socket): { ok: true } | { ok: false; error: EngineErrorCode } {
+    const player = this.state.players.find((p) => p.id === userId);
+    if (!player) return { ok: false, error: 'PLAYER_NOT_FOUND' };
+    const pseudo = player.pseudo;
+
+    const result = this.apply({ type: 'FORFEIT', playerId: userId });
+    if (!result.ok) return result;
+
+    if (socket) {
+      const set = this.sockets.get(userId);
+      set?.delete(socket);
+      if (set?.size === 0) this.sockets.delete(userId);
+      void socket.leave(this.code);
+    }
+    this.emitEvent({ type: 'player-left', playerId: userId, pseudo });
+    if (this.connectedCount() === 0) this.callbacks.onEmpty?.(this);
+    return { ok: true };
   }
 
   connectedCount(): number {

@@ -286,7 +286,22 @@ export type BotMove =
   | { kind: 'draw'; from: { source: 'stock' } | { source: 'discard'; cardId: string } };
 
 /** Le coup que joue le robot dans l'état courant, ou `null` si ce n'est pas son tour. */
-export function botMove(state: GameState, playerId: string): BotMove | null {
+/**
+ * Options de remplacement.
+ *
+ * `announce: false` sert au joueur en pause : le robot joue sa main, mais ne
+ * prend pas ses paris. Rater une annonce coûte trente points, et personne ne
+ * doit les perdre pendant qu'il répond au téléphone.
+ */
+export interface BotMoveOptions {
+  announce?: boolean;
+}
+
+export function botMove(
+  state: GameState,
+  playerId: string,
+  { announce = true }: BotMoveOptions = {},
+): BotMove | null {
   const round = state.round;
   if (!round) return null;
   const opts = comboOptions(state.variants);
@@ -308,7 +323,7 @@ export function botMove(state: GameState, playerId: string): BotMove | null {
     const opponentCounts = state.players
       .filter((p) => !p.eliminated && p.id !== playerId)
       .map((p) => (round.hands[p.id] ?? []).length);
-    if (shouldCallZap(hand, state.variants, opponentCounts)) return { kind: 'zap' };
+    if (announce && shouldCallZap(hand, state.variants, opponentCounts)) return { kind: 'zap' };
     const combo = chooseDiscard(hand, opts, state.variants.zapThreshold);
     return { kind: 'discard', cardIds: combo.cards.map(cardId) };
   }
