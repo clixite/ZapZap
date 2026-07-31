@@ -776,8 +776,36 @@ story('manifeste et hors-ligne', async () => {
   check(body.theme_color === '#1c1547', 'la couleur de thème est celle du design system');
   for (const icon of body.icons ?? []) {
     const res = await context.request.get(icon.src);
-    check(res.ok(), `icône ${icon.sizes} présente`);
+    check(res.ok(), `icône ${icon.sizes} ${icon.purpose ?? 'any'} présente`);
   }
+
+  /*
+   * Le plein écran, et le chemin pour y arriver.
+   *
+   * Ces quatre lignes tiennent une promesse qu'on ne peut pas vérifier à l'œil
+   * dans un navigateur de bureau : le jeu s'ouvre sans barres une fois installé.
+   * Elles cassent au premier réglage retiré du manifeste par mégarde.
+   */
+  check(
+    (body.display_override ?? [])[0] === 'fullscreen',
+    'le manifeste demande le plein écran, avec repli sur standalone',
+  );
+  check(body.display === 'standalone', 'et garde un mode connu de tous les navigateurs en secours');
+  check(
+    (body.icons ?? []).some((i) => i.purpose === 'maskable' && i.sizes === '192x192'),
+    'une icône adaptative 192 est fournie pour le lanceur Android',
+  );
+  check(body.launch_handler?.client_mode === 'navigate-existing', 'un lien d’invitation réutilise la fenêtre ouverte');
+
+  // iOS ne lit pas le manifeste : c'est la balise qui décide du plein écran, et
+  // l'icône doit être carrée parce qu'Apple applique son propre masque.
+  const home = await context.request.get('/');
+  const html = home.ok() ? await home.text() : '';
+  check(/name="apple-mobile-web-app-capable" content="yes"/.test(html), 'iOS : le plein écran est demandé dans la page');
+  check(/name="apple-mobile-web-app-title"/.test(html), 'iOS : l’icône porte un nom court');
+  const touch = await context.request.get('/icons/apple-touch-icon.png');
+  check(touch.ok(), 'iOS : l’icône d’écran d’accueil est servie');
+
   const health = await context.request.get('/api/health');
   check(health.ok(), 'la sonde de santé répond');
   for (const sound of ['/sounds/zapzap.mp3', '/sounds/launch.mp3']) {
@@ -785,6 +813,56 @@ story('manifeste et hors-ligne', async () => {
     check(res.ok(), `le son ${sound} est servi`);
   }
   await context.close();
+});
+
+/**
+ * L'ajout à l'écran d'accueil : la seule porte vers le plein écran.
+ *
+ * Le contexte de test est un iPhone — c'est le profil Playwright utilisé
+ * partout ici — donc c'est la branche iOS qui s'affiche : celle qui explique le
+ * geste, faute d'API. C'est aussi le cas le plus fréquent en vrai, puisque les
+ * joueurs arrivent par un lien WhatsApp ouvert dans Safari.
+ */
+story('ajouter à l’écran d’accueil', async () => {
+  const player = await newPlayer('Installateur');
+  const { page } = player;
+
+  // Elle n'arrive pas tout de suite : quelqu'un qui ouvre l'application veut
+  // jouer, pas lire une suggestion.
+  check(
+    !(await page.getByText(/écran d’accueil/i).first().isVisible().catch(() => false)),
+    'elle ne coupe pas la première seconde',
+  );
+
+  check(
+    await eventuallyVisible(page.getByText(/Mettez ZapZap sur votre écran d’accueil/), 8_000),
+    'la suggestion d’ajout finit par apparaître',
+  );
+  check(
+    await eventuallyVisible(page.getByText(/Sur l’écran d’accueil/)),
+    'sur iPhone, elle explique le geste — Apple n’expose aucune API',
+  );
+  check(
+    await eventuallyVisible(page.getByText(/plein écran/)),
+    'et elle dit ce qu’on y gagne : le plein écran',
+  );
+  await capture(page, 'installation');
+  await checkTapTargets(page, 'Accueil avec suggestion');
+
+  // Refuser doit refuser pour de bon : une bannière qui revient à chaque
+  // ouverture est ce qui fait désinstaller une application.
+  await page.getByRole('button', { name: /Masquer cette suggestion/ }).click();
+  check(
+    !(await page.getByText(/Mettez ZapZap sur votre écran d’accueil/).isVisible().catch(() => false)),
+    'elle se referme d’un geste',
+  );
+  await page.reload();
+  await page.waitForTimeout(4_000);
+  check(
+    !(await page.getByText(/Mettez ZapZap sur votre écran d’accueil/).isVisible().catch(() => false)),
+    'et ne revient pas au rechargement suivant',
+  );
+  await closePlayer(player);
 });
 
 /**

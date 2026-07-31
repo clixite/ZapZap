@@ -88,6 +88,16 @@ export const de: Messages = {
     copied: 'Kopiert ✓',
     text: (code, url) => `Spiel bei meiner ZapZap-Runde mit ⚡ Code ${code} — ${url}`,
   },
+  install: {
+    title: 'Leg ZapZap auf deinen Startbildschirm',
+    detail:
+      'Das Spiel öffnet dann im Vollbild, ohne Adressleiste — und ist beim nächsten Mal einen Tipp entfernt.',
+    iosBefore: 'Tippe auf ',
+    iosAfter: ' unten in Safari, dann auf „Zum Home-Bildschirm“. Das Spiel öffnet im Vollbild.',
+    action: 'Hinzufügen',
+    dismiss: 'Diesen Hinweis ausblenden',
+  },
+
   table: {
     connecting: 'Verbinde mit dem Tisch…',
     backHome: 'Zurück zum Start',

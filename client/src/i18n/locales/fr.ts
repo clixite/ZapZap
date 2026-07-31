@@ -109,6 +109,17 @@ export const fr = {
     text: (code: string, url: string) => `Rejoins ma partie de ZapZap ⚡ Code ${code} — ${url}`,
   },
 
+  /* Ajouter à l'écran d'accueil ------------------------------------ */
+  install: {
+    title: 'Mettez ZapZap sur votre écran d’accueil',
+    detail:
+      'Le jeu s’ouvre alors en plein écran, sans barre d’adresse — et se retrouve d’un seul geste.',
+    iosBefore: 'Touchez ',
+    iosAfter: ' en bas de Safari, puis « Sur l’écran d’accueil ». Le jeu s’ouvrira en plein écran.',
+    action: 'Ajouter',
+    dismiss: 'Masquer cette suggestion',
+  },
+
   /* Table --------------------------------------------------------- */
   table: {
     connecting: 'Connexion à la table…',

@@ -88,6 +88,16 @@ export const fi: Messages = {
     copied: 'Kopioitu ✓',
     text: (code, url) => `Tule mukaan ZapZap-peliini ⚡ Koodi ${code} — ${url}`,
   },
+  install: {
+    title: 'Lisää ZapZap aloitusnäytölle',
+    detail:
+      'Peli avautuu silloin koko näytölle, ilman osoitepalkkia — ja on ensi kerralla yhden kosketuksen päässä.',
+    iosBefore: 'Napauta ',
+    iosAfter: ' Safarin alareunassa ja sitten “Lisää Koti-valikkoon”. Peli avautuu koko näytölle.',
+    action: 'Lisää',
+    dismiss: 'Piilota tämä ehdotus',
+  },
+
   table: {
     connecting: 'Yhdistetään pöytään…',
     backHome: 'Takaisin alkuun',

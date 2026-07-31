@@ -16,9 +16,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#1c1547" />
     <meta name="description" content="ZapZap — défausse, annonce, et le plus bas gagne. À plusieurs, chacun sur son téléphone." />
+    <!--
+      Plein écran sur iOS.
+
+      Apple ne lit pas `display` du manifeste : c'est cette balise, et elle
+      seule, qui fait qu'une icône d'écran d'accueil ouvre le jeu **sans les
+      barres de Safari**. Combinée à `black-translucent` et à `viewport-fit`,
+      la page occupe alors l'écran entier, jusque sous l'encoche.
+
+      Cela ne vaut que pour un lancement depuis l'icône. Un lien ouvert dans
+      Safari garde ses barres, et aucune API ne permet d'y changer quoi que ce
+      soit — d'où la bannière qui propose l'ajout à l'écran d'accueil.
+    -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <!-- Le nom sous l'icône : sans lui, iOS reprend le titre de la page. -->
+    <meta name="apple-mobile-web-app-title" content="ZapZap" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
     <title>ZapZap</title>
   </head>
   <body>

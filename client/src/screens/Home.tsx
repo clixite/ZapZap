@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { ActiveGame, OpenTable } from '@zapzap/shared';
 import { fetchActiveGames } from '../api';
+import { InstallPrompt } from '../components/InstallPrompt';
 import { SignIn } from '../components/SignIn';
 import { useT } from '../i18n';
 import { request } from '../socket';
@@ -376,6 +377,17 @@ export function Home() {
           ))}
         </section>
       )}
+
+      {/*
+        La suggestion d'ajout à l'écran d'accueil, en bas plutôt qu'en haut.
+
+        Elle n'est pas ce que le joueur est venu faire : « Jouer maintenant » et
+        ses parties en cours passent avant. Placée au-dessus d'elles, elle
+        repoussait l'action principale sous la ligne de flottaison sur un petit
+        écran — et une bannière qui gêne pour jouer est une bannière qu'on ferme
+        sans la lire.
+      */}
+      <InstallPrompt />
 
       <nav className="mt-auto flex justify-center gap-4 pt-4 text-sm text-paper-300">
         <Link to="/regles" className="underline underline-offset-4">

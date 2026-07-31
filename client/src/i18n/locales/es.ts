@@ -88,6 +88,16 @@ export const es: Messages = {
     copied: 'Copiado ✓',
     text: (code, url) => `Únete a mi partida de ZapZap ⚡ Código ${code} — ${url}`,
   },
+  install: {
+    title: 'Pon ZapZap en tu pantalla de inicio',
+    detail:
+      'El juego se abre entonces a pantalla completa, sin barra de direcciones — y a un toque la próxima vez.',
+    iosBefore: 'Toca ',
+    iosAfter: ' abajo en Safari y luego «Añadir a inicio». El juego se abrirá a pantalla completa.',
+    action: 'Añadir',
+    dismiss: 'Ocultar esta sugerencia',
+  },
+
   table: {
     connecting: 'Conectando con la mesa…',
     backHome: 'Volver al inicio',

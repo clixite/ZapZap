@@ -88,6 +88,16 @@ export const sv: Messages = {
     copied: 'Kopierad ✓',
     text: (code, url) => `Häng med i min ZapZap-omgång ⚡ Kod ${code} — ${url}`,
   },
+  install: {
+    title: 'Lägg ZapZap på hemskärmen',
+    detail:
+      'Spelet öppnas då i helskärm, utan adressfält — och är ett tryck bort nästa gång.',
+    iosBefore: 'Tryck på ',
+    iosAfter: ' längst ner i Safari och sedan “Lägg till på hemskärmen”. Spelet öppnas i helskärm.',
+    action: 'Lägg till',
+    dismiss: 'Dölj det här förslaget',
+  },
+
   table: {
     connecting: 'Ansluter till bordet…',
     backHome: 'Tillbaka till start',

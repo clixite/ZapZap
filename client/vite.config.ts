@@ -55,9 +55,36 @@ export default defineConfig({
         // Le classement des magasins et des annuaires d'applications web s'y
         // adosse ; sans elles, l'application n'apparaît dans aucune catégorie.
         categories: ['games', 'entertainment'],
+        /*
+         * Plein écran, avec repli.
+         *
+         * `display_override` est essayé dans l'ordre : `fullscreen` d'abord —
+         * plus de barre d'état, plus de barre système, tout l'écran pour le
+         * tapis — puis `standalone` là où le plein écran n'existe pas. `display`
+         * reste la réponse pour les navigateurs qui ne connaissent pas
+         * `display_override` du tout, et doit donc rester une valeur ancienne.
+         *
+         * Ce que cela ne fait pas, et qu'aucun réglage ne fera : rendre plein
+         * écran une page **ouverte depuis un lien**. Un lien WhatsApp ouvre le
+         * navigateur, avec ses barres, sur les deux plateformes — le plein
+         * écran est une propriété de l'application installée, pas du site.
+         * D'où la bannière d'ajout à l'écran d'accueil : c'est le seul chemin.
+         */
         display: 'standalone',
+        display_override: ['fullscreen', 'standalone', 'minimal-ui'],
         orientation: 'portrait',
         start_url: '/',
+        /*
+         * Une fois installée, l'application capte ses propres liens.
+         *
+         * Sans cela, un joueur qui a ZapZap sur son écran d'accueil et qui
+         * touche un lien d'invitation repartait dans le navigateur : deuxième
+         * session, barres de navigation, et deux ZapZap ouverts en parallèle.
+         * `navigate-existing` amène l'invitation dans la fenêtre déjà ouverte
+         * plutôt que d'en créer une seconde.
+         */
+        handle_links: 'preferred',
+        launch_handler: { client_mode: 'navigate-existing' },
         /*
          * Les raccourcis de l'icône : un appui long sur l'écran d'accueil.
          *
@@ -71,9 +98,24 @@ export default defineConfig({
         ],
         background_color: '#110c2e',
         theme_color: '#1c1547',
+        /*
+         * Deux jeux d'icônes, pour deux façons de les découper.
+         *
+         * `any` est l'icône telle quelle, avec ses coins arrondis dessinés :
+         * c'est ce qu'affichent les listes, les onglets et les anciens
+         * lanceurs. `maskable` est une icône **à fond perdu**, dont le sujet
+         * tient dans le cercle de sûreté : Android la recadre selon la forme du
+         * lanceur — cercle, carré arrondi, goutte — et une icône `any` s'y
+         * retrouve avec ses coins rognés et un halo blanc autour.
+         *
+         * Il en faut une en 192 et pas seulement en 512 : Chrome choisit la
+         * taille la plus proche de ce dont il a besoin, et redimensionner une
+         * 512 vers 48 px donne un éclair mou.
+         */
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
           { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },

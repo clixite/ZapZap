@@ -88,6 +88,16 @@ export const pl: Messages = {
     copied: 'Skopiowano ✓',
     text: (code, url) => `Dołącz do mojej partii ZapZap ⚡ Kod ${code} — ${url}`,
   },
+  install: {
+    title: 'Dodaj ZapZap do ekranu głównego',
+    detail:
+      'Gra otworzy się wtedy na pełnym ekranie, bez paska adresu — i będzie o jedno dotknięcie stąd.',
+    iosBefore: 'Dotknij ',
+    iosAfter: ' na dole Safari, a potem „Do ekranu początkowego”. Gra otworzy się na pełnym ekranie.',
+    action: 'Dodaj',
+    dismiss: 'Ukryj tę podpowiedź',
+  },
+
   table: {
     connecting: 'Łączenie ze stołem…',
     backHome: 'Powrót na start',

@@ -88,6 +88,16 @@ export const nl: Messages = {
     copied: 'Gekopieerd ✓',
     text: (code, url) => `Kom meespelen met ZapZap ⚡ Code ${code} — ${url}`,
   },
+  install: {
+    title: 'Zet ZapZap op je beginscherm',
+    detail:
+      'Het spel opent dan schermvullend, zonder adresbalk — en staat de volgende keer één tik ver.',
+    iosBefore: 'Tik op ',
+    iosAfter: ' onderaan in Safari en dan op “Zet op beginscherm”. Het spel opent schermvullend.',
+    action: 'Toevoegen',
+    dismiss: 'Deze suggestie verbergen',
+  },
+
   table: {
     connecting: 'Verbinden met de tafel…',
     backHome: 'Terug naar start',

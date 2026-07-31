@@ -88,6 +88,16 @@ export const it: Messages = {
     copied: 'Copiato ✓',
     text: (code, url) => `Vieni a giocare a ZapZap ⚡ Codice ${code} — ${url}`,
   },
+  install: {
+    title: 'Metti ZapZap nella schermata Home',
+    detail:
+      'Il gioco si apre a schermo intero, senza barra degli indirizzi — e a un tocco la volta dopo.',
+    iosBefore: 'Tocca ',
+    iosAfter: ' in basso in Safari, poi “Aggiungi a Home”. Il gioco si aprirà a schermo intero.',
+    action: 'Aggiungi',
+    dismiss: 'Nascondi questo suggerimento',
+  },
+
   table: {
     connecting: 'Connessione al tavolo…',
     backHome: 'Torna all’inizio',

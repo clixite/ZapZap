@@ -88,6 +88,16 @@ export const ro: Messages = {
     copied: 'Copiat ✓',
     text: (code, url) => `Vino la partida mea de ZapZap ⚡ Cod ${code} — ${url}`,
   },
+  install: {
+    title: 'Pune ZapZap pe ecranul principal',
+    detail:
+      'Jocul se deschide atunci pe tot ecranul, fără bară de adresă — și e la o atingere data viitoare.',
+    iosBefore: 'Atinge ',
+    iosAfter: ' jos în Safari, apoi „Adaugă la ecran principal”. Jocul se va deschide pe tot ecranul.',
+    action: 'Adaugă',
+    dismiss: 'Ascunde această sugestie',
+  },
+
   table: {
     connecting: 'Se conectează la masă…',
     backHome: 'Înapoi la început',

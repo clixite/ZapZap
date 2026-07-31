@@ -88,6 +88,16 @@ export const cs: Messages = {
     copied: 'Zkopírováno ✓',
     text: (code, url) => `Přidej se ke mně na ZapZap ⚡ Kód ${code} — ${url}`,
   },
+  install: {
+    title: 'Přidej ZapZap na plochu',
+    detail:
+      'Hra se pak otevře na celou obrazovku, bez adresního řádku — a příště bude na jedno klepnutí.',
+    iosBefore: 'Klepni na ',
+    iosAfter: ' dole v Safari a pak na „Přidat na plochu“. Hra se otevře na celou obrazovku.',
+    action: 'Přidat',
+    dismiss: 'Skrýt tento tip',
+  },
+
   table: {
     connecting: 'Připojování ke stolu…',
     backHome: 'Zpět na začátek',

@@ -88,6 +88,16 @@ export const en: Messages = {
     copied: 'Copied ✓',
     text: (code, url) => `Join my ZapZap game ⚡ Code ${code} — ${url}`,
   },
+  install: {
+    title: 'Put ZapZap on your home screen',
+    detail:
+      'The game then opens full screen, with no address bar — and is one tap away next time.',
+    iosBefore: 'Tap ',
+    iosAfter: ' at the bottom of Safari, then “Add to Home Screen”. The game will open full screen.',
+    action: 'Add',
+    dismiss: 'Hide this suggestion',
+  },
+
   table: {
     connecting: 'Connecting to the table…',
     backHome: 'Back to home',

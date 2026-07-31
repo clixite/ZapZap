@@ -78,8 +78,19 @@ const page = await browser.newPage();
 const targets = [
   { file: 'icon-192.png', size: 192 },
   { file: 'icon-512.png', size: 512 },
+  // Android recadre selon la forme du lanceur et choisit la taille la plus
+  // proche : sans le 192 maskable, il rétrécissait la 512 jusqu'à 48 px.
+  { file: 'icon-maskable-192.png', size: 192, maskable: true },
   { file: 'icon-maskable-512.png', size: 512, maskable: true },
-  { file: 'apple-touch-icon.png', size: 180 },
+  /*
+   * iOS arrondit lui-même, et il faut le laisser faire.
+   *
+   * L'icône d'écran d'accueil était générée avec ses propres coins arrondis,
+   * puis iOS lui appliquait son masque en « squircle » par-dessus : les coins
+   * étaient rognés deux fois, ce qui laissait apparaître quatre encoches
+   * sombres au bord de l'icône. Le carré plein est ce qu'Apple demande.
+   */
+  { file: 'apple-touch-icon.png', size: 180, square: true },
   // L'App Store exige 1024 sans transparence ni coins arrondis : il applique
   // son propre masque, et une icône déjà arrondie ressortirait doublement.
   { file: 'icon-1024.png', size: 1024, square: true, store: true },

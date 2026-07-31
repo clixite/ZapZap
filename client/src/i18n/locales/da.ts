@@ -88,6 +88,16 @@ export const da: Messages = {
     copied: 'Kopieret ✓',
     text: (code, url) => `Kom med i mit ZapZap-spil ⚡ Kode ${code} — ${url}`,
   },
+  install: {
+    title: 'Læg ZapZap på din hjemmeskærm',
+    detail:
+      'Spillet åbner så i fuld skærm, uden adresselinje — og er ét tryk væk næste gang.',
+    iosBefore: 'Tryk på ',
+    iosAfter: ' nederst i Safari og derefter “Føj til hjemmeskærm”. Spillet åbner i fuld skærm.',
+    action: 'Tilføj',
+    dismiss: 'Skjul dette forslag',
+  },
+
   table: {
     connecting: 'Forbinder til bordet…',
     backHome: 'Tilbage til start',
