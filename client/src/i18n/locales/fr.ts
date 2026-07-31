@@ -98,7 +98,16 @@ export const fr = {
     firstOut: 'À la 1re sortie',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'SMS', share: 'Partager…', copy: 'Copier le lien', copied: 'Copié ✓' },
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'SMS',
+    share: 'Partager…',
+    copy: 'Copier le lien',
+    copied: 'Copié ✓',
+    // Le message part chez l'invité : il est dans la langue de celui qui
+    // invite, la seule qu'on connaisse — et celle qu'ils parlent entre eux.
+    text: (code: string, url: string) => `Rejoins ma partie de ZapZap ⚡ Code ${code} — ${url}`,
+  },
 
   /* Table --------------------------------------------------------- */
   table: {
@@ -173,6 +182,9 @@ export const fr = {
   theme: {
     cardBack: 'Dos de carte',
     cardBackDetail: 'C’est ce que vous regardez le plus longtemps. Chacun choisit le sien.',
+    fourColours: 'Couleurs distinctes',
+    fourColoursDetail:
+      'Pique et trèfle en noir et vert, cœur en rouge, carreau en bleu — le paquet à quatre couleurs des jeux de cartes, pour qui ne distingue pas le rouge du noir.',
     names: {
       storm: 'Orage',
       volt: 'Éclair',
@@ -269,12 +281,21 @@ export const fr = {
   gameOver: {
     title: 'Partie terminée',
     winner: (pseudo: string) => `${pseudo} l’emporte`,
-    youWin: 'Vous l’emportez !',
+    youWin: 'Vous gagnez !',
     rank: (n: number) => `${n}e`,
     first: '1er',
-    rematch: 'Revanche',
+    rematch: 'Revanche — même table',
     home: 'Retour à l’accueil',
     share: 'Partager le résultat',
+    shared: 'Partagé',
+    // La carte partagée part sur WhatsApp : elle est dans la langue de celui
+    // qui partage, la seule que l'on connaisse au moment de la dessiner.
+    cardTitle: (rounds: number) => `Partie terminée — ${rounds} manche${rounds > 1 ? 's' : ''}`,
+    cardText: (url: string) => `On vient de finir une partie de ZapZap ⚡ ${url}`,
+    roundsPlayed: (n: number) => `${n} manche${n > 1 ? 's' : ''} jouée${n > 1 ? 's' : ''}`,
+    you: 'vous',
+    points: (n: number) => `${n} pt`,
+    outSuffix: ' · éliminé',
   },
 
   /* Cartes passées -------------------------------------------------- */
@@ -332,6 +353,120 @@ export const fr = {
     dangerDetail: 'Efface le compte, les statistiques et l’historique. Sans retour.',
     confirmDelete: 'Confirmer la suppression',
     cancel: 'Annuler',
+    photoLabel: 'Changer la photo de profil',
+    photoBadge: 'photo',
+    pseudoLabel: 'Votre pseudo',
+    removePhoto: 'Retirer la photo, garder l’avatar dessiné',
+    avatarGroup: 'Votre avatar',
+    avatarNamed: (emoji: string) => `Avatar ${emoji}`,
+    saveAccount: 'Sauvegarder mon compte',
+    linkedTo: 'Compte rattaché à',
+    linkedDetail: 'Vos parties vous suivent sur tous vos appareils.',
+    noEmail:
+      'Sans e-mail, ce compte vit dans ce navigateur. Un lien magique — pas de mot de passe — le rend récupérable partout.',
+    emailPlaceholder: 'vous@exemple.be',
+    emailLabel: 'Votre adresse e-mail',
+    send: 'Envoyer',
+    linkSent: 'Lien envoyé ! Ouvrez votre boîte mail sur cet appareil.',
+    redZone: 'Zone rouge',
+    deleteWarning: 'Supprimer le compte efface aussi l’historique et les statistiques. C’est définitif.',
+    confirmDeleteFinal: 'Confirmer la suppression définitive',
+    keepMyAccount: 'Non, je garde mon compte',
+  },
+
+  /*
+   * Le nom parlé des cartes ------------------------------------------
+   *
+   * Un lecteur d'écran ne lit pas « ♠ ». C'est le seul texte que le joueur
+   * aveugle reçoit pour chaque carte de sa main, de la défausse et de
+   * l'abattage : le laisser en français revenait à rendre le jeu injouable
+   * dans toute autre langue pour ceux qui en dépendent le plus.
+   */
+  card: {
+    suits: { S: 'pique', H: 'cœur', D: 'carreau', C: 'trèfle' } as Record<string, string>,
+    ranks: { 1: 'As', 11: 'Valet', 12: 'Dame', 13: 'Roi' } as Record<number, string>,
+    joker: 'Joker, 0 point',
+    named: (rank: string, suit: string, value: number) =>
+      `${rank} de ${suit}, ${value} point${value > 1 ? 's' : ''}`,
+  },
+
+  /*
+   * Les règles ------------------------------------------------------
+   *
+   * En données plutôt qu'en JSX : c'est le seul écran entièrement fait de
+   * prose, et le laisser dans le composant revenait à ne jamais le traduire.
+   * Trois marques suffisent à porter la mise en forme sans balise :
+   * `**gras**`, un `~` en tête pour une remarque en retrait, un `!` pour le
+   * point à retenir, un `-` pour une puce. Le traducteur écrit des phrases,
+   * pas du balisage.
+   */
+  rules: {
+    back: '← Retour',
+    title: 'Comment on joue',
+    subtitle: 'De 2 à 6 joueurs, 20 à 40 minutes.',
+    sections: [
+      {
+        title: 'Le but',
+        body: [
+          'Contrairement à la belote ou au whist, on ne cherche pas à faire des levées. On cherche à avoir la main la plus faible, pour pouvoir annoncer **ZapZap** avant les autres.',
+          'Le premier joueur à atteindre 100 points est éliminé. On joue jusqu’au dernier debout.',
+        ],
+      },
+      {
+        title: 'Ce que valent les cartes',
+        body: [
+          'As : 1 point. De 2 à 10 : leur valeur. Valet, Dame, Roi : 10 points. Joker : 0.',
+          '~Cette valeur ne sert qu’au décompte. Elle n’a aucune influence sur ce que vous pouvez poser — c’est le rang qui compte. Un Roi et une Dame valent 10 tous les deux, ils ne font pas une paire pour autant.',
+        ],
+      },
+      {
+        title: 'La donne',
+        body: [
+          'À chaque manche, le donneur choisit combien de cartes distribuer, entre 3 et 7 — **le même nombre pour tout le monde, lui compris**. La donne tourne vers la gauche, chacun exerce ce pouvoir à son tour.',
+          '~Court, la manche est une course à qui descend le premier. Long, il y a de quoi construire des suites et lâcher gros d’un coup — mais beaucoup à encaisser si quelqu’un annonce.',
+        ],
+      },
+      {
+        title: 'Votre tour : deux actions',
+        body: [
+          '**1. Défaussez.** Une carte seule, un ensemble (paire, brelan, carré), ou une suite d’au moins 3 cartes de même couleur. L’As est bas : A-2-3 est une suite, Dame-Roi-As non. Une seule combinaison par tour.',
+          '**2. Repiochez exactement une carte.** Au talon, à l’aveugle, ou dans la défausse du tour précédent. Sur une suite, seulement la carte de tête ou de queue. Sur un ensemble, n’importe laquelle.',
+          '~Vous repiochez toujours, même si vous venez de vider votre main. Il est donc impossible de finir un tour sans carte — et une main sans combinaison ne raccourcit jamais.',
+        ],
+      },
+      {
+        title: 'L’annonce',
+        body: [
+          'En début de tour, avant de défausser, si votre main vaut 5 points ou moins : vous pouvez annoncer. Tout le monde abat son jeu.',
+          '**Personne en dessous ?** Vous marquez 0, chacun marque le total de sa main.',
+          '**Quelqu’un fait aussi bien ou mieux ?** Vous prenez 30 points. Ceux qui vous battent marquent 0, les autres leur main.',
+          '!L’égalité profite toujours au contre-attaquant, jamais à l’annonceur. Annoncer à 5 pile est un vrai pari.',
+        ],
+      },
+      {
+        title: 'Le rebond',
+        body: [
+          'Si votre score tombe **exactement** sur 50, il redescend à 25. S’il tombe exactement sur 100, il redescend à 50 et vous n’êtes pas éliminé.',
+          '~C’est ce qui relance les parties qui s’enlisent — et il arrive qu’on cherche à prendre exactement le nombre de points qui sauve.',
+        ],
+      },
+      {
+        title: 'Quelques réflexes',
+        body: [
+          '-Purgez les figures en priorité. Trois figures, c’est 30 points si quelqu’un annonce.',
+          '-Piochez à l’aveugle par défaut. Prendre dans la défausse renseigne toute la table sur ce que vous construisez.',
+          '-Comptez les cartes des autres. Un joueur qui pose trois cartes par tour et n’en remonte qu’une descend vite : n’annoncez pas à 5 contre lui.',
+          '-Ne gardez jamais une combinaison pour plus tard. Une paire de Rois, c’est 20 points qui dorment.',
+          '-Quand vous donnez, servez court si vous menez au score.',
+        ],
+      },
+      {
+        title: 'Bon à savoir',
+        body: [
+          '~L’application ne vous laisse jamais jouer un coup illégal : pas d’annonce hors tour, pas de combinaison invalide, donc aucune des pénalités de maladresse du jeu sur table. Si une manche se bloque — cela arrive quand plus personne ne peut apparier ses cartes — elle se termine d’elle-même au bout d’un long moment : chacun compte sa main, sans pénalité.',
+        ],
+      },
+    ],
   },
 
   /* Historique ----------------------------------------------------- */
@@ -342,6 +477,24 @@ export const fr = {
     emptyDetail: 'Vos parties apparaîtront ici dès la première fin de partie.',
     players: (n: number) => `${n} joueurs`,
     youRanked: (rank: number) => (rank === 1 ? 'Victoire' : `${rank}e place`),
+    backShort: '← Retour',
+    yourGames: 'Vos parties',
+    tileGames: 'parties',
+    tileWins: 'victoires',
+    tileZaps: (won: number, called: number) => `annonces réussies (${won}/${called})`,
+    loading: 'Chargement…',
+    none: 'Aucune partie terminée pour l’instant. La première victoire n’attend que vous.',
+    won: '🏆 Victoire',
+    ranked: (rank: number, total: number) => `${rank}ᵉ sur ${total}`,
+    home: 'Retour à l’accueil',
+  },
+
+  /* Vérification du lien magique ------------------------------------ */
+  verify: {
+    checking: 'Vérification du lien…',
+    invalid: 'Lien invalide ou expiré',
+    invalidDetail: 'Un lien magique ne vit que quinze minutes. Redemandez-en un depuis votre profil.',
+    home: 'Retour à l’accueil',
   },
 
   /* Mise à jour et connexion ---------------------------------------- */
@@ -379,6 +532,8 @@ export const fr = {
     TIMEOUT: 'Le serveur ne répond pas.',
     TOO_MANY_ACCOUNTS:
       'Beaucoup de comptes viennent d’être créés depuis votre connexion. Réessayez dans une minute.',
+    ACCOUNT_FAILED: 'Impossible de créer le compte.',
+    MAIL_FAILED: 'L’envoi a échoué. Réessayez plus tard.',
   },
 };
 

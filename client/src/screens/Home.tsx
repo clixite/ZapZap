@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { ActiveGame, OpenTable } from '@zapzap/shared';
 import { fetchActiveGames } from '../api';
 import { SignIn } from '../components/SignIn';
@@ -36,6 +36,7 @@ export function Home() {
   const t = useT();
   const { user, loading, signIn } = useSession();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
   const clear = useGame((s) => s.clear);
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState('');
@@ -80,17 +81,57 @@ export function Home() {
     };
   }, [user]);
 
+  /*
+   * Ouvrir une table, ou en rejoindre une — l'action, sans son bouton.
+   *
+   * Déclarée ici, au-dessus des retours anticipés, parce que les raccourcis de
+   * l'icône d'application (appui long sur l'écran d'accueil) doivent pouvoir la
+   * déclencher depuis un effet, et qu'un effet ne peut pas vivre plus bas.
+   */
+  const go = useCallback(
+    async (event: 'room:create' | 'room:quickMatch') => {
+      setBusy(true);
+      setError(null);
+      const ack = await request<{ code: string; created?: boolean }>(event);
+      setBusy(false);
+      if (!ack.ok) return setError(ack.error.message);
+      /*
+       * « Jouer maintenant » doit faire jouer.
+       *
+       * Le serveur répond `created: true` quand aucune table n'attendait et
+       * qu'il a fallu en ouvrir une. On atterrissait alors dans un salon vide,
+       * devant huit réglages et un bouton grisé « il faut 2 joueurs » — la
+       * promesse du plus gros bouton de l'application débouchait sur une
+       * impasse silencieuse, et c'est justement le bouton que touche quelqu'un
+       * qui découvre le jeu.
+       *
+       * Le salon sait maintenant qu'il est né d'une partie rapide : il cherche
+       * du monde à voix haute et propose de commencer sans attendre.
+       */
+      navigate(`/salon/${ack.code}${ack.created ? '?rapide=1' : ''}`);
+    },
+    [navigate],
+  );
+
+  /*
+   * Les raccourcis de l'icône : `?rapide=1` et `?creer=1`.
+   *
+   * Android les propose sur un appui long sur l'icône, iOS dans le menu de
+   * partage. Ils n'ont de valeur que s'ils agissent : atterrir sur l'accueil
+   * ordinaire après avoir choisi « Créer une table » serait pire que de ne rien
+   * proposer. On consomme le paramètre tout de suite — sans quoi un simple
+   * retour arrière relancerait une seconde table.
+   */
+  const shortcut = params.get('rapide') ? 'room:quickMatch' : params.get('creer') ? 'room:create' : null;
+  useEffect(() => {
+    if (!user || !shortcut) return;
+    setParams({}, { replace: true });
+    void go(shortcut);
+  }, [user, shortcut, go, setParams]);
+
   if (loading) return <Centered>{t.app.loading}</Centered>;
   if (!user) return <SignIn onSubmit={signIn} />;
 
-  const go = async (event: 'room:create' | 'room:quickMatch') => {
-    setBusy(true);
-    setError(null);
-    const ack = await request<{ code: string }>(event);
-    setBusy(false);
-    if (!ack.ok) return setError(ack.error.message);
-    navigate(`/salon/${ack.code}`);
-  };
 
   /*
    * Le solo, d'un seul geste.

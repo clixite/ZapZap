@@ -80,8 +80,14 @@ export const en: Messages = {
     firstOut: 'At the first knockout',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'SMS', share: 'Share…', copy: 'Copy link', copied: 'Copied ✓' },
-
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'SMS',
+    share: 'Share…',
+    copy: 'Copy link',
+    copied: 'Copied ✓',
+    text: (code, url) => `Join my ZapZap game ⚡ Code ${code} — ${url}`,
+  },
   table: {
     connecting: 'Connecting to the table…',
     backHome: 'Back to home',
@@ -152,6 +158,9 @@ export const en: Messages = {
   theme: {
     cardBack: 'Card back',
     cardBackDetail: 'It is what you look at the longest. Everyone picks their own.',
+    fourColours: 'Four-colour deck',
+    fourColoursDetail:
+      'Spades black, clubs green, hearts red, diamonds blue — the card-room standard, for anyone who cannot tell red from black.',
     names: {
       storm: 'Storm',
       volt: 'Bolt',
@@ -250,6 +259,13 @@ export const en: Messages = {
     rematch: 'Rematch',
     home: 'Back to home',
     share: 'Share the result',
+    shared: 'Shared',
+    cardTitle: (rounds) => `Game over — ${rounds} round${rounds > 1 ? 's' : ''}`,
+    cardText: (url) => `We just finished a game of ZapZap ⚡ ${url}`,
+    roundsPlayed: (n) => `${n} round${n > 1 ? 's' : ''} played`,
+    you: 'you',
+    points: (n) => `${n} pt`,
+    outSuffix: ' · out',
   },
 
   passed: {
@@ -304,6 +320,25 @@ export const en: Messages = {
     dangerDetail: 'Erases the account, the statistics and the history. No way back.',
     confirmDelete: 'Confirm deletion',
     cancel: 'Cancel',
+    photoLabel: 'Change profile photo',
+    photoBadge: 'photo',
+    pseudoLabel: 'Your name',
+    removePhoto: 'Remove the photo, keep the drawn avatar',
+    avatarGroup: 'Your avatar',
+    avatarNamed: (emoji) => `Avatar ${emoji}`,
+    saveAccount: 'Save my account',
+    linkedTo: 'Account linked to',
+    linkedDetail: 'Your games follow you on every device.',
+    noEmail:
+      'Without an email, this account lives in this browser only. A magic link — no password — makes it recoverable anywhere.',
+    emailPlaceholder: 'you@example.com',
+    emailLabel: 'Your email address',
+    send: 'Send',
+    linkSent: 'Link sent! Open your inbox on this device.',
+    redZone: 'Danger zone',
+    deleteWarning: 'Deleting the account also erases your history and statistics. This cannot be undone.',
+    confirmDeleteFinal: 'Confirm permanent deletion',
+    keepMyAccount: 'No, keep my account',
   },
 
   history: {
@@ -313,6 +348,99 @@ export const en: Messages = {
     emptyDetail: 'Your games will show up here as soon as one ends.',
     players: (n) => `${n} players`,
     youRanked: (rank) => (rank === 1 ? 'Win' : `${rank}th place`),
+    backShort: '← Back',
+    yourGames: 'Your games',
+    tileGames: 'games',
+    tileWins: 'wins',
+    tileZaps: (won, called) => `calls won (${won}/${called})`,
+    loading: 'Loading…',
+    none: 'No finished games yet. Your first win is waiting.',
+    won: '🏆 Win',
+    ranked: (rank, total) => `${rank} of ${total}`,
+    home: 'Back to home',
+  },
+
+  card: {
+    suits: { S: 'spades', H: 'hearts', D: 'diamonds', C: 'clubs' },
+    ranks: { 1: 'Ace', 11: 'Jack', 12: 'Queen', 13: 'King' },
+    joker: 'Joker, 0 points',
+    named: (rank, suit, value) => `${rank} of ${suit}, ${value} point${value > 1 ? 's' : ''}`,
+  },
+
+  rules: {
+    back: '← Back',
+    title: 'How to play',
+    subtitle: '2 to 6 players, 20 to 40 minutes.',
+    sections: [
+      {
+        title: 'The goal',
+        body: [
+          'Unlike bridge or whist, you are not trying to win tricks. You are trying to hold the weakest hand, so you can call **ZapZap** before anyone else.',
+          'The first player to reach 100 points is out. You play until one player is left standing.',
+        ],
+      },
+      {
+        title: 'What the cards are worth',
+        body: [
+          'Ace: 1 point. 2 to 10: face value. Jack, Queen, King: 10 points. Joker: 0.',
+          '~That value only matters when scoring. It has no effect on what you may lay down — rank is what counts. A King and a Queen are both worth 10, but they are not a pair.',
+        ],
+      },
+      {
+        title: 'The deal',
+        body: [
+          'Each round, the dealer picks how many cards to deal, between 3 and 7 — **the same number for everyone, dealer included**. The deal moves to the left, so everyone gets that power in turn.',
+          '~Short, and the round is a race to the bottom. Long, and there is room to build runs and drop big — but plenty to eat if someone calls.',
+        ],
+      },
+      {
+        title: 'Your turn: two actions',
+        body: [
+          '**1. Discard.** A single card, a set (pair, three or four of a kind), or a run of at least 3 cards in the same suit. The Ace is low: A-2-3 is a run, Q-K-A is not. One combination per turn.',
+          '**2. Draw exactly one card.** From the stock, blind, or from the previous turn\u2019s discard. On a run, only the head or the tail card. On a set, any of them.',
+          '~You always draw, even if you have just emptied your hand. So you can never finish a turn with no cards — and a hand with no combination never gets shorter.',
+        ],
+      },
+      {
+        title: 'The call',
+        body: [
+          'At the start of your turn, before discarding, if your hand is worth 5 points or less: you may call. Everyone reveals.',
+          '**Nobody lower?** You score 0, everyone else scores their hand.',
+          '**Someone matches or beats you?** You take 30 points. Those who beat you score 0, the rest score their hand.',
+          '!A tie always favours the counter-caller, never the caller. Calling at exactly 5 is a real gamble.',
+        ],
+      },
+      {
+        title: 'The bounce',
+        body: [
+          'If your score lands on **exactly** 50, it drops back to 25. If it lands on exactly 100, it drops back to 50 and you are not eliminated.',
+          '~That is what revives games that stall — and players do sometimes aim for the precise number of points that saves them.',
+        ],
+      },
+      {
+        title: 'A few habits',
+        body: [
+          '-Dump the face cards first. Three of them is 30 points if someone calls.',
+          '-Draw blind by default. Taking from the discard tells the whole table what you are building.',
+          '-Count the others\u2019 cards. A player laying three cards a turn and drawing one back is going down fast: do not call at 5 against them.',
+          '-Never save a combination for later. A pair of Kings is 20 points asleep in your hand.',
+          '-When you deal, deal short if you are ahead on score.',
+        ],
+      },
+      {
+        title: 'Good to know',
+        body: [
+          '~The app never lets you play an illegal move: no calling out of turn, no invalid combination, so none of the clumsiness penalties of the tabletop game. If a round stalls — which happens when nobody can match their cards any more — it ends by itself after a long while: everyone scores their hand, no penalty.',
+        ],
+      },
+    ],
+  },
+
+  verify: {
+    checking: 'Checking the link…',
+    invalid: 'Invalid or expired link',
+    invalidDetail: 'A magic link only lives fifteen minutes. Ask for a new one from your profile.',
+    home: 'Back to home',
   },
 
   app: {
@@ -347,6 +475,8 @@ export const en: Messages = {
     OFFLINE: 'No connection to the server.',
     TIMEOUT: 'The server is not responding.',
     TOO_MANY_ACCOUNTS: 'A lot of accounts have just been created from your connection. Try again in a minute.',
+    ACCOUNT_FAILED: 'Could not create the account.',
+    MAIL_FAILED: 'Sending failed. Try again later.',
   },
 };
 

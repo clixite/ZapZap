@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { verifyMagicLink } from '../api';
+import { useT } from '../i18n';
 import { useSession } from '../store/session';
 
 /**
@@ -11,6 +12,7 @@ import { useSession } from '../store/session';
  * l'emmène à l'accueil — ses parties en cours l'y attendent.
  */
 export function VerifyEmail() {
+  const t = useT();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const adopt = useSession((s) => s.adopt);
@@ -44,16 +46,16 @@ export function VerifyEmail() {
           <span className="text-3xl" aria-hidden="true">
             ⚡
           </span>
-          <p className="text-paper-300">Vérification du lien…</p>
+          <p className="text-paper-300">{t.verify.checking}</p>
         </>
       ) : (
         <>
-          <h1 className="font-display text-xl font-bold">Lien invalide ou expiré</h1>
+          <h1 className="font-display text-xl font-bold">{t.verify.invalid}</h1>
           <p className="text-sm text-paper-300">
-            Un lien magique ne vit que quinze minutes. Redemandez-en un depuis votre profil.
+            {t.verify.invalidDetail}
           </p>
           <Link to="/" className="mt-2 text-sm underline underline-offset-4">
-            Retour à l’accueil
+            {t.verify.home}
           </Link>
         </>
       )}

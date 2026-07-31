@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { cardId, handValue } from '../src/cards';
-import { applyAction, createGame, type GameAction } from '../src/engine';
+import { applyAction, createGame, defaultDiscard, type GameAction } from '../src/engine';
 import { DEFAULT_VARIANTS, MAX_TURNS_PER_PLAYER, MISS_PENALTY } from '../src/rules';
 import type { Card, GameState } from '../src/types';
 
@@ -789,9 +789,12 @@ describe('pause et départ volontaire', () => {
 
   it('rend les cartes du partant à la défausse', () => {
     let state = playing(['a', 'b', 'c'], 5);
-    const before = state.round!.discardPile.length;
+    const hand = [...state.round!.hands['b']!];
     state = ok(state, { type: 'FORFEIT', playerId: 'b' });
-    expect(state.round!.discardPile.length).toBe(before + 5);
+    // Contenance et non compte exact : clore le tour retire aussi la défausse
+    // du tour précédent, qui n'était plus ramassable.
+    const pile = state.round!.discardPile.map(cardId);
+    for (const card of hand) expect(pile).toContain(cardId(card));
     expect(state.round!.hands['b']).toEqual([]);
   });
 
@@ -832,5 +835,61 @@ describe('pause et départ volontaire', () => {
 
   it('refuse de faire partir un inconnu', () => {
     fails(playing(['a', 'b', 'c']), { type: 'FORFEIT', playerId: 'zzz' }, 'PLAYER_NOT_FOUND');
+  });
+
+  it('l’hôte qui part passe la barre à quelqu’un', () => {
+    // Sans transfert, plus personne ne peut lancer la manche suivante : la
+    // table reste bloquée sur l'écran de score jusqu'à expiration.
+    let state = playing(['a', 'b', 'c']);
+    expect(state.hostId).toBe('a');
+    state = ok(state, { type: 'FORFEIT', playerId: 'a' });
+    expect(state.hostId).not.toBe('a');
+    expect(['b', 'c']).toContain(state.hostId);
+  });
+
+  it('l’hôte qui part préfère un humain à un robot', () => {
+    let state = ok(lobby(['a', 'bot:0']), {
+      type: 'ADD_PLAYER',
+      player: { id: 'c', pseudo: 'c', avatar: '⚡' },
+    });
+    state = ok(state, { type: 'START_GAME', playerId: 'a' });
+    const dealer = state.players.find((p) => p.seat === state.round!.dealerSeat)!;
+    state = ok(state, { type: 'DEAL', playerId: dealer.id, handSize: 5 });
+    state = ok(state, { type: 'FORFEIT', playerId: 'a' });
+    expect(state.hostId).toBe('c');
+  });
+
+  it('un départ volontaire ne compte pas comme première élimination', () => {
+    // Variante « fin à la première élimination » : partir en claquant la porte
+    // ne doit pas arrêter la partie de ceux qui restent.
+    let state = lobby(['a', 'b', 'c']);
+    state = ok(state, {
+      type: 'SET_VARIANTS',
+      playerId: 'a',
+      variants: { ...DEFAULT_VARIANTS, endMode: 'first-out' },
+    });
+    state = ok(state, { type: 'START_GAME', playerId: 'a' });
+    const dealer = state.players.find((p) => p.seat === state.round!.dealerSeat)!;
+    state = ok(state, { type: 'DEAL', playerId: dealer.id, handSize: 5 });
+    state = ok(state, { type: 'FORFEIT', playerId: 'b' });
+    expect(state.phase).not.toBe('game-over');
+  });
+});
+
+describe('coups de secours', () => {
+  it('ne défausse rien quand la main est vide', () => {
+    // Chemin appelé depuis un minuteur : une exception y arrêterait le serveur
+    // entier, pas seulement cette table.
+    const state = setHand(playing(['a', 'b']), 'a', []);
+    expect(defaultDiscard(state, 'a')).toEqual([]);
+  });
+
+  it('ne défausse rien pour un joueur qu’elle ne connaît pas', () => {
+    expect(defaultDiscard(playing(['a', 'b']), 'zzz')).toEqual([]);
+  });
+
+  it('pose la carte la plus chère quand la main en a une', () => {
+    const state = setHand(playing(['a', 'b']), 'a', [c('H', 3), c('S', 13), c('D', 2)]);
+    expect(defaultDiscard(state, 'a')).toEqual([cardId(c('S', 13))]);
   });
 });

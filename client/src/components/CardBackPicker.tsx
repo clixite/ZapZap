@@ -1,6 +1,14 @@
 import { useT } from '../i18n';
 import { vibrate } from '../haptics';
-import { CARD_BACKS, CARD_BACK_STYLES, setCardBack, useCardBack, type CardBackId } from '../store/theme';
+import {
+  CARD_BACKS,
+  CARD_BACK_STYLES,
+  setCardBack,
+  setColorblind,
+  useCardBack,
+  useColorblind,
+  type CardBackId,
+} from '../store/theme';
 
 /**
  * Le choix du dos de carte.
@@ -12,6 +20,7 @@ import { CARD_BACKS, CARD_BACK_STYLES, setCardBack, useCardBack, type CardBackId
 export function CardBackPicker() {
   const t = useT();
   const current = useCardBack();
+  const colorblind = useColorblind();
 
   const choose = (id: CardBackId) => {
     vibrate('tap');
@@ -65,6 +74,28 @@ export function CardBackPicker() {
           );
         })}
       </div>
+
+      {/*
+        Le paquet à quatre couleurs, juste sous les dos : c'est le même sujet —
+        à quoi ressemblent mes cartes — et c'est là qu'on le cherchera. L'isoler
+        dans un écran « accessibilité » reviendrait à le cacher à ceux qui en
+        ont besoin sans savoir qu'il porte ce nom.
+      */}
+      <label className="mt-4 flex items-start gap-3 border-t border-storm-700 pt-3">
+        <input
+          type="checkbox"
+          checked={colorblind}
+          onChange={(e) => {
+            vibrate('tap');
+            setColorblind(e.target.checked);
+          }}
+          className="mt-0.5 h-5 w-5 shrink-0 accent-volt-500"
+        />
+        <span>
+          <span className="block text-sm font-medium">{t.theme.fourColours}</span>
+          <span className="block text-xs text-paper-300">{t.theme.fourColoursDetail}</span>
+        </span>
+      </label>
     </section>
   );
 }

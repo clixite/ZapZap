@@ -56,6 +56,11 @@ const MESSAGES: Record<ErrorCode, string> = {
   RATE_LIMITED: 'Doucement ! Réessayez dans un instant.',
   INVALID_TOKEN: 'Session expirée, rechargez la page.',
   INVALID_PAYLOAD: 'Requête invalide.',
+  // Le serveur n'émet jamais ces deux-là — ils décrivent son silence, et c'est
+  // le client qui les fabrique. Ils figurent ici pour que la table reste
+  // exhaustive : c'est ce qui garantit qu'aucun code n'arrive sans message.
+  TIMEOUT: 'Le serveur ne répond pas.',
+  OFFLINE: 'Pas de connexion au serveur.',
 };
 
 function fail(code: ErrorCode): Ack<never> {
@@ -140,6 +145,19 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
      * reconnexion, avant que le client n'ait redemandé sa table.
      */
     const focusOn = (room: Room): Room => {
+      /*
+       * Un onglet ne regarde qu'une table à la fois.
+       *
+       * Le joueur, lui, peut être assis à cinq — mais ce socket-ci n'en affiche
+       * qu'une. Tant qu'il restait attaché à la précédente, les deux tables lui
+       * poussaient leurs `game:view` : le client gardait la dernière arrivée,
+       * et la table affichée sautait d'une partie à l'autre au gré des coups
+       * des autres joueurs. On se décroche donc de l'ancienne en s'asseyant à
+       * la nouvelle — le joueur y reste membre, il n'y a simplement plus d'œil
+       * dessus, ce qui est exactement la vérité.
+       */
+      const previous = socket.data.roomCode as string | undefined;
+      if (previous && previous !== room.code) rooms.get(previous)?.detach(userId, socket);
       socket.data.roomCode = room.code;
       return room;
     };
@@ -407,9 +425,11 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
         if (!result.ok) return fail(result.error);
         const call = room.state.round!.zapCall!;
         room.emitEvent({ type: 'zap-called', playerId: userId, success: call.success });
-        for (const player of room.state.players.filter((p) => p.eliminated && p.finishRank !== undefined)) {
-          room.emitEvent({ type: 'player-eliminated', playerId: player.id });
-        }
+        // Les éliminations sont diffusées par `Room.apply`, qui seul voit celles
+        // qui viennent d'arriver. La boucle qui était ici rediffusait *tous* les
+        // sortis de la partie à chaque annonce : le joueur éliminé à la manche 2
+        // se faisait re-annoncer, son et animation compris, à chaque manche
+        // suivante jusqu'à la fin.
         return { ok: true };
       }),
     );
@@ -420,6 +440,17 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
         if (!room) return fail('NOT_IN_ROOM');
         const result = room.apply({ type: 'NEXT_ROUND', playerId: userId });
         return result.ok ? { ok: true } : fail(result.error);
+      }),
+    );
+
+    socket.on('game:log', (ack) =>
+      reply(ack, () => {
+        const room = myRoom();
+        if (!room) return fail('NOT_IN_ROOM');
+        if (!room.isMember(userId)) return fail('NOT_IN_ROOM');
+        // Journal strictement public : qui a donné, posé, ramassé, pioché à
+        // l'aveugle. Aucune main, aucune carte de la pioche.
+        return { ok: true, log: room.state.round?.log ?? [] };
       }),
     );
 
@@ -458,7 +489,18 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
     );
 
     socket.on('disconnect', () => {
-      for (const game of rooms.gamesOf(userId)) rooms.get(game.code)?.detach(userId, socket);
+      /*
+       * On se décroche de la table que ce socket regardait, et d'elle seule.
+       *
+       * La version précédente balayait `gamesOf(userId)`, qui **exclut les
+       * parties terminées** : un onglet resté sur l'écran de fin n'était jamais
+       * détaché, et la table gardait son socket mort à vie — elle continuait à
+       * compter un joueur connecté, donc n'était jamais balayée, donc restait
+       * en mémoire et en base. Une soirée de parties finies suffisait à faire
+       * grossir le processus sans rien qui puisse le faire redescendre.
+       */
+      const code = socket.data.roomCode as string | undefined;
+      if (code) rooms.get(code)?.detach(userId, socket);
     });
   });
 }

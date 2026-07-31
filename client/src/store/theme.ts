@@ -114,3 +114,60 @@ function subscribe(cb: () => void): () => void {
 export function useCardBack(): CardBackId {
   return useSyncExternalStore(subscribe, cardBack, cardBack);
 }
+
+/**
+ * Le paquet à quatre couleurs.
+ *
+ * Rouge et noir sont le seul repère entre familles sur un jeu classique : pour
+ * une deutéranopie ou une protanopie — près d'un homme sur douze — ♥ et ♠
+ * deviennent la même carte. Le standard des jeux de cartes est le paquet à
+ * quatre couleurs, et la feuille de style le portait déjà… sous un attribut que
+ * personne ne posait jamais. Le mode existait donc sur le papier et nulle part
+ * ailleurs. Voici l'interrupteur.
+ *
+ * Purement local, comme le dos : ce que je vois ne regarde pas la table.
+ */
+const CB_KEY = 'zapzap.colorblind';
+const cbListeners = new Set<() => void>();
+let colorblindOn = readColorblind();
+
+function readColorblind(): boolean {
+  try {
+    return localStorage.getItem(CB_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/** Applique la préférence au document — c'est elle qui déclenche la règle CSS. */
+function paint(): void {
+  if (typeof document === 'undefined') return;
+  if (colorblindOn) document.documentElement.dataset.colorblind = 'true';
+  else delete document.documentElement.dataset.colorblind;
+}
+
+paint();
+
+export function setColorblind(on: boolean): void {
+  colorblindOn = on;
+  try {
+    localStorage.setItem(CB_KEY, String(on));
+  } catch {
+    // sans stockage, le choix vaut pour la session
+  }
+  paint();
+  cbListeners.forEach((cb) => cb());
+}
+
+function colorblind(): boolean {
+  return colorblindOn;
+}
+
+function subscribeColorblind(cb: () => void): () => void {
+  cbListeners.add(cb);
+  return () => cbListeners.delete(cb);
+}
+
+export function useColorblind(): boolean {
+  return useSyncExternalStore(subscribeColorblind, colorblind, colorblind);
+}

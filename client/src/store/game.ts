@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { create } from 'zustand';
 import type { CardId, GameView, TransientEvent } from '@zapzap/shared';
+import { vibrate } from '../haptics';
 import { getSocket, request } from '../socket';
 import { applyPending, type Pending } from './optimistic';
 import { useSession } from './session';
@@ -77,13 +78,33 @@ export const useGame = create<GameStore>((set, get) => ({
     const socket = getSocket();
     if (!socket) return () => {};
 
-    // Toute vue serveur fait autorité : le coup en vol a atterri.
-    const onView = (view: GameView) => set({ serverView: view, pending: null });
+    /*
+     * Toute vue serveur fait autorité — celle de la table qu'on regarde.
+     *
+     * En asynchrone on est assis à plusieurs tables, et le serveur ne pousse la
+     * vue qu'aux onglets rattachés ; mais entre le moment où l'on demande à
+     * changer de table et celui où le serveur nous décroche de l'ancienne, une
+     * vue en retard pouvait arriver et remplacer la nouvelle. L'écran affichait
+     * alors l'autre partie, avec sa main et son tour à elle. On garde la table
+     * demandée quand elle est connue ; avant elle, la première vue reçue.
+     */
+    const onView = (view: GameView) => {
+      const wanted = get().wantedCode;
+      if (wanted && view.code !== wanted) return;
+      set({ serverView: view, pending: null });
+    };
     const onEvent = (event: TransientEvent) => {
       set({ lastEvent: event });
-      // La revanche bascule toute la table : l'hôte a ouvert une nouvelle
-      // partie, chacun la rejoint de lui-même en entendant l'événement.
-      if (event.type === 'rematch') void get().send('room:join', { code: event.code });
+      /*
+       * La revanche bascule toute la table : l'hôte a ouvert une nouvelle
+       * partie, chacun la rejoint de lui-même en entendant l'événement.
+       *
+       * Par `join` et non par `send` : c'est `join` qui inscrit la table
+       * demandée. Sans elle, on restait pointé sur la partie terminée — et la
+       * vue du nouveau salon, portant un autre code, était écartée à l'arrivée.
+       * L'hôte cliquait « Revanche » et ne quittait jamais l'écran de fin.
+       */
+      if (event.type === 'rematch') void get().join(event.code);
     };
     const onClosed = ({ reason }: { reason: string }) =>
       set({
@@ -138,6 +159,9 @@ export const useGame = create<GameStore>((set, get) => ({
     const ack = await request(event, payload);
     set({ busy: false });
     if (!ack.ok) {
+      // Un refus se sent : le bandeau est en bas de l'écran, sous le pouce, et
+      // le joueur qui regarde sa main ne le voyait pas passer.
+      vibrate('failure');
       set({ error: ack.error.message });
       return false;
     }
@@ -153,6 +177,7 @@ export const useGame = create<GameStore>((set, get) => ({
       // Refusé : on remet la vue du serveur telle quelle et on dit pourquoi.
       // Le cas est rare — le coup venait de la liste des coups légaux — mais il
       // existe : minuteur expiré, tour passé entre-temps.
+      vibrate('failure');
       set({ pending: null, error: ack.error.message });
       return false;
     }

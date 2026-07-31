@@ -80,8 +80,14 @@ export const pt: Messages = {
     firstOut: 'Na primeira eliminação',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'SMS', share: 'Partilhar…', copy: 'Copiar ligação', copied: 'Copiado ✓' },
-
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'SMS',
+    share: 'Partilhar…',
+    copy: 'Copiar ligação',
+    copied: 'Copiado ✓',
+    text: (code, url) => `Vem jogar ZapZap comigo ⚡ Código ${code} — ${url}`,
+  },
   table: {
     connecting: 'A ligar à mesa…',
     backHome: 'Voltar ao início',
@@ -152,6 +158,9 @@ export const pt: Messages = {
   theme: {
     cardBack: 'Verso da carta',
     cardBackDetail: 'É o que mais olha. Cada um escolhe o seu.',
+    fourColours: 'Baralho de quatro cores',
+    fourColoursDetail:
+      'Espadas a preto, paus a verde, copas a vermelho, ouros a azul — o baralho de quatro cores, para quem não distingue o vermelho do preto.',
     names: {
       storm: 'Tempestade',
       volt: 'Raio',
@@ -250,6 +259,13 @@ export const pt: Messages = {
     rematch: 'Desforra',
     home: 'Voltar ao início',
     share: 'Partilhar o resultado',
+    shared: 'Partilhado',
+    cardTitle: (rounds) => `Jogo terminado — ${rounds} ronda${rounds > 1 ? 's' : ''}`,
+    cardText: (url) => `Acabámos de jogar uma partida de ZapZap ⚡ ${url}`,
+    roundsPlayed: (n) => `${n} ronda${n > 1 ? 's' : ''} jogada${n > 1 ? 's' : ''}`,
+    you: 'tu',
+    points: (n) => `${n} pt`,
+    outSuffix: ' · eliminado',
   },
 
   passed: {
@@ -304,6 +320,25 @@ export const pt: Messages = {
     dangerDetail: 'Apaga a conta, as estatísticas e o histórico. Sem volta atrás.',
     confirmDelete: 'Confirmar a eliminação',
     cancel: 'Cancelar',
+    photoLabel: 'Mudar a foto de perfil',
+    photoBadge: 'foto',
+    pseudoLabel: 'O teu nome',
+    removePhoto: 'Retirar a foto, ficar com o avatar desenhado',
+    avatarGroup: 'O teu avatar',
+    avatarNamed: (emoji) => `Avatar ${emoji}`,
+    saveAccount: 'Guardar a minha conta',
+    linkedTo: 'Conta associada a',
+    linkedDetail: 'Os teus jogos seguem-te em todos os dispositivos.',
+    noEmail:
+      'Sem e-mail, esta conta vive apenas neste navegador. Uma ligação mágica — sem palavra-passe — torna-a recuperável em qualquer lado.',
+    emailPlaceholder: 'tu@exemplo.pt',
+    emailLabel: 'O teu endereço de e-mail',
+    send: 'Enviar',
+    linkSent: 'Ligação enviada! Abre o teu correio neste dispositivo.',
+    redZone: 'Zona vermelha',
+    deleteWarning: 'Apagar a conta apaga também o histórico e as estatísticas. Não há volta atrás.',
+    confirmDeleteFinal: 'Confirmar a eliminação definitiva',
+    keepMyAccount: 'Não, fico com a minha conta',
   },
 
   history: {
@@ -313,6 +348,99 @@ export const pt: Messages = {
     emptyDetail: 'Os seus jogos aparecem aqui assim que um terminar.',
     players: (n) => `${n} jogadores`,
     youRanked: (rank) => (rank === 1 ? 'Vitória' : `${rank}.º lugar`),
+    backShort: '← Voltar',
+    yourGames: 'Os teus jogos',
+    tileGames: 'jogos',
+    tileWins: 'vitórias',
+    tileZaps: (won, called) => `anúncios ganhos (${won}/${called})`,
+    loading: 'A carregar…',
+    none: 'Ainda não há jogos terminados. A tua primeira vitória está à espera.',
+    won: '🏆 Vitória',
+    ranked: (rank, total) => `${rank}.º de ${total}`,
+    home: 'Voltar ao início',
+  },
+
+  card: {
+    suits: { S: 'espadas', H: 'copas', D: 'ouros', C: 'paus' },
+    ranks: { 1: 'Ás', 11: 'Valete', 12: 'Dama', 13: 'Rei' },
+    joker: 'Joker, 0 pontos',
+    named: (rank, suit, value) => `${rank} de ${suit}, ${value} ponto${value > 1 ? 's' : ''}`,
+  },
+
+  rules: {
+    back: '← Voltar',
+    title: 'Como se joga',
+    subtitle: 'De 2 a 6 jogadores, 20 a 40 minutos.',
+    sections: [
+      {
+        title: 'O objetivo',
+        body: [
+          'Ao contrário da sueca ou do whist, não se procuram vazas. Procura-se ter a mão mais fraca, para poder anunciar **ZapZap** antes dos outros.',
+          'O primeiro jogador a chegar a 100 pontos é eliminado. Joga-se até restar um só.',
+        ],
+      },
+      {
+        title: 'Quanto valem as cartas',
+        body: [
+          'Ás: 1 ponto. De 2 a 10: o seu valor. Valete, Dama, Rei: 10 pontos. Joker: 0.',
+          '~Esse valor só conta na contagem. Não influencia o que podes baixar — aí o que manda é o valor da carta. Um Rei e uma Dama valem 10 os dois, mas não fazem par.',
+        ],
+      },
+      {
+        title: 'A distribuição',
+        body: [
+          'Em cada ronda, quem dá escolhe quantas cartas distribuir, entre 3 e 7 — **o mesmo número para todos, ele incluído**. A distribuição roda para a esquerda, cada um exerce esse poder à sua vez.',
+          '~Curta, a ronda é uma corrida a quem desce primeiro. Longa, há espaço para construir sequências e largar muito de uma vez — mas muito a engolir se alguém anunciar.',
+        ],
+      },
+      {
+        title: 'A tua vez: duas ações',
+        body: [
+          '**1. Descarta.** Uma carta sozinha, um conjunto (par, trio, quadra) ou uma sequência de pelo menos 3 cartas do mesmo naipe. O Ás é baixo: A-2-3 é sequência, D-R-A não. Uma só combinação por vez.',
+          '**2. Tira exatamente uma carta.** Do baralho, às cegas, ou do descarte da jogada anterior. Numa sequência, só a carta da ponta. Num conjunto, qualquer uma.',
+          '~Tiras sempre, mesmo que tenhas acabado de esvaziar a mão. É impossível acabar uma jogada sem cartas — e uma mão sem combinação nunca encurta.',
+        ],
+      },
+      {
+        title: 'O anúncio',
+        body: [
+          'No início da tua vez, antes de descartar, se a tua mão valer 5 pontos ou menos: podes anunciar. Toda a gente mostra.',
+          '**Ninguém abaixo?** Marcas 0, cada um marca o total da sua mão.',
+          '**Alguém igual ou melhor?** Levas 30 pontos. Quem te bate marca 0, os outros a sua mão.',
+          '!O empate favorece sempre quem contra-ataca, nunca quem anuncia. Anunciar com 5 certos é uma aposta a sério.',
+        ],
+      },
+      {
+        title: 'O ressalto',
+        body: [
+          'Se a tua pontuação cair **exatamente** em 50, desce para 25. Se cair exatamente em 100, desce para 50 e não és eliminado.',
+          '~É o que relança os jogos que empancam — e às vezes alguém procura mesmo os pontos que o salvam.',
+        ],
+      },
+      {
+        title: 'Alguns hábitos',
+        body: [
+          '-Larga primeiro as figuras. Três figuras são 30 pontos se alguém anunciar.',
+          '-Tira às cegas por defeito. Ir buscar ao descarte diz à mesa toda o que estás a construir.',
+          '-Conta as cartas dos outros. Quem baixa três cartas por vez e só tira uma desce depressa: não anuncies com 5 contra ele.',
+          '-Nunca guardes uma combinação para depois. Um par de Reis são 20 pontos a dormir.',
+          '-Quando dás, dá curto se vais à frente.',
+        ],
+      },
+      {
+        title: 'Bom saber',
+        body: [
+          '~A aplicação nunca te deixa fazer uma jogada ilegal: nada de anúncios fora de vez, nada de combinações inválidas, portanto nenhuma das penalizações por distração do jogo de mesa. Se uma ronda empancar — acontece quando ninguém consegue já combinar as cartas — acaba sozinha ao fim de bastante tempo: cada um conta a sua mão, sem penalização.',
+        ],
+      },
+    ],
+  },
+
+  verify: {
+    checking: 'A verificar a ligação…',
+    invalid: 'Ligação inválida ou expirada',
+    invalidDetail: 'Uma ligação mágica só vive quinze minutos. Pede outra a partir do teu perfil.',
+    home: 'Voltar ao início',
   },
 
   app: {
@@ -347,6 +475,8 @@ export const pt: Messages = {
     OFFLINE: 'Sem ligação ao servidor.',
     TIMEOUT: 'O servidor não responde.',
     TOO_MANY_ACCOUNTS: 'Acabaram de ser criadas muitas contas a partir da sua ligação. Tente daqui a um minuto.',
+    ACCOUNT_FAILED: 'Não foi possível criar a conta.',
+    MAIL_FAILED: 'O envio falhou. Tenta mais tarde.',
   },
 };
 

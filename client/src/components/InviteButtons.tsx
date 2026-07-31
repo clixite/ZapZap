@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useT } from '../i18n';
 
 /**
  * Inviter, par le canal que la tablée utilise déjà.
@@ -8,9 +9,10 @@ import { useState } from 'react';
  * groupes de famille et d'amis, le public exact du jeu.
  */
 export function InviteButtons({ code }: { code: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const url = `${location.origin}/j/${code}`;
-  const text = `Rejoins ma partie de ZapZap ⚡ Code ${code} — ${url}`;
+  const text = t.invite.text(code, url);
 
   const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent);
   // iOS et Android ne s'accordent pas sur le séparateur du corps de SMS.
@@ -40,10 +42,10 @@ export function InviteButtons({ code }: { code: string }) {
         role="button"
         className="flex h-11 items-center rounded-xl bg-storm-700 px-4 text-sm font-medium"
       >
-        WhatsApp
+        {t.invite.whatsapp}
       </a>
       <a href={smsHref} role="button" className="flex h-11 items-center rounded-xl bg-storm-700 px-4 text-sm font-medium">
-        SMS
+        {t.invite.sms}
       </a>
       {typeof navigator.share === 'function' && (
         <button
@@ -51,7 +53,7 @@ export function InviteButtons({ code }: { code: string }) {
           onClick={() => void nativeShare()}
           className="flex h-11 items-center rounded-xl bg-storm-700 px-4 text-sm font-medium"
         >
-          Partager…
+          {t.invite.share}
         </button>
       )}
       <button
@@ -59,7 +61,7 @@ export function InviteButtons({ code }: { code: string }) {
         onClick={() => void copy()}
         className="flex h-11 items-center rounded-xl bg-storm-700 px-4 text-sm font-medium"
       >
-        {copied ? 'Copié ✓' : 'Copier le lien'}
+        {copied ? t.invite.copied : t.invite.copy}
       </button>
     </div>
   );

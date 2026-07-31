@@ -1,4 +1,5 @@
 import type { GameView } from '@zapzap/shared';
+import { t } from './i18n';
 
 /**
  * La carte de fin de partie, à partager.
@@ -66,7 +67,7 @@ export function drawShareCard(view: GameView): HTMLCanvasElement {
   ctx.fillText('ZapZap ⚡', SIZE / 2, 150);
   ctx.fillStyle = PAPER_300;
   ctx.font = '40px system-ui, sans-serif';
-  ctx.fillText(`Partie terminée — ${view.roundIndex + 1} manche${view.roundIndex > 0 ? 's' : ''}`, SIZE / 2, 215);
+  ctx.fillText(t().gameOver.cardTitle(view.roundIndex + 1), SIZE / 2, 215);
 
   // Classement : rang final d'abord, éliminés grisés.
   const standings = [...view.players].sort(
@@ -104,7 +105,11 @@ export function drawShareCard(view: GameView): HTMLCanvasElement {
     ctx.textAlign = 'right';
     ctx.fillStyle = PAPER_300;
     ctx.font = `${Math.round(rowH * 0.34)}px system-ui, sans-serif`;
-    ctx.fillText(`${player.totalScore} pt${player.eliminated ? ' · éliminé' : ''}`, SIZE - 120, y + rowH * 0.62);
+    ctx.fillText(
+      `${t().gameOver.points(player.totalScore)}${player.eliminated ? t().gameOver.outSuffix : ''}`,
+      SIZE - 120,
+      y + rowH * 0.62,
+    );
   });
 
   // Pied : l'adresse — l'image doit donner le moyen de venir jouer.
@@ -122,7 +127,7 @@ export type ShareOutcome = 'shared' | 'downloaded' | 'cancelled';
 export async function shareResult(view: GameView): Promise<ShareOutcome> {
   const canvas = drawShareCard(view);
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
-  const text = `On vient de finir une partie de ZapZap ⚡ ${location.origin}`;
+  const text = t().gameOver.cardText(location.origin);
 
   if (blob) {
     const file = new File([blob], 'zapzap.png', { type: 'image/png' });

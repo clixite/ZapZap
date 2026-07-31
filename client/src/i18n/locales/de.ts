@@ -80,8 +80,14 @@ export const de: Messages = {
     firstOut: 'Beim ersten Ausscheiden',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'SMS', share: 'Teilen…', copy: 'Link kopieren', copied: 'Kopiert ✓' },
-
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'SMS',
+    share: 'Teilen…',
+    copy: 'Link kopieren',
+    copied: 'Kopiert ✓',
+    text: (code, url) => `Spiel bei meiner ZapZap-Runde mit ⚡ Code ${code} — ${url}`,
+  },
   table: {
     connecting: 'Verbinde mit dem Tisch…',
     backHome: 'Zurück zum Start',
@@ -152,6 +158,9 @@ export const de: Messages = {
   theme: {
     cardBack: 'Kartenrücken',
     cardBackDetail: 'Das schaust du am längsten an. Jeder wählt seinen eigenen.',
+    fourColours: 'Vierfarbiges Blatt',
+    fourColoursDetail:
+      'Pik schwarz, Kreuz grün, Herz rot, Karo blau — das vierfarbige Blatt, für alle, die Rot und Schwarz nicht unterscheiden.',
     names: {
       storm: 'Sturm',
       volt: 'Blitz',
@@ -250,6 +259,13 @@ export const de: Messages = {
     rematch: 'Revanche',
     home: 'Zurück zum Start',
     share: 'Ergebnis teilen',
+    shared: 'Geteilt',
+    cardTitle: (rounds) => `Partie beendet — ${rounds} Runde${rounds > 1 ? 'n' : ''}`,
+    cardText: (url) => `Wir haben gerade eine Runde ZapZap gespielt ⚡ ${url}`,
+    roundsPlayed: (n) => `${n} Runde${n > 1 ? 'n' : ''} gespielt`,
+    you: 'du',
+    points: (n) => `${n} Pkt`,
+    outSuffix: ' · ausgeschieden',
   },
 
   passed: {
@@ -304,6 +320,25 @@ export const de: Messages = {
     dangerDetail: 'Löscht Konto, Statistiken und Verlauf. Ohne Rückweg.',
     confirmDelete: 'Löschen bestätigen',
     cancel: 'Abbrechen',
+    photoLabel: 'Profilfoto ändern',
+    photoBadge: 'Foto',
+    pseudoLabel: 'Dein Name',
+    removePhoto: 'Foto entfernen, gezeichneten Avatar behalten',
+    avatarGroup: 'Dein Avatar',
+    avatarNamed: (emoji) => `Avatar ${emoji}`,
+    saveAccount: 'Mein Konto sichern',
+    linkedTo: 'Konto verknüpft mit',
+    linkedDetail: 'Deine Partien folgen dir auf allen Geräten.',
+    noEmail:
+      'Ohne E-Mail lebt dieses Konto nur in diesem Browser. Ein magischer Link — kein Passwort — macht es überall wiederherstellbar.',
+    emailPlaceholder: 'du@beispiel.de',
+    emailLabel: 'Deine E-Mail-Adresse',
+    send: 'Senden',
+    linkSent: 'Link gesendet! Öffne dein Postfach auf diesem Gerät.',
+    redZone: 'Roter Bereich',
+    deleteWarning: 'Das Konto zu löschen löscht auch Verlauf und Statistiken. Das ist endgültig.',
+    confirmDeleteFinal: 'Endgültige Löschung bestätigen',
+    keepMyAccount: 'Nein, ich behalte mein Konto',
   },
 
   history: {
@@ -313,6 +348,99 @@ export const de: Messages = {
     emptyDetail: 'Deine Partien erscheinen hier, sobald eine zu Ende geht.',
     players: (n) => `${n} Spieler`,
     youRanked: (rank) => (rank === 1 ? 'Sieg' : `${rank}. Platz`),
+    backShort: '← Zurück',
+    yourGames: 'Deine Partien',
+    tileGames: 'Partien',
+    tileWins: 'Siege',
+    tileZaps: (won, called) => `gelungene Ansagen (${won}/${called})`,
+    loading: 'Wird geladen…',
+    none: 'Noch keine beendete Partie. Dein erster Sieg wartet auf dich.',
+    won: '🏆 Sieg',
+    ranked: (rank, total) => `${rank}. von ${total}`,
+    home: 'Zurück zum Start',
+  },
+
+  card: {
+    suits: { S: 'Pik', H: 'Herz', D: 'Karo', C: 'Kreuz' },
+    ranks: { 1: 'Ass', 11: 'Bube', 12: 'Dame', 13: 'König' },
+    joker: 'Joker, 0 Punkte',
+    named: (rank, suit, value) => `${rank} ${suit}, ${value} Punkt${value > 1 ? 'e' : ''}`,
+  },
+
+  rules: {
+    back: '← Zurück',
+    title: 'So wird gespielt',
+    subtitle: '2 bis 6 Spieler, 20 bis 40 Minuten.',
+    sections: [
+      {
+        title: 'Das Ziel',
+        body: [
+          'Anders als bei Skat oder Whist geht es nicht darum, Stiche zu machen. Es geht darum, das schwächste Blatt zu halten, um vor allen anderen **ZapZap** ansagen zu können.',
+          'Wer zuerst 100 Punkte erreicht, scheidet aus. Gespielt wird, bis nur noch einer übrig ist.',
+        ],
+      },
+      {
+        title: 'Was die Karten wert sind',
+        body: [
+          'Ass: 1 Punkt. 2 bis 10: ihr Wert. Bube, Dame, König: 10 Punkte. Joker: 0.',
+          '~Dieser Wert zählt nur beim Abrechnen. Er sagt nichts darüber, was du ablegen darfst — dort zählt der Rang. König und Dame sind beide 10 wert, ein Paar sind sie deshalb nicht.',
+        ],
+      },
+      {
+        title: 'Das Geben',
+        body: [
+          'In jeder Runde wählt der Geber, wie viele Karten er austeilt, zwischen 3 und 7 — **für alle gleich viele, ihn selbst eingeschlossen**. Das Geben wandert nach links, jeder übt diese Macht der Reihe nach aus.',
+          '~Kurz, und die Runde ist ein Wettlauf nach unten. Lang, und es bleibt Platz für Folgen und große Würfe — aber viel zu schlucken, wenn jemand ansagt.',
+        ],
+      },
+      {
+        title: 'Dein Zug: zwei Handlungen',
+        body: [
+          '**1. Ablegen.** Eine einzelne Karte, ein Satz (Paar, Drilling, Vierling) oder eine Folge aus mindestens 3 Karten derselben Farbe. Das Ass ist niedrig: A-2-3 ist eine Folge, D-K-A nicht. Eine Kombination pro Zug.',
+          '**2. Genau eine Karte ziehen.** Blind vom Stapel oder aus dem Ablagestapel des vorherigen Zuges. Bei einer Folge nur die Kopf- oder Endkarte. Bei einem Satz eine beliebige.',
+          '~Du ziehst immer, auch wenn du dein Blatt gerade geleert hast. Ohne Karten kann ein Zug also nie enden — und ein Blatt ohne Kombination wird nie kürzer.',
+        ],
+      },
+      {
+        title: 'Die Ansage',
+        body: [
+          'Zu Beginn deines Zuges, vor dem Ablegen, wenn dein Blatt 5 Punkte oder weniger wert ist: du darfst ansagen. Alle decken auf.',
+          '**Niemand darunter?** Du bekommst 0, alle anderen ihr Blatt.',
+          '**Jemand gleichauf oder besser?** Du bekommst 30 Punkte. Wer dich schlägt bekommt 0, der Rest sein Blatt.',
+          '!Gleichstand geht immer zugunsten des Gegenspielers, nie des Ansagers. Bei genau 5 anzusagen ist ein echtes Wagnis.',
+        ],
+      },
+      {
+        title: 'Der Rückfall',
+        body: [
+          'Landet dein Punktestand **genau** auf 50, fällt er auf 25 zurück. Landet er genau auf 100, fällt er auf 50 und du scheidest nicht aus.',
+          '~Das bringt festgefahrene Partien wieder in Gang — und manchmal zielt jemand tatsächlich auf genau die rettende Punktzahl.',
+        ],
+      },
+      {
+        title: 'Ein paar Gewohnheiten',
+        body: [
+          '-Wirf zuerst die Bilder ab. Drei Bilder sind 30 Punkte, wenn jemand ansagt.',
+          '-Zieh im Zweifel blind. Aus dem Ablagestapel zu nehmen verrät dem ganzen Tisch, was du baust.',
+          '-Zähl die Karten der anderen. Wer drei Karten pro Zug ablegt und eine zurückzieht, sinkt schnell: sag gegen ihn nicht bei 5 an.',
+          '-Heb nie eine Kombination für später auf. Ein Königspaar sind 20 schlafende Punkte.',
+          '-Wenn du gibst: gib kurz, wenn du in Führung liegst.',
+        ],
+      },
+      {
+        title: 'Gut zu wissen',
+        body: [
+          '~Die App lässt dich nie einen unerlaubten Zug machen: keine Ansage außer der Reihe, keine ungültige Kombination, also keine der Ungeschicklichkeitsstrafen des Tischspiels. Wenn eine Runde feststeckt — das passiert, wenn niemand seine Karten mehr kombinieren kann — endet sie nach langer Zeit von selbst: jeder zählt sein Blatt, ohne Strafe.',
+        ],
+      },
+    ],
+  },
+
+  verify: {
+    checking: 'Link wird geprüft…',
+    invalid: 'Ungültiger oder abgelaufener Link',
+    invalidDetail: 'Ein magischer Link lebt nur fünfzehn Minuten. Fordere in deinem Profil einen neuen an.',
+    home: 'Zurück zum Start',
   },
 
   app: {
@@ -347,6 +475,8 @@ export const de: Messages = {
     OFFLINE: 'Keine Verbindung zum Server.',
     TIMEOUT: 'Der Server antwortet nicht.',
     TOO_MANY_ACCOUNTS: 'Von deinem Anschluss wurden gerade viele Konten erstellt. Versuch es in einer Minute nochmal.',
+    ACCOUNT_FAILED: 'Konto konnte nicht erstellt werden.',
+    MAIL_FAILED: 'Senden fehlgeschlagen. Versuch es später noch einmal.',
   },
 };
 

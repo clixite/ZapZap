@@ -5,11 +5,15 @@
     <!--
       viewport-fit=cover : la table occupe l'écran jusque sous l'encoche, et les
       marges de sécurité sont reprises en CSS là où il le faut.
+
+      Sans `maximum-scale` : il interdisait le zoom à deux doigts. C'est le
+      geste par lequel un joueur malvoyant lit une carte de 46 px de large, et
+      le lui retirer est un manquement direct au critère 1.4.4 des WCAG — pour
+      le seul bénéfice d'éviter le zoom automatique de Safari sur les champs de
+      saisie, qui ne se produit pas ici : tous nos champs sont à 16 px ou plus,
+      ce qui est la vraie parade.
     -->
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#1c1547" />
     <meta name="description" content="ZapZap — défausse, annonce, et le plus bas gagne. À plusieurs, chacun sur son téléphone." />
     <meta name="apple-mobile-web-app-capable" content="yes" />

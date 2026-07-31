@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { play } from '../audio';
+import { vibrate } from '../haptics';
+import { useT } from '../i18n';
+import { Confetti } from '../components/Confetti';
 import { IconShare } from '../components/icons';
 import { shareResult } from '../shareCard';
 import { useGame, useGameChannel, useView } from '../store/game';
 
 /** Le classement final. Le vainqueur est celui qui reste, pas celui qui marque. */
 export function GameOver() {
-    const clear = useGame((s) => s.clear);
+  const t = useT();
+  const clear = useGame((s) => s.clear);
   const send = useGame((s) => s.send);
   const busy = useGame((s) => s.busy);
   const view = useView();
@@ -28,7 +32,11 @@ export function GameOver() {
   // La fanfare — une fois, quand le résultat est là.
   const done = view?.phase === 'game-over';
   useEffect(() => {
-    if (done) play(iWon ? 'victory' : 'defeat');
+    if (!done) return;
+    play(iWon ? 'victory' : 'defeat');
+    // La victoire se sent dans la main : c'est la seule récompense du jeu, et
+    // celle dont on se souvient entre deux parties.
+    vibrate(iWon ? 'success' : 'failure');
     // Le résultat ne change pas : ne rejouer ni sur re-rendu ni sur revanche.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
@@ -37,7 +45,7 @@ export function GameOver() {
     return (
       <Centered>
         <button type="button" onClick={() => navigate('/')} className="underline underline-offset-4">
-          Retour à l’accueil
+          {t.gameOver.home}
         </button>
       </Centered>
     );
@@ -57,12 +65,13 @@ export function GameOver() {
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-md flex-col gap-5 px-5 py-8">
+      {iWon && <Confetti />}
       <header className="text-center">
         <h1 className="zz-zap font-display text-3xl font-bold">
-          {iWon ? 'Vous gagnez !' : 'Partie terminée'}
+          {iWon ? t.gameOver.youWin : t.gameOver.title}
         </h1>
         <p className="mt-1 text-sm text-paper-300">
-          {view.roundIndex + 1} manche{view.roundIndex > 0 ? 's' : ''} jouée{view.roundIndex > 0 ? 's' : ''}
+          {t.gameOver.roundsPlayed(view.roundIndex + 1)}
         </p>
       </header>
 
@@ -82,10 +91,11 @@ export function GameOver() {
             </span>
             <span className="min-w-0 flex-1 truncate">
               {player.pseudo}
-              {player.id === view.you && <span className="ml-1 text-xs text-paper-300">vous</span>}
+              {player.id === view.you && <span className="ml-1 text-xs text-paper-300">{t.gameOver.you}</span>}
             </span>
             <span className="shrink-0 text-sm tabular-nums text-paper-300">
-              {player.totalScore} pt{player.eliminated ? ' · éliminé' : ''}
+              {t.gameOver.points(player.totalScore)}
+              {player.eliminated ? t.gameOver.outSuffix : ''}
             </span>
           </li>
         ))}
@@ -97,7 +107,7 @@ export function GameOver() {
         className="flex items-center justify-center gap-2 rounded-xl bg-storm-700 py-3 font-display font-bold"
       >
         <IconShare size={20} />
-        {shared ? 'Partagé' : 'Partager le résultat'}
+        {shared ? t.gameOver.shared : t.gameOver.share}
       </button>
 
       <div className="mt-auto flex flex-col gap-2">
@@ -108,7 +118,7 @@ export function GameOver() {
             disabled={busy}
             className="rounded-xl bg-flash-400 py-3.5 font-display text-lg font-bold text-storm-950 disabled:opacity-50"
           >
-            Revanche — même table
+            {t.gameOver.rematch}
           </button>
         )}
         <button
@@ -119,7 +129,7 @@ export function GameOver() {
           }}
           className="rounded-xl bg-volt-500 py-3.5 font-display text-lg font-bold text-storm-950"
         >
-          Retour à l’accueil
+          {t.gameOver.home}
         </button>
       </div>
     </div>

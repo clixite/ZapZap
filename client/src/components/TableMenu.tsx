@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { GameView } from '@zapzap/shared';
+import { useModal } from '../hooks/useModal';
 import { useT } from '../i18n';
 
 /**
@@ -41,12 +42,19 @@ export interface TableMenuProps {
 export function TableMenu({ view, onClose, onPause, onMenu, onQuit }: TableMenuProps) {
   const t = useT();
   const [confirmQuit, setConfirmQuit] = useState(false);
+  const panel = useModal<HTMLDivElement>(onClose);
   const me = view.players.find((p) => p.id === view.you);
   const away = me?.away ?? false;
   const inGame = view.phase !== 'lobby' && view.phase !== 'game-over';
 
   return (
-    <div className="absolute inset-0 z-40 flex flex-col justify-end bg-storm-950/70" role="dialog" aria-modal="true">
+    <div
+      ref={panel}
+      className="absolute inset-0 z-40 flex flex-col justify-end bg-storm-950/70"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t.table.menu}
+    >
       {/* Toucher à côté referme : c'est le geste attendu d'une feuille. */}
       <button type="button" className="flex-1" aria-label={t.menu.close} onClick={onClose} />
 
@@ -91,7 +99,7 @@ export function TableMenu({ view, onClose, onPause, onMenu, onQuit }: TableMenuP
               <button
                 type="button"
                 onClick={() => void onQuit()}
-                className="min-h-11 flex-1 rounded-lg bg-danger px-3 font-bold text-white"
+                className="min-h-11 flex-1 rounded-lg bg-danger-solid px-3 font-bold text-white"
               >
                 {t.menu.quitConfirm}
               </button>

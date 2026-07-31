@@ -1,4 +1,5 @@
 import { cardId, cardValue, isJoker, type Card } from '@zapzap/shared';
+import { t } from '../i18n';
 import { CARD_BACK_STYLES, useCardBack } from '../store/theme';
 
 const SUIT_GLYPH: Record<string, string> = { S: '♠', H: '♥', D: '♦', C: '♣', X: '⚡' };
@@ -231,6 +232,15 @@ export function CardFace({ card, width, selected, dimmed, onClick, label, disabl
     return (
       <span
         data-card={cardId(card)}
+        /*
+         * `role="img"` n'est pas décoratif : sans lui, ce `span` a le rôle
+         * `generic`, sur lequel la spécification ARIA **interdit** `aria-label`
+         * — VoiceOver et NVDA l'ignorent purement et simplement. La défausse,
+         * l'abattage de fin de manche et le journal des cartes passées étaient
+         * donc totalement muets, alors que savoir ce qu'il y a sur la défausse
+         * est la décision centrale de chaque tour.
+         */
+        role="img"
         className="block rounded-[7%/4.7%] transition-[filter,opacity] duration-150"
         style={style}
         aria-label={name}
@@ -270,6 +280,7 @@ export function MiniCards({ cards, size = 11 }: { cards: Card[]; size?: number }
       {cards.map((card) => (
         <span
           key={cardId(card)}
+          role="img"
           className="rounded-[3px] bg-paper-50 px-[0.28em] font-display leading-[1.35] font-bold"
           style={{ color: inkFor(card) }}
           aria-label={describeCard(card)}
@@ -282,20 +293,19 @@ export function MiniCards({ cards, size = 11 }: { cards: Card[]; size?: number }
   );
 }
 
-const SUIT_NAME: Record<string, string> = {
-  S: 'pique',
-  H: 'cœur',
-  D: 'carreau',
-  C: 'trèfle',
-};
-
-const RANK_NAME: Record<number, string> = { 1: 'As', 11: 'Valet', 12: 'Dame', 13: 'Roi' };
-
-/** Nom parlé de la carte : les lecteurs d'écran ne lisent pas « ♠ ». */
+/**
+ * Nom parlé de la carte : les lecteurs d'écran ne lisent pas « ♠ ».
+ *
+ * Par `t()` et non par `useT()` : la fonction sert aussi de valeur par défaut à
+ * `CardFace` et `MiniCards`, appelée pendant le rendu de composants qui n'ont
+ * pas de raison d'être abonnés à la langue — le libellé est recalculé au rendu
+ * suivant, que le changement de langue déclenche de toute façon.
+ */
 export function describeCard(card: Card): string {
-  if (isJoker(card)) return 'Joker, 0 point';
-  const rank = RANK_NAME[card.rank] ?? String(card.rank);
-  return `${rank} de ${SUIT_NAME[card.suit]}, ${cardValue(card)} point${cardValue(card) > 1 ? 's' : ''}`;
+  const names = t().card;
+  if (isJoker(card)) return names.joker;
+  const rank = names.ranks[card.rank] ?? String(card.rank);
+  return names.named(rank, names.suits[card.suit] ?? card.suit, cardValue(card));
 }
 
 /**

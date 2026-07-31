@@ -80,8 +80,14 @@ export const fi: Messages = {
     firstOut: 'Ensimmäiseen putoamiseen',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'Tekstiviesti', share: 'Jaa…', copy: 'Kopioi linkki', copied: 'Kopioitu ✓' },
-
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'Tekstiviesti',
+    share: 'Jaa…',
+    copy: 'Kopioi linkki',
+    copied: 'Kopioitu ✓',
+    text: (code, url) => `Tule mukaan ZapZap-peliini ⚡ Koodi ${code} — ${url}`,
+  },
   table: {
     connecting: 'Yhdistetään pöytään…',
     backHome: 'Takaisin alkuun',
@@ -151,6 +157,9 @@ export const fi: Messages = {
   theme: {
     cardBack: 'Kortin selkä',
     cardBackDetail: 'Sitä katsoo pisimpään. Jokainen valitsee omansa.',
+    fourColours: 'Nelivärinen pakka',
+    fourColoursDetail:
+      'Pata musta, risti vihreä, hertta punainen, ruutu sininen — neliväripakka niille, jotka eivät erota punaista mustasta.',
     names: {
       storm: 'Myrsky',
       volt: 'Salama',
@@ -248,6 +257,13 @@ export const fi: Messages = {
     rematch: 'Uusinta',
     home: 'Takaisin alkuun',
     share: 'Jaa tulos',
+    shared: 'Jaettu',
+    cardTitle: (rounds) => `Peli päättyi — ${rounds} kierros${rounds > 1 ? 'ta' : ''}`,
+    cardText: (url) => `Pelasimme juuri ZapZap-pelin ⚡ ${url}`,
+    roundsPlayed: (n) => `${n} pelattu${n > 1 ? 'a' : ''} kierros${n > 1 ? 'ta' : ''}`,
+    you: 'sinä',
+    points: (n) => `${n} p`,
+    outSuffix: ' · pudonnut',
   },
 
   passed: {
@@ -302,6 +318,25 @@ export const fi: Messages = {
     dangerDetail: 'Poistaa tilin, tilastot ja historian. Peruuttamatta.',
     confirmDelete: 'Vahvista poisto',
     cancel: 'Peruuta',
+    photoLabel: 'Vaihda profiilikuva',
+    photoBadge: 'kuva',
+    pseudoLabel: 'Nimesi',
+    removePhoto: 'Poista kuva, pidä piirretty avatar',
+    avatarGroup: 'Avatarisi',
+    avatarNamed: (emoji) => `Avatar ${emoji}`,
+    saveAccount: 'Tallenna tilini',
+    linkedTo: 'Tili on liitetty osoitteeseen',
+    linkedDetail: 'Pelisi seuraavat sinua kaikilla laitteilla.',
+    noEmail:
+      'Ilman sähköpostia tämä tili elää vain tässä selaimessa. Taikalinkki — ei salasanaa — tekee siitä palautettavan missä tahansa.',
+    emailPlaceholder: 'sina@esimerkki.fi',
+    emailLabel: 'Sähköpostiosoitteesi',
+    send: 'Lähetä',
+    linkSent: 'Linkki lähetetty! Avaa postilaatikkosi tällä laitteella.',
+    redZone: 'Punainen alue',
+    deleteWarning: 'Tilin poistaminen pyyhkii myös historian ja tilastot. Tätä ei voi perua.',
+    confirmDeleteFinal: 'Vahvista lopullinen poisto',
+    keepMyAccount: 'Ei, pidän tilini',
   },
 
   history: {
@@ -311,6 +346,99 @@ export const fi: Messages = {
     emptyDetail: 'Pelisi ilmestyvät tänne heti kun yksi päättyy.',
     players: (n) => `${n} pelaajaa`,
     youRanked: (rank) => (rank === 1 ? 'Voitto' : `${rank}. sija`),
+    backShort: '← Takaisin',
+    yourGames: 'Pelisi',
+    tileGames: 'peliä',
+    tileWins: 'voittoa',
+    tileZaps: (won, called) => `onnistuneet ilmoitukset (${won}/${called})`,
+    loading: 'Ladataan…',
+    none: 'Ei vielä päättyneitä pelejä. Ensimmäinen voittosi odottaa.',
+    won: '🏆 Voitto',
+    ranked: (rank, total) => `${rank}. / ${total}`,
+    home: 'Takaisin alkuun',
+  },
+
+  card: {
+    suits: { S: 'pata', H: 'hertta', D: 'ruutu', C: 'risti' },
+    ranks: { 1: 'Ässä', 11: 'Jätkä', 12: 'Rouva', 13: 'Kuningas' },
+    joker: 'Jokeri, 0 pistettä',
+    named: (rank, suit, value) => `${suit} ${rank}, ${value} piste${value > 1 ? 'ttä' : ''}`,
+  },
+
+  rules: {
+    back: '← Takaisin',
+    title: 'Näin pelataan',
+    subtitle: '2–6 pelaajaa, 20–40 minuuttia.',
+    sections: [
+      {
+        title: 'Tavoite',
+        body: [
+          'Toisin kuin bridgessä tai whistissä, tikkejä ei kerätä. Tavoitteena on pitää heikointa kättä, jotta voit ilmoittaa **ZapZap** ennen muita.',
+          'Ensimmäinen 100 pisteeseen yltävä putoaa. Pelataan, kunnes yksi on jäljellä.',
+        ],
+      },
+      {
+        title: 'Korttien arvot',
+        body: [
+          'Ässä: 1 piste. 2–10: oma arvonsa. Jätkä, Rouva, Kuningas: 10 pistettä. Jokeri: 0.',
+          '~Arvo merkitsee vain laskennassa. Se ei vaikuta siihen, mitä voit laskea pöytään — siinä ratkaisee arvoluokka. Kuningas ja Rouva ovat molemmat 10 arvoisia, mutta eivät muodosta paria.',
+        ],
+      },
+      {
+        title: 'Jako',
+        body: [
+          'Joka kierroksella jakaja valitsee, montako korttia jaetaan, 3:n ja 7:n väliltä — **kaikille sama määrä, itse mukaan lukien**. Jako kiertää vasemmalle, joten jokainen käyttää tuota valtaa vuorollaan.',
+          '~Lyhyt jako tekee kierroksesta kilpajuoksun pohjalle. Pitkä jako antaa tilaa rakentaa suoria ja pudottaa paljon kerralla — mutta myös paljon nieltävää, jos joku ilmoittaa.',
+        ],
+      },
+      {
+        title: 'Vuorosi: kaksi tekoa',
+        body: [
+          '**1. Poista kortti.** Yksittäinen kortti, sarja (pari, kolmoset, neloset) tai vähintään 3 kortin suora samaa maata. Ässä on matala: A-2-3 on suora, R-K-A ei. Yksi yhdistelmä vuorossa.',
+          '**2. Nosta täsmälleen yksi kortti.** Pakasta sokkona tai edellisen vuoron poistopinosta. Suorasta vain pään tai hännän kortti. Sarjasta mikä tahansa.',
+          '~Nostat aina, vaikka olisit juuri tyhjentänyt kätesi. Vuoroa ei siis voi lopettaa ilman kortteja — eikä käsi ilman yhdistelmää lyhene koskaan.',
+        ],
+      },
+      {
+        title: 'Ilmoitus',
+        body: [
+          'Vuorosi alussa, ennen poistoa, jos kätesi arvo on 5 pistettä tai vähemmän: voit ilmoittaa. Kaikki näyttävät korttinsa.',
+          '**Kukaan ei ole alle?** Saat 0, muut saavat kätensä summan.',
+          '**Joku yhtä hyvä tai parempi?** Otat 30 pistettä. Sinut voittaneet saavat 0, loput kätensä.',
+          '!Tasapeli suosii aina vastaanilmoittajaa, ei koskaan ilmoittajaa. Tasan 5:llä ilmoittaminen on todellinen uhkapeli.',
+        ],
+      },
+      {
+        title: 'Kimmahdus',
+        body: [
+          'Jos pistemääräsi osuu **täsmälleen** 50:een, se putoaa takaisin 25:een. Jos se osuu täsmälleen 100:aan, se putoaa 50:een etkä putoa pelistä.',
+          '~Se herättää jumiin jääneet pelit henkiin — ja joskus joku tähtää juuri siihen pelastavaan pistemäärään.',
+        ],
+      },
+      {
+        title: 'Muutama tapa',
+        body: [
+          '-Pudota kuvakortit ensin. Kolme kuvakorttia on 30 pistettä, jos joku ilmoittaa.',
+          '-Nosta oletuksena sokkona. Poistopinosta ottaminen kertoo koko pöydälle, mitä rakennat.',
+          '-Laske muiden kortit. Se joka laskee kolme korttia vuorossa ja nostaa yhden, laskeutuu nopeasti: älä ilmoita 5:llä häntä vastaan.',
+          '-Älä koskaan säästä yhdistelmää myöhemmäksi. Kuningaspari on 20 nukkuvaa pistettä.',
+          '-Kun jaat, jaa lyhyt käsi jos johdat.',
+        ],
+      },
+      {
+        title: 'Hyvä tietää',
+        body: [
+          '~Sovellus ei koskaan päästä sinua tekemään laitonta siirtoa: ei vuoron ulkopuolista ilmoitusta, ei kelvotonta yhdistelmää, eikä siis mitään pöytäpelin huolimattomuussakkoja. Jos kierros jumittuu — niin käy, kun kukaan ei enää saa kortteja yhteen — se päättyy itsestään pitkän ajan kuluttua: jokainen laskee kätensä, ilman sakkoa.',
+        ],
+      },
+    ],
+  },
+
+  verify: {
+    checking: 'Tarkistetaan linkkiä…',
+    invalid: 'Virheellinen tai vanhentunut linkki',
+    invalidDetail: 'Taikalinkki elää vain viisitoista minuuttia. Pyydä uusi profiilistasi.',
+    home: 'Takaisin alkuun',
   },
 
   app: {
@@ -345,6 +473,8 @@ export const fi: Messages = {
     OFFLINE: 'Ei yhteyttä palvelimeen.',
     TIMEOUT: 'Palvelin ei vastaa.',
     TOO_MANY_ACCOUNTS: 'Yhteydestäsi luotiin juuri monta tiliä. Yritä minuutin päästä.',
+    ACCOUNT_FAILED: 'Tilin luonti ei onnistunut.',
+    MAIL_FAILED: 'Lähetys epäonnistui. Yritä myöhemmin uudelleen.',
   },
 };
 

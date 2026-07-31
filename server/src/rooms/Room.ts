@@ -196,6 +196,9 @@ export class Room {
   /* ---------------------------------------------------------------- */
 
   broadcastViews(): void {
+    // Personne à qui diffuser : on ne sérialise rien. Une table asynchrone est
+    // vide par nature, et `viewFor` n'est pas gratuit.
+    if (this.sockets.size === 0) return;
     for (const [userId, sockets] of this.sockets) {
       const view = viewFor(this.state, userId, this.turnDeadline);
       for (const socket of sockets) socket.emit('game:view', view);
@@ -274,8 +277,14 @@ export class Room {
     const pending = this.pendingPlayer();
     if (!pending || pending.id !== playerId) return;
 
-    const action = this.neutralAction(playerId);
-    if (action) this.apply(action);
+    // Comme l'autoplay : on est dans un rappel de minuteur, une exception qui
+    // remonte d'ici n'a personne pour l'attraper et arrête tout le serveur.
+    try {
+      const action = this.neutralAction(playerId);
+      if (action) this.apply(action);
+    } catch (error) {
+      console.error(`[room ${this.code}] coup neutre impossible`, error);
+    }
   }
 
   private neutralAction(playerId: string): GameAction | null {
@@ -309,13 +318,71 @@ export class Room {
     if (this.autoplayTimer) return;
     const pending = this.pendingPlayer();
     if (!pending || !this.playsItself(pending)) return;
+    /*
+     * Personne ne regarde : on ne joue pour personne.
+     *
+     * Au redémarrage du serveur, chaque table asynchrone dont le joueur attendu
+     * est en pause reprenait sa partie toute seule, à un coup par 800 ms, vers
+     * zéro socket — et comme chaque coup rafraîchit `updatedAt`, le balayage ne
+     * la fermait jamais. Trente tables restaurées, c'était plusieurs minutes de
+     * processeur et de disque après chaque bascule de conteneur.
+     *
+     * En temps réel on continue : la table est vide parce que quelqu'un a perdu
+     * sa connexion trente secondes, et elle doit tourner pour lui.
+     */
+    if (this.state.pace === 'async' && this.connectedCount() === 0) return;
 
     const delay = this.options.botDelayMs ?? config.botDelayMs;
     this.autoplayTimer = setTimeout(() => {
       this.autoplayTimer = null;
       if (this.disposed) return;
-      this.playBotTurn();
+      /*
+       * Un robot qui trébuche ne doit pas emporter le serveur.
+       *
+       * On est dans le rappel d'un `setTimeout` : une exception qui remonte
+       * d'ici n'a personne pour l'attraper, c'est un `uncaughtException`, et
+       * Node arrête le processus — **toutes** les tables tombent parce qu'une
+       * seule main a mis le robot en défaut. On journalise et on rend la main
+       * au minuteur de tour, qui jouera le coup par défaut.
+       */
+      try {
+        this.playBotTurn();
+      } catch (error) {
+        console.error(`[room ${this.code}] coup automatique impossible`, error);
+        this.forceDefaultMove();
+      }
     }, delay);
+  }
+
+  /**
+   * Le coup le plus bête qui soit légal, quand le robot a échoué.
+   *
+   * Sans lui, une table dont le robot lève une exception reste figée pour
+   * toujours : le minuteur de tour n'est pas réarmé, personne d'autre ne peut
+   * jouer, et les humains n'ont plus que « quitter » comme issue.
+   */
+  private forceDefaultMove(): void {
+    const pending = this.pendingPlayer();
+    if (!pending) return;
+    try {
+      if (this.state.phase === 'dealing') {
+        this.apply({ type: 'DEAL', playerId: pending.id, handSize: defaultDealChoice() });
+        return;
+      }
+      const round = this.state.round;
+      if (!round) return;
+      if (round.turnStep === 'discard') {
+        // Une main vide au moment de défausser n'existe pas dans les règles —
+        // mais si l'état y arrive quand même, mieux vaut ne rien poser que
+        // planter une seconde fois sur le chemin de secours.
+        if ((round.hands[pending.id] ?? []).length === 0) return;
+        this.apply({ type: 'DISCARD', playerId: pending.id, cardIds: defaultDiscard(this.state, pending.id) });
+      } else {
+        this.apply({ type: 'DRAW', playerId: pending.id, from: defaultDraw(this.state) });
+      }
+    } catch (error) {
+      console.error(`[room ${this.code}] coup par défaut impossible`, error);
+    }
   }
 
   private playBotTurn(): void {

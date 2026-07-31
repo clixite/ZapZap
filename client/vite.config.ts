@@ -36,13 +36,39 @@ export default defineConfig({
       injectRegister: false,
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
+        /*
+         * `id` et `scope` ne sont pas décoratifs.
+         *
+         * Sans `id`, le navigateur identifie l'application installée par son
+         * `start_url` : le jour où celui-ci change, Chrome et Android
+         * considèrent que c'est une **autre** application et en installent une
+         * seconde à côté de la première. Sans `scope`, une navigation hors du
+         * chemin de départ sort de la fenêtre d'application et rouvre le
+         * navigateur — ce qui arrivait sur les liens d'invitation `/j/CODE`.
+         */
+        id: '/',
+        scope: '/',
         name: 'ZapZap — le jeu de cartes entre amis',
         short_name: 'ZapZap',
         description: 'Défausse, annonce, et le plus bas gagne. À plusieurs, chacun sur son téléphone.',
         lang: 'fr',
+        // Le classement des magasins et des annuaires d'applications web s'y
+        // adosse ; sans elles, l'application n'apparaît dans aucune catégorie.
+        categories: ['games', 'entertainment'],
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
+        /*
+         * Les raccourcis de l'icône : un appui long sur l'écran d'accueil.
+         *
+         * Les deux gestes qui amènent quelqu'un à ouvrir le jeu — reprendre une
+         * partie, en lancer une avec des amis — sont à deux écrans du
+         * lancement. Les mettre sous l'icône les met à zéro.
+         */
+        shortcuts: [
+          { name: 'Jouer maintenant', url: '/?rapide=1', description: 'Rejoindre une table ouverte' },
+          { name: 'Créer une table', url: '/?creer=1', description: 'Inviter ses amis par code' },
+        ],
         background_color: '#110c2e',
         theme_color: '#1c1547',
         icons: [

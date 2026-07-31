@@ -80,8 +80,14 @@ export const it: Messages = {
     firstOut: 'Alla prima eliminazione',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'SMS', share: 'Condividi…', copy: 'Copia il link', copied: 'Copiato ✓' },
-
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'SMS',
+    share: 'Condividi…',
+    copy: 'Copia il link',
+    copied: 'Copiato ✓',
+    text: (code, url) => `Vieni a giocare a ZapZap ⚡ Codice ${code} — ${url}`,
+  },
   table: {
     connecting: 'Connessione al tavolo…',
     backHome: 'Torna all’inizio',
@@ -152,6 +158,9 @@ export const it: Messages = {
   theme: {
     cardBack: 'Dorso della carta',
     cardBackDetail: 'È ciò che guardi più a lungo. Ognuno sceglie il suo.',
+    fourColours: 'Mazzo a quattro colori',
+    fourColoursDetail:
+      'Picche nere, fiori verdi, cuori rossi, quadri blu — il mazzo a quattro colori, per chi non distingue il rosso dal nero.',
     names: {
       storm: 'Tempesta',
       volt: 'Fulmine',
@@ -250,6 +259,13 @@ export const it: Messages = {
     rematch: 'Rivincita',
     home: 'Torna all’inizio',
     share: 'Condividi il risultato',
+    shared: 'Condiviso',
+    cardTitle: (rounds) => `Partita finita — ${rounds} mano${rounds > 1 ? 'i' : ''}`,
+    cardText: (url) => `Abbiamo appena finito una partita a ZapZap ⚡ ${url}`,
+    roundsPlayed: (n) => `${n} mano${n > 1 ? 'i' : ''} giocate`,
+    you: 'tu',
+    points: (n) => `${n} pt`,
+    outSuffix: ' · eliminato',
   },
 
   passed: {
@@ -304,6 +320,25 @@ export const it: Messages = {
     dangerDetail: 'Cancella account, statistiche e storico. Senza ritorno.',
     confirmDelete: 'Conferma la cancellazione',
     cancel: 'Annulla',
+    photoLabel: 'Cambia la foto del profilo',
+    photoBadge: 'foto',
+    pseudoLabel: 'Il tuo nome',
+    removePhoto: 'Togli la foto, tieni l’avatar disegnato',
+    avatarGroup: 'Il tuo avatar',
+    avatarNamed: (emoji) => `Avatar ${emoji}`,
+    saveAccount: 'Salva il mio account',
+    linkedTo: 'Account collegato a',
+    linkedDetail: 'Le tue partite ti seguono su tutti i dispositivi.',
+    noEmail:
+      'Senza e-mail, questo account vive solo in questo browser. Un link magico — niente password — lo rende recuperabile ovunque.',
+    emailPlaceholder: 'tu@esempio.it',
+    emailLabel: 'Il tuo indirizzo e-mail',
+    send: 'Invia',
+    linkSent: 'Link inviato! Apri la posta su questo dispositivo.',
+    redZone: 'Zona rossa',
+    deleteWarning: 'Eliminare l’account cancella anche cronologia e statistiche. È definitivo.',
+    confirmDeleteFinal: 'Conferma l’eliminazione definitiva',
+    keepMyAccount: 'No, tengo il mio account',
   },
 
   history: {
@@ -313,6 +348,99 @@ export const it: Messages = {
     emptyDetail: 'Le tue partite compariranno qui appena una finisce.',
     players: (n) => `${n} giocatori`,
     youRanked: (rank) => (rank === 1 ? 'Vittoria' : `${rank}º posto`),
+    backShort: '← Indietro',
+    yourGames: 'Le tue partite',
+    tileGames: 'partite',
+    tileWins: 'vittorie',
+    tileZaps: (won, called) => `annunci riusciti (${won}/${called})`,
+    loading: 'Caricamento…',
+    none: 'Ancora nessuna partita finita. La prima vittoria ti aspetta.',
+    won: '🏆 Vittoria',
+    ranked: (rank, total) => `${rank}º su ${total}`,
+    home: 'Torna all’inizio',
+  },
+
+  card: {
+    suits: { S: 'picche', H: 'cuori', D: 'quadri', C: 'fiori' },
+    ranks: { 1: 'Asso', 11: 'Fante', 12: 'Donna', 13: 'Re' },
+    joker: 'Jolly, 0 punti',
+    named: (rank, suit, value) => `${rank} di ${suit}, ${value} punt${value > 1 ? 'i' : 'o'}`,
+  },
+
+  rules: {
+    back: '← Indietro',
+    title: 'Come si gioca',
+    subtitle: 'Da 2 a 6 giocatori, dai 20 ai 40 minuti.',
+    sections: [
+      {
+        title: 'Lo scopo',
+        body: [
+          'A differenza della briscola o del whist, non si cercano prese. Si cerca di avere la mano più debole, per poter annunciare **ZapZap** prima degli altri.',
+          'Il primo giocatore che arriva a 100 punti è eliminato. Si gioca finché ne resta uno solo.',
+        ],
+      },
+      {
+        title: 'Quanto valgono le carte',
+        body: [
+          'Asso: 1 punto. Dal 2 al 10: il loro valore. Fante, Donna, Re: 10 punti. Jolly: 0.',
+          '~Quel valore conta solo al conteggio. Non ha alcun effetto su ciò che puoi calare — lì conta il rango. Un Re e una Donna valgono 10 entrambi, ma non fanno coppia.',
+        ],
+      },
+      {
+        title: 'La distribuzione',
+        body: [
+          'A ogni mano, chi distribuisce sceglie quante carte dare, tra 3 e 7 — **lo stesso numero per tutti, lui compreso**. La distribuzione gira verso sinistra, così ognuno esercita quel potere a turno.',
+          '~Corta, la mano è una corsa a chi scende per primo. Lunga, c’è spazio per costruire scale e scaricare tanto in un colpo — ma anche molto da incassare se qualcuno annuncia.',
+        ],
+      },
+      {
+        title: 'Il tuo turno: due azioni',
+        body: [
+          '**1. Scarta.** Una carta singola, un gruppo (coppia, tris, poker) o una scala di almeno 3 carte dello stesso seme. L’Asso è basso: A-2-3 è una scala, D-R-A no. Una sola combinazione per turno.',
+          '**2. Pesca esattamente una carta.** Dal tallone, alla cieca, o dagli scarti del turno precedente. Su una scala, solo la carta di testa o di coda. Su un gruppo, una qualsiasi.',
+          '~Peschi sempre, anche se hai appena svuotato la mano. È quindi impossibile finire un turno senza carte — e una mano senza combinazioni non si accorcia mai.',
+        ],
+      },
+      {
+        title: 'L’annuncio',
+        body: [
+          'A inizio turno, prima di scartare, se la tua mano vale 5 punti o meno: puoi annunciare. Tutti scoprono.',
+          '**Nessuno sotto di te?** Tu segni 0, ognuno segna il totale della sua mano.',
+          '**Qualcuno pari o meglio?** Tu prendi 30 punti. Chi ti batte segna 0, gli altri la loro mano.',
+          '!La parità favorisce sempre chi contrattacca, mai chi annuncia. Annunciare a 5 esatti è una vera scommessa.',
+        ],
+      },
+      {
+        title: 'Il rimbalzo',
+        body: [
+          'Se il tuo punteggio finisce **esattamente** su 50, torna a 25. Se finisce esattamente su 100, torna a 50 e non sei eliminato.',
+          '~È quello che rilancia le partite che si impantanano — e capita che qualcuno punti proprio ai punti che lo salvano.',
+        ],
+      },
+      {
+        title: 'Qualche abitudine',
+        body: [
+          '-Scarica prima le figure. Tre figure fanno 30 punti se qualcuno annuncia.',
+          '-Pesca alla cieca per impostazione predefinita. Prendere dagli scarti dice a tutto il tavolo cosa stai costruendo.',
+          '-Conta le carte degli altri. Chi cala tre carte a turno e ne ripesca una sola scende in fretta: non annunciare a 5 contro di lui.',
+          '-Non tenere mai una combinazione per dopo. Una coppia di Re sono 20 punti che dormono.',
+          '-Quando distribuisci, dai corto se sei in testa.',
+        ],
+      },
+      {
+        title: 'Buono a sapersi',
+        body: [
+          '~L’applicazione non ti lascia mai fare una mossa illegale: niente annunci fuori turno, niente combinazioni non valide, quindi nessuna delle penalità per distrazione del gioco dal vivo. Se una mano si blocca — capita quando nessuno riesce più ad accoppiare le carte — finisce da sola dopo parecchio tempo: ognuno conta la sua mano, senza penalità.',
+        ],
+      },
+    ],
+  },
+
+  verify: {
+    checking: 'Verifica del link…',
+    invalid: 'Link non valido o scaduto',
+    invalidDetail: 'Un link magico vive solo quindici minuti. Chiedine un altro dal tuo profilo.',
+    home: 'Torna all’inizio',
   },
 
   app: {
@@ -347,6 +475,8 @@ export const it: Messages = {
     OFFLINE: 'Nessuna connessione al server.',
     TIMEOUT: 'Il server non risponde.',
     TOO_MANY_ACCOUNTS: 'Sono stati appena creati molti account dalla tua connessione. Riprova tra un minuto.',
+    ACCOUNT_FAILED: 'Impossibile creare l’account.',
+    MAIL_FAILED: 'Invio non riuscito. Riprova più tardi.',
   },
 };
 

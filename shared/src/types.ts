@@ -267,7 +267,18 @@ export interface DrawOption {
 }
 
 /** La manche telle que vue par UN joueur : jamais les mains adverses. */
-export interface RoundView extends Omit<RoundState, 'hands' | 'stock' | 'discardPile'> {
+/*
+ * Le journal de manche ne voyage pas avec la vue.
+ *
+ * Il est cumulatif — il atteint une dizaine de kilo-octets en fin de manche —
+ * et il repartait en entier dans chacune des vues émises à chaque coup, pour
+ * chaque joueur : à cinq, cela représentait 72 % de tout le trafic de la
+ * partie. Or personne ne le lit en continu : les événements arrivent déjà un
+ * par un par `game:event`, et le seul écran qui a besoin de l'historique
+ * complet — « les cartes déjà passées » — s'ouvre à la demande. Il se demande
+ * donc à la demande, par `game:log`.
+ */
+export interface RoundView extends Omit<RoundState, 'hands' | 'stock' | 'discardPile' | 'log'> {
   myHand: Card[];
   handCounts: Record<string, number>;
   stockCount: number;

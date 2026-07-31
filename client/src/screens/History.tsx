@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { GameHistoryEntry, UserStats } from '@zapzap/shared';
 import { fetchHistory, fetchMe, readCachedHistory, storedToken } from '../api';
 import { Leaderboard } from '../components/Leaderboard';
+import { useLocale, useT } from '../i18n';
 import { useSession } from '../store/session';
 
 /**
@@ -14,6 +15,10 @@ import { useSession } from '../store/session';
  * passées. C'est elle qui dit si on joue bien.
  */
 export function History() {
+  const t = useT();
+  // La date suit la langue choisie, pas le fuseau du navigateur : « 3 janv. »
+  // pour qui joue en français, « Jan 3 » pour qui joue en anglais.
+  const loc = useLocale();
   const user = useSession((s) => s.user);
   const [games, setGames] = useState<GameHistoryEntry[] | null>(() =>
     user ? readCachedHistory(user.id) : null,
@@ -41,7 +46,7 @@ export function History() {
     return (
       <Centered>
         <Link to="/" className="underline underline-offset-4">
-          Retour à l’accueil
+          {t.history.home}
         </Link>
       </Centered>
     );
@@ -53,29 +58,29 @@ export function History() {
     <div className="mx-auto flex w-full max-w-md flex-col gap-5 px-5 py-8">
       <header>
         <Link to="/" className="text-sm text-paper-300 underline underline-offset-4">
-          ← Retour
+          {t.history.backShort}
         </Link>
-        <h1 className="mt-3 font-display text-3xl font-bold">Vos parties</h1>
+        <h1 className="mt-3 font-display text-3xl font-bold">{t.history.yourGames}</h1>
       </header>
 
       <Leaderboard />
 
       {stats && (
         <div className="grid grid-cols-3 gap-2">
-          <Tile value={stats.gamesPlayed} label="parties" />
-          <Tile value={stats.gamesWon} label="victoires" />
+          <Tile value={stats.gamesPlayed} label={t.history.tileGames} />
+          <Tile value={stats.gamesWon} label={t.history.tileWins} />
           <Tile
             value={zapRate === null ? '—' : `${zapRate}%`}
-            label={`annonces réussies (${stats.zapsWon}/${stats.zapsCalled})`}
+            label={t.history.tileZaps(stats.zapsWon, stats.zapsCalled)}
           />
         </div>
       )}
 
       {games === null ? (
-        <p className="py-8 text-center text-sm text-paper-300">Chargement…</p>
+        <p className="py-8 text-center text-sm text-paper-300">{t.history.loading}</p>
       ) : games.length === 0 ? (
         <p className="py-8 text-center text-sm text-paper-300">
-          Aucune partie terminée pour l’instant. La première victoire n’attend que vous.
+          {t.history.none}
         </p>
       ) : (
         <ol className="flex flex-col gap-2">
@@ -83,10 +88,10 @@ export function History() {
             <li key={`${game.code}-${game.playedAt}`} className="rounded-xl bg-storm-800 px-4 py-3">
               <div className="flex items-center justify-between gap-2">
                 <span className={`text-sm font-bold ${game.won ? 'text-flash-300' : 'text-paper-100'}`}>
-                  {game.won ? '🏆 Victoire' : `${game.myRank}ᵉ sur ${game.playersCount}`}
+                  {game.won ? t.history.won : t.history.ranked(game.myRank, game.playersCount)}
                 </span>
                 <span className="text-xs text-paper-300">
-                  {new Date(game.playedAt).toLocaleDateString('fr-BE', { day: 'numeric', month: 'short' })}
+                  {new Date(game.playedAt).toLocaleDateString(loc, { day: 'numeric', month: 'short' })}
                 </span>
               </div>
               <p className="mt-1 truncate text-xs text-paper-300">

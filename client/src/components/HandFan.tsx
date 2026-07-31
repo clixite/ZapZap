@@ -170,7 +170,16 @@ export function HandFan({ hand, selected, onToggle, interactive, variants, width
                 width={cardW}
                 selected={isSelected}
                 dimmed={compatible !== null && !compatible.has(id)}
-                onClick={interactive ? () => onToggle(id) : undefined}
+                /*
+                 * Toujours un bouton, désactivé quand ce n'est pas le moment.
+                 *
+                 * Passer `onClick` à `undefined` faisait basculer `CardFace` sur
+                 * sa branche non interactive, et un joueur aveugle ne pouvait
+                 * plus relire sa main pendant l'étape de pioche ni pendant les
+                 * tours adverses — c'est-à-dire exactement quand il prépare son
+                 * coup.
+                 */
+                onClick={() => onToggle(id)}
                 disabled={!interactive}
               />
             </span>

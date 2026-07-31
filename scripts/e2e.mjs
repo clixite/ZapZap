@@ -45,6 +45,24 @@ function log(message) {
   console.log(`  · ${message}`);
 }
 
+/**
+ * « Finit par apparaître », et non « est déjà là ».
+ *
+ * `isVisible()` de Playwright est une **sonde instantanée** : elle n'attend
+ * rien, et l'option `timeout` qu'on lui passait était purement décorative. Sur
+ * un écran qui s'affiche à l'arrivée d'une vue par WebSocket — le tapis, un
+ * salon rejoint, une langue rechargée — la sonde tombait dans l'intervalle et
+ * déclarait absent ce qui apparaissait cent millisecondes plus tard. C'est
+ * `waitFor` qu'il faut : il attend vraiment, et rend la main dès que c'est là.
+ */
+async function eventuallyVisible(locator, timeout = 10_000) {
+  return locator
+    .first()
+    .waitFor({ state: 'visible', timeout })
+    .then(() => true)
+    .catch(() => false);
+}
+
 async function capture(page, name) {
   if (!SHOTS_DIR) return;
   mkdirSync(SHOTS_DIR, { recursive: true });
@@ -141,8 +159,22 @@ async function tableWithBots(pseudo, bots = 2) {
  * elles testeraient un écran de démarrage plutôt que le jeu.
  */
 async function dismissTutorial(page) {
-  const skip = page.getByRole('button', { name: 'Passer' }).first();
-  if (await skip.isVisible().catch(() => false)) await skip.click().catch(() => {});
+  /*
+   * On lui laisse le temps d'arriver avant de conclure qu'il n'est pas là.
+   *
+   * Le tutoriel s'affiche à la première vue reçue par WebSocket, pas au
+   * chargement de la page : sonder instantanément après `waitForURL` tombait
+   * souvent trop tôt. Et le manquer n'est pas anodin — c'est un voile plein
+   * écran en `z-50`, qui intercepte **tous** les gestes suivants. L'histoire ne
+   * plantait pas : elle cliquait dans le vide pendant tout son scénario.
+   *
+   * Deux secondes et demie suffisent largement, et ne coûtent rien aux
+   * histoires où le tutoriel a déjà été vu : on n'attend que quand il manque.
+   */
+  const dialog = page.getByRole('dialog', { name: /Comment on joue/ });
+  if (!(await eventuallyVisible(dialog, 2_500))) return;
+  await page.getByRole('button', { name: 'Passer' }).first().click().catch(() => {});
+  await dialog.waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => {});
 }
 
 async function passDealing(page) {
@@ -173,7 +205,7 @@ story('compte invité', async () => {
   const context = await newContext();
   const page = await context.newPage();
   await page.goto('/');
-  check(await page.getByLabel('Votre pseudo').isVisible(), 'l’inscription ne demande qu’un pseudo');
+  check(await eventuallyVisible(page.getByLabel('Votre pseudo')), 'l’inscription ne demande qu’un pseudo');
   check(
     !(await page.getByRole('button', { name: 'C’est parti' }).isEnabled()),
     'on ne peut pas valider sans pseudo',
@@ -184,7 +216,7 @@ story('compte invité', async () => {
   await page.getByRole('button', { name: 'C’est parti' }).click();
   await page.getByRole('button', { name: /Jouer maintenant/ }).waitFor({ timeout: 15_000 });
   check(
-    await page.getByRole('link', { name: /Mon profil — Nico/ }).isVisible(),
+    await eventuallyVisible(page.getByRole('link', { name: /Mon profil — Nico/ })),
     'l’accueil porte la pastille de profil, toujours à portée de pouce',
   );
 
@@ -209,7 +241,7 @@ story('changer de langue', async () => {
   );
   await page.goto('/');
   check(
-    await page.getByRole('button', { name: /Nu spelen/ }).isVisible({ timeout: 10_000 }).catch(() => false),
+    await eventuallyVisible(page.getByRole('button', { name: /Nu spelen/ }), 10_000),
     'l’accueil est traduit en néerlandais',
   );
   await capture(page, 'accueil-nl');
@@ -218,7 +250,7 @@ story('changer de langue', async () => {
   // ouverture, ce qui revient à ne pas l'avoir.
   await page.reload();
   check(
-    await page.getByRole('button', { name: /Nu spelen/ }).isVisible({ timeout: 10_000 }).catch(() => false),
+    await eventuallyVisible(page.getByRole('button', { name: /Nu spelen/ }), 10_000),
     'le choix de langue survit au rechargement',
   );
 
@@ -227,7 +259,7 @@ story('changer de langue', async () => {
   await page.getByRole('button', { name: /tafel maken/i }).click();
   await page.waitForURL(/\/salon\//, { timeout: 15_000 });
   check(
-    await page.getByText('Nodig je vrienden uit').isVisible().catch(() => false),
+    await eventuallyVisible(page.getByText('Nodig je vrienden uit')),
     'le salon est traduit',
   );
   await page.getByRole('button', { name: '+ Bot toevoegen' }).click();
@@ -245,7 +277,7 @@ story('changer de langue', async () => {
   await page.waitForTimeout(600);
   await page.goto('/');
   check(
-    await page.getByRole('button', { name: /Jouer maintenant/ }).isVisible({ timeout: 10_000 }).catch(() => false),
+    await eventuallyVisible(page.getByRole('button', { name: /Jouer maintenant/ }), 10_000),
     'on revient au français d’un geste',
   );
   await closePlayer(player);
@@ -255,15 +287,15 @@ story('accueil', async () => {
   const player = await newPlayer('Alix');
   const { page } = player;
   check(
-    await page.getByRole('button', { name: /Jouer maintenant/ }).isVisible(),
+    await eventuallyVisible(page.getByRole('button', { name: /Jouer maintenant/ })),
     'l’action principale est « Jouer maintenant »',
   );
   check(
-    await page.getByRole('button', { name: /Créer une table/ }).isVisible(),
+    await eventuallyVisible(page.getByRole('button', { name: /Créer une table/ })),
     'créer une table est présenté comme une action distincte',
   );
   check(
-    await page.getByLabel(/On vous a envoyé un code/).isVisible(),
+    await eventuallyVisible(page.getByLabel(/On vous a envoyé un code/)),
     'le champ de code explique d’où vient le code',
   );
   check(
@@ -271,7 +303,7 @@ story('accueil', async () => {
     'on ne peut pas entrer sans code',
   );
   check(
-    await page.getByRole('button', { name: /robots/ }).isVisible(),
+    await eventuallyVisible(page.getByRole('button', { name: /robots/ })),
     'le raccourci solo contre robots est proposé',
   );
   await checkNoHorizontalOverflow(page, 'Accueil');
@@ -282,7 +314,7 @@ story('accueil', async () => {
   await page.getByLabel(/On vous a envoyé un code/).fill('ZZZZ');
   await page.getByRole('button', { name: 'Entrer' }).click();
   await page.waitForTimeout(800);
-  check(await page.getByText(/introuvable|existe pas/i).isVisible(), 'un code inconnu affiche une erreur claire');
+  check(await eventuallyVisible(page.getByText(/introuvable|existe pas/i)), 'un code inconnu affiche une erreur claire');
   await closePlayer(player);
 });
 
@@ -293,7 +325,7 @@ story('premier joueur : le tutoriel', async () => {
   await player.page.getByRole('button', { name: /robots/ }).click();
   await player.page.waitForURL(/\/table\//, { timeout: 20_000 });
   check(
-    await player.page.getByRole('dialog', { name: /Comment on joue/ }).isVisible({ timeout: 10_000 }).catch(() => false),
+    await eventuallyVisible(player.page.getByRole('dialog', { name: /Comment on joue/ }), 10_000),
     'le tutoriel s’ouvre tout seul à la première partie',
   );
   await capture(player.page, 'tutoriel-1');
@@ -301,7 +333,7 @@ story('premier joueur : le tutoriel', async () => {
   await player.page.getByRole('button', { name: 'Suivant' }).click();
   await player.page.getByRole('button', { name: 'Suivant' }).click();
   check(
-    await player.page.getByText(/ZapZap : le pari/).isVisible(),
+    await eventuallyVisible(player.page.getByText(/ZapZap : le pari/)),
     'les quatre étapes se parcourent jusqu’à l’annonce',
   );
   await capture(player.page, 'tutoriel-4');
@@ -345,9 +377,9 @@ story('salon : code, invitation, réglages', async () => {
   // L'URL change avant que le salon n'ait fini de se peindre : on attend le
   // panneau d'invitation, sinon la vérification juge un écran encore vide.
   await page.getByText('Invitez vos amis').waitFor({ timeout: 15_000 });
-  check(await page.getByText(code).first().isVisible(), 'le code est affiché en grand');
-  check(await page.getByRole('button', { name: 'WhatsApp' }).isVisible(), 'on peut inviter par WhatsApp');
-  check(await page.getByRole('button', { name: /Copier/ }).isVisible(), 'on peut copier le lien');
+  check(await eventuallyVisible(page.getByText(code).first()), 'le code est affiché en grand');
+  check(await eventuallyVisible(page.getByRole('button', { name: 'WhatsApp' })), 'on peut inviter par WhatsApp');
+  check(await eventuallyVisible(page.getByRole('button', { name: /Copier/ })), 'on peut copier le lien');
   await checkNoHorizontalOverflow(page, 'Salon');
   await checkTapTargets(page, 'Salon');
   await capture(page, 'salon');
@@ -394,14 +426,14 @@ story('rejoindre par code et par lien', async () => {
   await byCode.page.waitForURL(/\/salon\//, { timeout: 15_000 });
   check(codeOf(byCode.page) === code, 'le code saisi en minuscules mène à la bonne table');
   await host.page.waitForTimeout(600);
-  check(await host.page.getByText('Paul').isVisible(), 'l’hôte voit le nouveau joueur arriver');
+  check(await eventuallyVisible(host.page.getByText('Paul')), 'l’hôte voit le nouveau joueur arriver');
 
   const byLink = await newPlayer('Léa');
   await byLink.page.goto(`/j/${code}`);
   await byLink.page.waitForURL(/\/salon\//, { timeout: 15_000 });
   check(codeOf(byLink.page) === code, 'le lien d’invitation /j/CODE mène à la table');
   await host.page.waitForTimeout(600);
-  check(await host.page.getByText('Léa').isVisible(), 'la table compte maintenant trois joueurs');
+  check(await eventuallyVisible(host.page.getByText('Léa')), 'la table compte maintenant trois joueurs');
   await capture(host.page, 'salon-a-trois');
 
   // Un joueur exclu doit revenir à l'accueil, pas rester sur un écran mort.
@@ -432,7 +464,7 @@ story('invité sans compte', async () => {
   const guest = await context.newPage();
   await guest.goto(`/j/${code}`);
   check(
-    await guest.getByText(`Vous êtes invité à la table`).isVisible({ timeout: 10_000 }).catch(() => false),
+    await eventuallyVisible(guest.getByText(`Vous êtes invité à la table`), 10_000),
     'le lien d’invitation propose de créer un compte, en nommant la table',
   );
   await capture(guest, 'invitation-sans-compte');
@@ -441,7 +473,7 @@ story('invité sans compte', async () => {
   await guest.getByText('Invitez vos amis').waitFor({ timeout: 15_000 });
   check(codeOf(guest) === code, 'après inscription, il entre directement dans la table');
   await host.page.waitForTimeout(800);
-  check(await host.page.getByText('Invité').isVisible(), 'l’hôte le voit arriver');
+  check(await eventuallyVisible(host.page.getByText('Invité')), 'l’hôte le voit arriver');
 
   await context.close();
   await closePlayer(host);
@@ -502,7 +534,7 @@ story('un tour complet : qui joue, qui a posé quoi', async () => {
   await page.getByText('À vous — piochez une carte').waitFor({ timeout: 15_000 });
   check(true, 'la défausse passe bien à l’étape « piocher »');
   check(
-    await page.getByText('vous avez posé').isVisible(),
+    await eventuallyVisible(page.getByText('vous avez posé')),
     'pendant qu’on pioche, le bandeau rappelle ce qu’on vient de poser',
   );
   await capture(page, 'pioche');
@@ -515,7 +547,7 @@ story('un tour complet : qui joue, qui a posé quoi', async () => {
   // L'attribution de la défausse : une fois notre tour fini, le centre doit
   // porter notre nom, puis celui du joueur suivant.
   check(
-    await page.getByText('Vous avez posé').first().isVisible(),
+    await eventuallyVisible(page.getByText('Vous avez posé').first()),
     'la défausse indique que c’est nous qui avons posé',
   );
   await page.waitForTimeout(4_000);
@@ -533,14 +565,14 @@ story('cartes passées et réactions', async () => {
 
   await page.getByLabel('Voir les cartes déjà passées').click();
   await page.waitForTimeout(400);
-  check(await page.getByText(/passé|défauss/i).first().isVisible(), 'le journal des cartes passées s’ouvre');
+  check(await eventuallyVisible(page.getByText(/passé|défauss/i).first()), 'le journal des cartes passées s’ouvre');
   await capture(page, 'cartes-passees');
   await page.keyboard.press('Escape').catch(() => {});
   await page.getByRole('button', { name: /Fermer/ }).first().click().catch(() => {});
 
   await page.getByLabel('Envoyer une réaction').click();
   await page.waitForTimeout(300);
-  check(await page.getByRole('menu', { name: 'Réactions' }).isVisible(), 'la rangée de réactions s’ouvre');
+  check(await eventuallyVisible(page.getByRole('menu', { name: 'Réactions' })), 'la rangée de réactions s’ouvre');
   await page.getByRole('menuitem').first().click();
   await page.waitForTimeout(300);
   check(true, 'une réaction part sans casser la table');
@@ -577,13 +609,13 @@ story('pause, menu et départ définitif', async () => {
   await passDealing(page);
 
   await page.getByLabel('Menu de la partie').click();
-  check(await page.getByRole('dialog').isVisible(), 'le menu de la partie s’ouvre');
+  check(await eventuallyVisible(page.getByRole('dialog')), 'le menu de la partie s’ouvre');
   check(
-    await page.getByRole('link', { name: /Mon profil/ }).isVisible(),
+    await eventuallyVisible(page.getByRole('link', { name: /Mon profil/ })),
     'le profil est atteignable depuis la table',
   );
   check(
-    await page.getByRole('link', { name: /Les règles/ }).isVisible(),
+    await eventuallyVisible(page.getByRole('link', { name: /Les règles/ })),
     'les règles sont atteignables depuis la table',
   );
   await capture(page, 'menu-table');
@@ -596,7 +628,7 @@ story('pause, menu et départ définitif', async () => {
   // Et la table continue sans nous : un robot joue les tours.
   await page.waitForTimeout(3_000);
   check(
-    await page.getByText('En pause').first().isVisible(),
+    await eventuallyVisible(page.getByText('En pause').first()),
     'la pause tient pendant que la table avance',
   );
 
@@ -613,7 +645,7 @@ story('pause, menu et départ définitif', async () => {
   await page.getByRole('button', { name: /Jouer maintenant/ }).waitFor({ timeout: 15_000 });
   check(true, 'on revient au menu principal depuis la table');
   check(
-    await page.getByText('Mes parties en cours').isVisible(),
+    await eventuallyVisible(page.getByText('Mes parties en cours')),
     'la partie quittée reste proposée à l’accueil',
   );
   await capture(page, 'accueil-partie-en-cours');
@@ -631,7 +663,7 @@ story('reconnexion en pleine partie', async () => {
   const after = await page.locator('[aria-label="Votre main"] [data-card]').count();
   check(after === before, `après rechargement, la main est intacte (${before} cartes)`);
   check(
-    await page.locator('[role="status"]').first().isVisible(),
+    await eventuallyVisible(page.locator('[role="status"]').first()),
     'le bandeau de tour est reconstruit après reconnexion',
   );
   await capture(page, 'reconnexion');
@@ -645,7 +677,7 @@ story('règles, historique, profil', async () => {
   await page.goto('/regles');
   await page.getByRole('heading', { name: 'Comment on joue' }).waitFor({ timeout: 15_000 });
   check(
-    await page.getByText(/L’égalité profite toujours au contre-attaquant/).isVisible(),
+    await eventuallyVisible(page.getByText(/L’égalité profite toujours au contre-attaquant/)),
     'les règles expliquent le point le plus subtil du jeu',
   );
   await checkNoHorizontalOverflow(page, 'Règles');
@@ -676,7 +708,7 @@ story('dos de carte', async () => {
   // L'écran est chargé à la demande : on attend qu'il soit là avant de juger.
   await page.locator('[data-cardback="storm"]').waitFor({ timeout: 15_000 });
   check(
-    await page.getByRole('radiogroup', { name: /Dos de carte/ }).isVisible(),
+    await eventuallyVisible(page.getByRole('radiogroup', { name: /Dos de carte/ })),
     'le choix du dos est proposé',
   );
   await page.locator('[data-cardback="paper"]').click();
@@ -701,11 +733,11 @@ story('notifications et classement', async () => {
   await page.goto('/profil');
   await page.locator('[data-cardback="storm"]').waitFor({ timeout: 15_000 });
   check(
-    await page.locator('[data-push-toggle]').isVisible().catch(() => false),
+    await eventuallyVisible(page.locator('[data-push-toggle]')),
     'le réglage des notifications est proposé, avec ce qu’il fait et ne fait pas',
   );
   check(
-    await page.getByText(/chacun son heure/).isVisible().catch(() => false),
+    await eventuallyVisible(page.getByText(/chacun son heure/)),
     'il annonce qu’il ne notifie jamais pendant une partie en direct',
   );
   await capture(page, 'notifications');

@@ -1,5 +1,6 @@
 import { io, type Socket } from 'socket.io-client';
 import type { Ack, ClientToServerEvents, ServerToClientEvents } from '@zapzap/shared';
+import { t } from './i18n';
 
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -56,7 +57,7 @@ export function request<T>(event: keyof ClientToServerEvents, payload?: unknown,
       resolve(res);
     };
     const timer = setTimeout(
-      () => done({ ok: false, error: { code: 'INVALID_PAYLOAD', message: 'Le serveur ne répond pas.' } }),
+      () => done({ ok: false, error: { code: 'TIMEOUT', message: t().errors.TIMEOUT } }),
       timeoutMs,
     );
 

@@ -38,14 +38,60 @@ export class RoomManager {
   /* Persistance                                                       */
   /* ---------------------------------------------------------------- */
 
-  private persist(room: Room): void {
+  /**
+   * L'écriture, préparée une fois pour toutes.
+   *
+   * `db.prepare()` recompile la requête à chaque appel. Sur un chemin parcouru à
+   * chaque coup de chaque table, c'est une recompilation par coup pour rien.
+   */
+  private writeStmt: { run: (...args: [string, string, number]) => unknown } | null = null;
+
+  /** Tables dont l'état a changé et attend d'être écrit. */
+  private dirty = new Map<string, Room>();
+  private flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * L'état part sur le disque, mais pas à chaque coup.
+   *
+   * `better-sqlite3` est **synchrone** : chaque écriture bloque la boucle
+   * d'événements pour toutes les autres tables. Une partie à cinq produisait
+   * près de quatre cents écritures de six kilo-octets — deux mégaoctets par
+   * partie et par table, sur le fil qui doit diffuser les vues de tout le monde.
+   *
+   * On regroupe donc : au plus une écriture toutes les deux secondes par table.
+   * Ce qu'on risque en cas de coupure brutale, c'est deux secondes de jeu —
+   * alors que les moments qui comptent vraiment (changement de phase, fin de
+   * partie, table vide, arrêt du serveur) forcent l'écriture immédiate.
+   */
+  private persist(room: Room, immediate = false): void {
     if (!this.db) return;
-    this.db
-      .prepare(
-        `INSERT INTO live_rooms (code, state, updated_at) VALUES (?, ?, ?)
-         ON CONFLICT(code) DO UPDATE SET state = excluded.state, updated_at = excluded.updated_at`,
-      )
-      .run(room.code, JSON.stringify(room.state), room.updatedAt);
+    if (immediate) {
+      this.dirty.delete(room.code);
+      this.write(room);
+      return;
+    }
+    this.dirty.set(room.code, room);
+    if (this.flushTimer) return;
+    this.flushTimer = setTimeout(() => {
+      this.flushTimer = null;
+      this.flush();
+    }, 2_000);
+    this.flushTimer.unref?.();
+  }
+
+  /** Écrit tout ce qui attend. Appelé par le minuteur et à l'arrêt. */
+  private flush(): void {
+    for (const room of this.dirty.values()) this.write(room);
+    this.dirty.clear();
+  }
+
+  private write(room: Room): void {
+    if (!this.db) return;
+    this.writeStmt ??= this.db.prepare(
+      `INSERT INTO live_rooms (code, state, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(code) DO UPDATE SET state = excluded.state, updated_at = excluded.updated_at`,
+    );
+    this.writeStmt.run(room.code, JSON.stringify(room.state), room.updatedAt);
   }
 
   private forget(code: string): void {
@@ -92,7 +138,9 @@ export class RoomManager {
     return {
       onChanged: (room: Room) => this.persist(room),
       onGameOver: (room: Room) => {
-        this.persist(room);
+        // Fin de partie : on écrit tout de suite, c'est l'état qu'on ne veut
+        // perdre sous aucun prétexte.
+        this.persist(room, true);
         try {
           this.onGameOver?.(room);
         } catch (error) {
@@ -104,7 +152,9 @@ export class RoomManager {
       onEmpty: (room: Room) => {
         // Une table vide n'est pas fermée sur-le-champ : quelqu'un peut revenir,
         // et une partie asynchrone est vide par nature. Le balayage tranchera.
-        this.persist(room);
+        // Écriture immédiate : plus personne ne jouera pour déclencher le
+        // regroupement.
+        this.persist(room, true);
       },
       onTurnAwaited: (room: Room, playerId: string) => {
         try {
@@ -262,6 +312,11 @@ export class RoomManager {
 
   stop(): void {
     clearInterval(this.sweepTimer);
+    if (this.flushTimer) clearTimeout(this.flushTimer);
+    this.flushTimer = null;
+    // Rien ne doit rester en attente d'écriture quand le processus s'arrête :
+    // c'est le seul moment où le regroupement pourrait coûter une partie.
+    this.flush();
     for (const room of this.rooms.values()) room.dispose();
     this.rooms.clear();
   }

@@ -57,6 +57,12 @@ const io = new Server(http, {
   // Un téléphone qui passe du wifi à la 4G doit pouvoir reprendre sa session
   // plutôt que d'en ouvrir une nouvelle et de perdre sa place à table.
   connectionStateRecovery: { maxDisconnectionDuration: 120_000 },
+  /*
+   * Les vues de partie se compressent très bien — ce sont des objets JSON
+   * répétitifs — et Socket.IO ne compresse rien par défaut. Le seuil évite de
+   * payer le coût du dégonflage sur les petits messages, où il ne rapporte rien.
+   */
+  perMessageDeflate: { threshold: 1024 },
 });
 
 /**
@@ -101,3 +107,21 @@ function shutdown(signal: string): void {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
+
+/*
+ * Le filet de sécurité : une table qui tombe ne fait pas tomber les autres.
+ *
+ * Un seul processus sert toutes les parties. Par défaut, la moindre exception
+ * échappée d'un rappel asynchrone — un minuteur de tour, une notification
+ * poussée, une écriture disque — arrête Node, et *toutes* les tables en cours
+ * perdent leur connexion d'un coup. Les chemins sensibles ont chacun leur
+ * `try`/`catch` ; ceci rattrape ce qu'on n'a pas prévu, journalise, et laisse
+ * le serveur debout. Un état incohérent sur une table vaut mieux qu'une soirée
+ * interrompue pour tout le monde.
+ */
+process.on('uncaughtException', (error) => {
+  console.error('Exception non rattrapée — le serveur continue.', error);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('Promesse rejetée sans traitement — le serveur continue.', reason);
+});

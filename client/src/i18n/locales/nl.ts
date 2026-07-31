@@ -80,8 +80,14 @@ export const nl: Messages = {
     firstOut: 'Bij de eerste die afvalt',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'Sms', share: 'Delen…', copy: 'Link kopiëren', copied: 'Gekopieerd ✓' },
-
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'Sms',
+    share: 'Delen…',
+    copy: 'Link kopiëren',
+    copied: 'Gekopieerd ✓',
+    text: (code, url) => `Kom meespelen met ZapZap ⚡ Code ${code} — ${url}`,
+  },
   table: {
     connecting: 'Verbinden met de tafel…',
     backHome: 'Terug naar start',
@@ -152,6 +158,9 @@ export const nl: Messages = {
   theme: {
     cardBack: 'Kaartrug',
     cardBackDetail: 'Daar kijk je het langst naar. Iedereen kiest de zijne.',
+    fourColours: 'Vier kleuren',
+    fourColoursDetail:
+      'Schoppen zwart, klaveren groen, harten rood, ruiten blauw — het vierkleurenspel, voor wie rood en zwart niet uit elkaar houdt.',
     names: {
       storm: 'Storm',
       volt: 'Bliksem',
@@ -250,6 +259,13 @@ export const nl: Messages = {
     rematch: 'Revanche',
     home: 'Terug naar start',
     share: 'Resultaat delen',
+    shared: 'Gedeeld',
+    cardTitle: (rounds) => `Partij afgelopen — ${rounds} ronde${rounds > 1 ? 's' : ''}`,
+    cardText: (url) => `We hebben net een partij ZapZap gespeeld ⚡ ${url}`,
+    roundsPlayed: (n) => `${n} ronde${n > 1 ? 's' : ''} gespeeld`,
+    you: 'jij',
+    points: (n) => `${n} pt`,
+    outSuffix: ' · uitgeschakeld',
   },
 
   passed: {
@@ -304,6 +320,25 @@ export const nl: Messages = {
     dangerDetail: 'Wist het account, de statistieken en de geschiedenis. Onomkeerbaar.',
     confirmDelete: 'Verwijdering bevestigen',
     cancel: 'Annuleren',
+    photoLabel: 'Profielfoto wijzigen',
+    photoBadge: 'foto',
+    pseudoLabel: 'Je naam',
+    removePhoto: 'Foto verwijderen, getekende avatar houden',
+    avatarGroup: 'Je avatar',
+    avatarNamed: (emoji) => `Avatar ${emoji}`,
+    saveAccount: 'Mijn account bewaren',
+    linkedTo: 'Account gekoppeld aan',
+    linkedDetail: 'Je partijen volgen je op al je toestellen.',
+    noEmail:
+      'Zonder e-mail leeft dit account alleen in deze browser. Een magische link — geen wachtwoord — maakt het overal terugvindbaar.',
+    emailPlaceholder: 'jij@voorbeeld.be',
+    emailLabel: 'Je e-mailadres',
+    send: 'Versturen',
+    linkSent: 'Link verstuurd! Open je mailbox op dit toestel.',
+    redZone: 'Rode zone',
+    deleteWarning: 'Je account verwijderen wist ook je geschiedenis en statistieken. Dit is definitief.',
+    confirmDeleteFinal: 'Definitieve verwijdering bevestigen',
+    keepMyAccount: 'Nee, ik hou mijn account',
   },
 
   history: {
@@ -313,6 +348,99 @@ export const nl: Messages = {
     emptyDetail: 'Je spellen verschijnen hier zodra er een afloopt.',
     players: (n) => `${n} spelers`,
     youRanked: (rank) => (rank === 1 ? 'Overwinning' : `${rank}e plaats`),
+    backShort: '← Terug',
+    yourGames: 'Je partijen',
+    tileGames: 'partijen',
+    tileWins: 'overwinningen',
+    tileZaps: (won, called) => `geslaagde calls (${won}/${called})`,
+    loading: 'Laden…',
+    none: 'Nog geen afgelopen partij. Je eerste overwinning wacht op je.',
+    won: '🏆 Gewonnen',
+    ranked: (rank, total) => `${rank}e van ${total}`,
+    home: 'Terug naar het begin',
+  },
+
+  card: {
+    suits: { S: 'schoppen', H: 'harten', D: 'ruiten', C: 'klaveren' },
+    ranks: { 1: 'Aas', 11: 'Boer', 12: 'Vrouw', 13: 'Heer' },
+    joker: 'Joker, 0 punten',
+    named: (rank, suit, value) => `${rank} ${suit}, ${value} punt${value > 1 ? 'en' : ''}`,
+  },
+
+  rules: {
+    back: '← Terug',
+    title: 'Hoe je speelt',
+    subtitle: '2 tot 6 spelers, 20 tot 40 minuten.',
+    sections: [
+      {
+        title: 'Het doel',
+        body: [
+          'Anders dan bij bridge of whist probeer je geen slagen te halen. Je probeert de zwakste hand te hebben, om als eerste **ZapZap** te kunnen roepen.',
+          'De eerste speler die 100 punten bereikt, ligt eruit. Er wordt gespeeld tot er één overblijft.',
+        ],
+      },
+      {
+        title: 'Wat de kaarten waard zijn',
+        body: [
+          'Aas: 1 punt. 2 tot 10: hun waarde. Boer, Vrouw, Heer: 10 punten. Joker: 0.',
+          '~Die waarde telt alleen bij het optellen. Ze zegt niets over wat je mag neerleggen — daar telt de rang. Een Heer en een Vrouw zijn allebei 10 waard, maar vormen daarom nog geen paar.',
+        ],
+      },
+      {
+        title: 'De deal',
+        body: [
+          'Elke ronde kiest de gever hoeveel kaarten hij deelt, tussen 3 en 7 — **evenveel voor iedereen, hijzelf inbegrepen**. De gever schuift naar links op, zodat iedereen die macht op zijn beurt krijgt.',
+          '~Kort, en de ronde is een race naar beneden. Lang, en er is ruimte om reeksen te bouwen en groot te lossen — maar veel te slikken als iemand roept.',
+        ],
+      },
+      {
+        title: 'Jouw beurt: twee handelingen',
+        body: [
+          '**1. Leg af.** Eén kaart, een set (paar, drie- of vierkaart) of een reeks van minstens 3 kaarten in dezelfde kleur. De aas is laag: A-2-3 is een reeks, V-H-A niet. Eén combinatie per beurt.',
+          '**2. Pak precies één kaart.** Blind van de stapel, of uit de aflegstapel van de vorige beurt. Bij een reeks alleen de kop- of staartkaart. Bij een set om het even welke.',
+          '~Je pakt altijd, ook als je je hand net leeg hebt gespeeld. Je kunt dus nooit zonder kaarten eindigen — en een hand zonder combinatie wordt nooit korter.',
+        ],
+      },
+      {
+        title: 'De call',
+        body: [
+          'Aan het begin van je beurt, vóór je aflegt, als je hand 5 punten of minder waard is: je mag roepen. Iedereen legt open.',
+          '**Niemand lager?** Jij scoort 0, alle anderen scoren hun hand.',
+          '**Iemand even goed of beter?** Jij krijgt 30 punten. Wie je klopt scoort 0, de rest hun hand.',
+          '!Gelijkspel is altijd in het voordeel van de tegenroeper, nooit van de roeper. Roepen op precies 5 is een echte gok.',
+        ],
+      },
+      {
+        title: 'De terugval',
+        body: [
+          'Komt je score **precies** op 50, dan zakt hij terug naar 25. Komt hij precies op 100, dan zakt hij naar 50 en lig je er niet uit.',
+          '~Dat blaast vastgelopen partijen weer leven in — en soms mikt iemand echt op dat ene reddende aantal punten.',
+        ],
+      },
+      {
+        title: 'Een paar gewoontes',
+        body: [
+          '-Ruim eerst de plaatjes op. Drie plaatjes is 30 punten als iemand roept.',
+          '-Pak standaard blind. Uit de aflegstapel pakken vertelt de hele tafel wat je bouwt.',
+          '-Tel de kaarten van de anderen. Wie drie kaarten per beurt aflegt en er één terugpakt, zakt snel: roep niet op 5 tegen hem.',
+          '-Bewaar nooit een combinatie voor later. Een paar Heren is 20 punten die liggen te slapen.',
+          '-Als jij geeft: geef kort wanneer je op kop staat.',
+        ],
+      },
+      {
+        title: 'Goed om te weten',
+        body: [
+          '~De app laat je nooit een ongeldige zet doen: niet roepen buiten je beurt, geen ongeldige combinatie, dus geen enkele van de strafpunten voor onhandigheid uit het tafelspel. Loopt een ronde vast — dat gebeurt als niemand zijn kaarten nog kan combineren — dan eindigt ze na een hele tijd vanzelf: iedereen telt zijn hand, zonder straf.',
+        ],
+      },
+    ],
+  },
+
+  verify: {
+    checking: 'Link controleren…',
+    invalid: 'Ongeldige of verlopen link',
+    invalidDetail: 'Een magische link leeft maar vijftien minuten. Vraag er een nieuwe aan via je profiel.',
+    home: 'Terug naar het begin',
   },
 
   app: {
@@ -347,6 +475,8 @@ export const nl: Messages = {
     OFFLINE: 'Geen verbinding met de server.',
     TIMEOUT: 'De server antwoordt niet.',
     TOO_MANY_ACCOUNTS: 'Er zijn net veel accounts aangemaakt vanaf jouw verbinding. Probeer over een minuut opnieuw.',
+    ACCOUNT_FAILED: 'Account aanmaken is niet gelukt.',
+    MAIL_FAILED: 'Versturen is mislukt. Probeer het later opnieuw.',
   },
 };
 

@@ -80,8 +80,14 @@ export const pl: Messages = {
     firstOut: 'Przy pierwszym odpadnięciu',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'SMS', share: 'Udostępnij…', copy: 'Kopiuj link', copied: 'Skopiowano ✓' },
-
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'SMS',
+    share: 'Udostępnij…',
+    copy: 'Kopiuj link',
+    copied: 'Skopiowano ✓',
+    text: (code, url) => `Dołącz do mojej partii ZapZap ⚡ Kod ${code} — ${url}`,
+  },
   table: {
     connecting: 'Łączenie ze stołem…',
     backHome: 'Powrót na start',
@@ -151,6 +157,9 @@ export const pl: Messages = {
   theme: {
     cardBack: 'Rewers karty',
     cardBackDetail: 'To na to patrzysz najdłużej. Każdy wybiera swój.',
+    fourColours: 'Talia czterokolorowa',
+    fourColoursDetail:
+      'Pik czarny, trefl zielony, kier czerwony, karo niebieskie — talia czterokolorowa, dla tych, którzy nie odróżniają czerwieni od czerni.',
     names: {
       storm: 'Burza',
       volt: 'Piorun',
@@ -248,6 +257,13 @@ export const pl: Messages = {
     rematch: 'Rewanż',
     home: 'Powrót na start',
     share: 'Udostępnij wynik',
+    shared: 'Udostępniono',
+    cardTitle: (rounds) => `Koniec partii — ${rounds} rund${rounds === 1 ? 'a' : rounds < 5 ? 'y' : ''}`,
+    cardText: (url) => `Właśnie skończyliśmy partię ZapZap ⚡ ${url}`,
+    roundsPlayed: (n) => `rozegrane rundy: ${n}`,
+    you: 'ty',
+    points: (n) => `${n} pkt`,
+    outSuffix: ' · odpadł',
   },
 
   passed: {
@@ -302,6 +318,25 @@ export const pl: Messages = {
     dangerDetail: 'Kasuje konto, statystyki i historię. Bez odwrotu.',
     confirmDelete: 'Potwierdź usunięcie',
     cancel: 'Anuluj',
+    photoLabel: 'Zmień zdjęcie profilowe',
+    photoBadge: 'zdjęcie',
+    pseudoLabel: 'Twoja nazwa',
+    removePhoto: 'Usuń zdjęcie, zostaw rysowany awatar',
+    avatarGroup: 'Twój awatar',
+    avatarNamed: (emoji) => `Awatar ${emoji}`,
+    saveAccount: 'Zachowaj moje konto',
+    linkedTo: 'Konto powiązane z',
+    linkedDetail: 'Twoje partie są z tobą na każdym urządzeniu.',
+    noEmail:
+      'Bez adresu e-mail to konto żyje tylko w tej przeglądarce. Magiczny link — bez hasła — pozwala odzyskać je wszędzie.',
+    emailPlaceholder: 'ty@przyklad.pl',
+    emailLabel: 'Twój adres e-mail',
+    send: 'Wyślij',
+    linkSent: 'Link wysłany! Otwórz skrzynkę na tym urządzeniu.',
+    redZone: 'Czerwona strefa',
+    deleteWarning: 'Usunięcie konta kasuje też historię i statystyki. Bez odwrotu.',
+    confirmDeleteFinal: 'Potwierdź trwałe usunięcie',
+    keepMyAccount: 'Nie, zostawiam swoje konto',
   },
 
   history: {
@@ -311,6 +346,99 @@ export const pl: Messages = {
     emptyDetail: 'Twoje gry pojawią się tutaj, gdy tylko któraś się skończy.',
     players: (n) => `graczy: ${n}`,
     youRanked: (rank) => (rank === 1 ? 'Zwycięstwo' : `${rank}. miejsce`),
+    backShort: '← Wstecz',
+    yourGames: 'Twoje partie',
+    tileGames: 'partie',
+    tileWins: 'wygrane',
+    tileZaps: (won, called) => `udane zapowiedzi (${won}/${called})`,
+    loading: 'Wczytywanie…',
+    none: 'Nie ma jeszcze zakończonej partii. Pierwsza wygrana czeka na ciebie.',
+    won: '🏆 Wygrana',
+    ranked: (rank, total) => `${rank}. z ${total}`,
+    home: 'Powrót do ekranu głównego',
+  },
+
+  card: {
+    suits: { S: 'pik', H: 'kier', D: 'karo', C: 'trefl' },
+    ranks: { 1: 'As', 11: 'Walet', 12: 'Dama', 13: 'Król' },
+    joker: 'Joker, 0 punktów',
+    named: (rank, suit, value) => `${rank} ${suit}, ${value} punkt${value === 1 ? '' : value < 5 ? 'y' : 'ów'}`,
+  },
+
+  rules: {
+    back: '← Wstecz',
+    title: 'Jak się gra',
+    subtitle: 'Od 2 do 6 graczy, 20 do 40 minut.',
+    sections: [
+      {
+        title: 'Cel gry',
+        body: [
+          'Inaczej niż w brydżu czy wiście nie zbiera się lew. Chodzi o to, żeby mieć najsłabszą rękę i zapowiedzieć **ZapZap** przed innymi.',
+          'Pierwszy gracz, który osiągnie 100 punktów, odpada. Gra się aż zostanie jeden.',
+        ],
+      },
+      {
+        title: 'Ile warte są karty',
+        body: [
+          'As: 1 punkt. Od 2 do 10: wartość karty. Walet, Dama, Król: 10 punktów. Joker: 0.',
+          '~Ta wartość liczy się tylko przy podliczaniu. Nie wpływa na to, co możesz wyłożyć — tam liczy się figura. Król i Dama są warte po 10, ale pary nie tworzą.',
+        ],
+      },
+      {
+        title: 'Rozdanie',
+        body: [
+          'W każdej rundzie rozdający wybiera, ile kart rozdać, od 3 do 7 — **tyle samo dla wszystkich, dla siebie też**. Rozdanie przechodzi w lewo, więc każdy korzysta z tej władzy po kolei.',
+          '~Krótko — runda jest wyścigiem, kto pierwszy zejdzie. Długo — jest z czego budować sekwensy i zrzucić dużo naraz, ale też dużo do przełknięcia, jeśli ktoś zapowie.',
+        ],
+      },
+      {
+        title: 'Twoja kolej: dwie czynności',
+        body: [
+          '**1. Zrzuć.** Pojedynczą kartę, zestaw (para, trójka, kareta) albo sekwens co najmniej 3 kart w tym samym kolorze. As jest niski: A-2-3 to sekwens, D-K-A nie. Jedna kombinacja na turę.',
+          '**2. Dobierz dokładnie jedną kartę.** Ze stosu, w ciemno, albo ze zrzutu z poprzedniej tury. Z sekwensu tylko kartę z początku lub z końca. Z zestawu dowolną.',
+          '~Dobierasz zawsze, nawet jeśli właśnie opróżniłeś rękę. Nie da się więc skończyć tury bez kart — a ręka bez kombinacji nigdy się nie skraca.',
+        ],
+      },
+      {
+        title: 'Zapowiedź',
+        body: [
+          'Na początku swojej tury, przed zrzutem, jeśli twoja ręka jest warta 5 punktów lub mniej: możesz zapowiedzieć. Wszyscy odkrywają karty.',
+          '**Nikt niżej?** Ty zapisujesz 0, każdy inny sumę swojej ręki.',
+          '**Ktoś tyle samo albo mniej?** Bierzesz 30 punktów. Ci, którzy cię pobili, zapisują 0, reszta swoją rękę.',
+          '!Remis zawsze sprzyja kontrującemu, nigdy zapowiadającemu. Zapowiedź przy równych 5 to prawdziwy hazard.',
+        ],
+      },
+      {
+        title: 'Odbicie',
+        body: [
+          'Jeśli twój wynik trafi **dokładnie** w 50, spada do 25. Jeśli trafi dokładnie w 100, spada do 50 i nie odpadasz.',
+          '~To ożywia partie, które grzęzną — i czasem ktoś naprawdę celuje w tę jedną ratującą liczbę punktów.',
+        ],
+      },
+      {
+        title: 'Kilka nawyków',
+        body: [
+          '-Najpierw pozbądź się figur. Trzy figury to 30 punktów, jeśli ktoś zapowie.',
+          '-Domyślnie dobieraj w ciemno. Branie ze zrzutu mówi całemu stołowi, co budujesz.',
+          '-Licz karty innych. Kto wykłada trzy karty na turę i dobiera jedną, schodzi szybko: nie zapowiadaj przy 5 przeciwko niemu.',
+          '-Nigdy nie chowaj kombinacji na później. Para Króli to 20 uśpionych punktów.',
+          '-Gdy rozdajesz, rozdawaj krótko, jeśli prowadzisz.',
+        ],
+      },
+      {
+        title: 'Warto wiedzieć',
+        body: [
+          '~Aplikacja nigdy nie pozwoli ci zagrać nielegalnie: żadnej zapowiedzi poza kolejnością, żadnej błędnej kombinacji, więc żadnej z kar za nieuwagę znanych z gry przy stole. Jeśli runda utknie — zdarza się, gdy nikt nie może już dopasować kart — kończy się sama po dłuższej chwili: każdy liczy swoją rękę, bez kary.',
+        ],
+      },
+    ],
+  },
+
+  verify: {
+    checking: 'Sprawdzanie linku…',
+    invalid: 'Link nieprawidłowy lub wygasły',
+    invalidDetail: 'Magiczny link żyje tylko piętnaście minut. Poproś o nowy w swoim profilu.',
+    home: 'Powrót do ekranu głównego',
   },
 
   app: {
@@ -345,6 +473,8 @@ export const pl: Messages = {
     OFFLINE: 'Brak połączenia z serwerem.',
     TIMEOUT: 'Serwer nie odpowiada.',
     TOO_MANY_ACCOUNTS: 'Z Twojego łącza założono właśnie wiele kont. Spróbuj za minutę.',
+    ACCOUNT_FAILED: 'Nie udało się utworzyć konta.',
+    MAIL_FAILED: 'Wysyłka się nie powiodła. Spróbuj później.',
   },
 };
 

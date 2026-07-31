@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import compression from 'compression';
 import express, { type Express, type Request } from 'express';
 import { z } from 'zod';
 import type { ActiveGame } from '@zapzap/shared';
@@ -68,6 +69,15 @@ export function createApp(
   const app = express();
   const users = new UsersRepo(db);
 
+  /*
+   * Compression : le bundle, les traductions, les polices, l'API.
+   *
+   * Rien n'était compressé. Le paquet principal pesait 296 Ko en clair pour
+   * 95 Ko une fois dégonflé, et les treize catalogues de traduction 127 Ko pour
+   * une quarantaine — sur un premier lancement en 4G, c'est une seconde et
+   * demie rendue au joueur pour une ligne de code.
+   */
+  app.use(compression());
   app.use(express.json({ limit: '256kb' }));
   app.disable('x-powered-by');
   // Derrière Traefik, l'adresse du client est dans X-Forwarded-For : sans ce

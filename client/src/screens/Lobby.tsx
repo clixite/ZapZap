@@ -30,12 +30,19 @@ export function Lobby() {
 
   useGameChannel();
 
-  // Comme à table : on attend la connexion pour demander sa place, sinon le
-  // premier chargement d'un lien d'invitation échoue sans jamais réessayer.
-  // Et on ne redemande pas sa place là où on vient d'être retiré.
+  /*
+   * On demande la table que l'URL nomme — pas « une » table.
+   *
+   * La condition portait sur `!view` : tant qu'une vue était en mémoire, on ne
+   * redemandait rien. Depuis une table ouverte, aller sur le salon d'une autre
+   * partie affichait donc l'ancienne, indéfiniment. On attend toujours la
+   * connexion (sinon le premier chargement d'un lien d'invitation part dans le
+   * vide sans jamais réessayer), et on ne redemande pas sa place là où on vient
+   * d'être retiré.
+   */
   useEffect(() => {
-    if (connected && code && !view && denied !== code) void join(code);
-  }, [connected, code, view, join, denied]);
+    if (connected && code && view?.code !== code && denied !== code) void join(code);
+  }, [connected, code, view?.code, join, denied]);
 
   // Exclu, ou table close : on ne reste pas sur un écran vide à se demander.
   useEffect(() => {

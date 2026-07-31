@@ -80,8 +80,14 @@ export const da: Messages = {
     firstOut: 'Ved første udslag',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'Sms', share: 'Del…', copy: 'Kopiér link', copied: 'Kopieret ✓' },
-
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'Sms',
+    share: 'Del…',
+    copy: 'Kopiér link',
+    copied: 'Kopieret ✓',
+    text: (code, url) => `Kom med i mit ZapZap-spil ⚡ Kode ${code} — ${url}`,
+  },
   table: {
     connecting: 'Forbinder til bordet…',
     backHome: 'Tilbage til start',
@@ -151,6 +157,9 @@ export const da: Messages = {
   theme: {
     cardBack: 'Kortryg',
     cardBackDetail: 'Det er det, du kigger længst på. Hver vælger sin egen.',
+    fourColours: 'Firfarvet spil',
+    fourColoursDetail:
+      'Spar sort, klør grøn, hjerter rød, ruder blå — det firfarvede spil, for dem der ikke skelner rødt fra sort.',
     names: {
       storm: 'Storm',
       volt: 'Lyn',
@@ -248,6 +257,13 @@ export const da: Messages = {
     rematch: 'Omkamp',
     home: 'Tilbage til start',
     share: 'Del resultatet',
+    shared: 'Delt',
+    cardTitle: (rounds) => `Spillet er slut — ${rounds} runde${rounds > 1 ? 'r' : ''}`,
+    cardText: (url) => `Vi har lige spillet et parti ZapZap ⚡ ${url}`,
+    roundsPlayed: (n) => `${n} spillet runde${n > 1 ? 'r' : ''}`,
+    you: 'dig',
+    points: (n) => `${n} p`,
+    outSuffix: ' · ude',
   },
 
   passed: {
@@ -302,6 +318,25 @@ export const da: Messages = {
     dangerDetail: 'Sletter kontoen, statistikken og historikken. Ingen vej tilbage.',
     confirmDelete: 'Bekræft sletningen',
     cancel: 'Annuller',
+    photoLabel: 'Skift profilbillede',
+    photoBadge: 'foto',
+    pseudoLabel: 'Dit navn',
+    removePhoto: 'Fjern billedet, behold den tegnede avatar',
+    avatarGroup: 'Din avatar',
+    avatarNamed: (emoji) => `Avatar ${emoji}`,
+    saveAccount: 'Gem min konto',
+    linkedTo: 'Kontoen er knyttet til',
+    linkedDetail: 'Dine spil følger med dig på alle dine enheder.',
+    noEmail:
+      'Uden e-mail lever denne konto kun i denne browser. Et magisk link — ingen adgangskode — gør den mulig at hente overalt.',
+    emailPlaceholder: 'dig@eksempel.dk',
+    emailLabel: 'Din e-mailadresse',
+    send: 'Send',
+    linkSent: 'Linket er sendt! Åbn din indbakke på denne enhed.',
+    redZone: 'Rød zone',
+    deleteWarning: 'At slette kontoen sletter også historik og statistik. Det kan ikke fortrydes.',
+    confirmDeleteFinal: 'Bekræft permanent sletning',
+    keepMyAccount: 'Nej, jeg beholder min konto',
   },
 
   history: {
@@ -311,6 +346,99 @@ export const da: Messages = {
     emptyDetail: 'Dine partier dukker op her, så snart et slutter.',
     players: (n) => `${n} spillere`,
     youRanked: (rank) => (rank === 1 ? 'Sejr' : `${rank}. plads`),
+    backShort: '← Tilbage',
+    yourGames: 'Dine spil',
+    tileGames: 'spil',
+    tileWins: 'sejre',
+    tileZaps: (won, called) => `vundne meldinger (${won}/${called})`,
+    loading: 'Indlæser…',
+    none: 'Ingen afsluttede spil endnu. Din første sejr venter på dig.',
+    won: '🏆 Sejr',
+    ranked: (rank, total) => `${rank}. af ${total}`,
+    home: 'Tilbage til start',
+  },
+
+  card: {
+    suits: { S: 'spar', H: 'hjerter', D: 'ruder', C: 'klør' },
+    ranks: { 1: 'Es', 11: 'Knægt', 12: 'Dame', 13: 'Konge' },
+    joker: 'Joker, 0 point',
+    named: (rank, suit, value) => `${rank} i ${suit}, ${value} point`,
+  },
+
+  rules: {
+    back: '← Tilbage',
+    title: 'Sådan spiller man',
+    subtitle: '2 til 6 spillere, 20 til 40 minutter.',
+    sections: [
+      {
+        title: 'Målet',
+        body: [
+          'I modsætning til bridge eller whist handler det ikke om at tage stik. Det handler om at have den svageste hånd, så du kan melde **ZapZap** før de andre.',
+          'Den første, der når 100 point, er ude. Der spilles, indtil én er tilbage.',
+        ],
+      },
+      {
+        title: 'Hvad kortene er værd',
+        body: [
+          'Es: 1 point. 2 til 10: deres værdi. Knægt, Dame, Konge: 10 point. Joker: 0.',
+          '~Værdien tæller kun ved optællingen. Den siger intet om, hvad du må lægge ned — dér er det rangen, der gælder. En Konge og en Dame er begge 10 værd, men de danner ikke et par.',
+        ],
+      },
+      {
+        title: 'Givet',
+        body: [
+          'Hver runde vælger giveren, hvor mange kort der skal deles ud, mellem 3 og 7 — **lige mange til alle, ham selv iberegnet**. Given går til venstre, så alle får den magt på skift.',
+          '~Kort, og runden bliver et kapløb mod bunden. Lang, og der er plads til at bygge sekvenser og smide stort på én gang — men også meget at sluge, hvis nogen melder.',
+        ],
+      },
+      {
+        title: 'Din tur: to handlinger',
+        body: [
+          '**1. Smid af.** Et enkelt kort, et sæt (par, tre eller fire ens) eller en sekvens på mindst 3 kort i samme farve. Esset er lavt: A-2-3 er en sekvens, D-K-A ikke. Én kombination pr. tur.',
+          '**2. Træk præcis ét kort.** Fra bunken, i blinde, eller fra sidste turs afsmidning. På en sekvens kun kortet i hver ende. På et sæt et hvilket som helst.',
+          '~Du trækker altid, også hvis du lige har tømt hånden. Det er derfor umuligt at slutte en tur uden kort — og en hånd uden kombination bliver aldrig kortere.',
+        ],
+      },
+      {
+        title: 'Meldingen',
+        body: [
+          'I starten af din tur, før du smider af, hvis din hånd er 5 point værd eller mindre: du må melde. Alle viser kort.',
+          '**Ingen under dig?** Du får 0, alle andre får summen af deres hånd.',
+          '**Nogen lige så god eller bedre?** Du får 30 point. De, der slår dig, får 0, resten deres hånd.',
+          '!Uafgjort er altid til fordel for modspilleren, aldrig for den, der melder. At melde på præcis 5 er et rigtigt væddemål.',
+        ],
+      },
+      {
+        title: 'Rebounden',
+        body: [
+          'Lander din score på **præcis** 50, falder den tilbage til 25. Lander den på præcis 100, falder den til 50, og du ryger ikke ud.',
+          '~Det er dét, der får fastlåste spil i gang igen — og somme tider sigter nogen netop efter det reddende pointtal.',
+        ],
+      },
+      {
+        title: 'Et par vaner',
+        body: [
+          '-Kom af med billedkortene først. Tre billeder er 30 point, hvis nogen melder.',
+          '-Træk i blinde som udgangspunkt. At tage fra bunken fortæller hele bordet, hvad du bygger.',
+          '-Tæl de andres kort. Den, der lægger tre kort pr. tur og trækker ét tilbage, falder hurtigt: meld ikke på 5 mod ham.',
+          '-Gem aldrig en kombination til senere. Et kongepar er 20 sovende point.',
+          '-Når du giver: giv kort, hvis du fører.',
+        ],
+      },
+      {
+        title: 'Godt at vide',
+        body: [
+          '~Appen lader dig aldrig lave et ulovligt træk: ingen melding uden for tur, ingen ugyldig kombination, altså ingen af bordspillets strafpoint for sjusk. Går en runde i stå — det sker, når ingen længere kan sætte deres kort sammen — slutter den af sig selv efter lang tid: alle tæller deres hånd, uden straf.',
+        ],
+      },
+    ],
+  },
+
+  verify: {
+    checking: 'Kontrollerer linket…',
+    invalid: 'Ugyldigt eller udløbet link',
+    invalidDetail: 'Et magisk link lever kun femten minutter. Bed om et nyt fra din profil.',
+    home: 'Tilbage til start',
   },
 
   app: {
@@ -345,6 +473,8 @@ export const da: Messages = {
     OFFLINE: 'Ingen forbindelse til serveren.',
     TIMEOUT: 'Serveren svarer ikke.',
     TOO_MANY_ACCOUNTS: 'Der er lige oprettet mange konti fra din forbindelse. Prøv igen om et minut.',
+    ACCOUNT_FAILED: 'Kontoen kunne ikke oprettes.',
+    MAIL_FAILED: 'Afsendelsen mislykkedes. Prøv igen senere.',
   },
 };
 

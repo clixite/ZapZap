@@ -80,8 +80,14 @@ export const sv: Messages = {
     firstOut: 'Vid första utslagningen',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'SMS', share: 'Dela…', copy: 'Kopiera länk', copied: 'Kopierad ✓' },
-
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'SMS',
+    share: 'Dela…',
+    copy: 'Kopiera länk',
+    copied: 'Kopierad ✓',
+    text: (code, url) => `Häng med i min ZapZap-omgång ⚡ Kod ${code} — ${url}`,
+  },
   table: {
     connecting: 'Ansluter till bordet…',
     backHome: 'Tillbaka till start',
@@ -151,6 +157,9 @@ export const sv: Messages = {
   theme: {
     cardBack: 'Kortets baksida',
     cardBackDetail: 'Det är det du tittar mest på. Var och en väljer sin.',
+    fourColours: 'Fyrfärgad kortlek',
+    fourColoursDetail:
+      'Spader svart, klöver grönt, hjärter rött, ruter blått — den fyrfärgade leken, för den som inte skiljer rött från svart.',
     names: {
       storm: 'Storm',
       volt: 'Blixt',
@@ -248,6 +257,13 @@ export const sv: Messages = {
     rematch: 'Revansch',
     home: 'Tillbaka till start',
     share: 'Dela resultatet',
+    shared: 'Delad',
+    cardTitle: (rounds) => `Partiet är slut — ${rounds} omgång${rounds > 1 ? 'ar' : ''}`,
+    cardText: (url) => `Vi har just spelat klart en omgång ZapZap ⚡ ${url}`,
+    roundsPlayed: (n) => `${n} spelad${n > 1 ? 'e' : ''} omgång${n > 1 ? 'ar' : ''}`,
+    you: 'du',
+    points: (n) => `${n} p`,
+    outSuffix: ' · utslagen',
   },
 
   passed: {
@@ -302,6 +318,25 @@ export const sv: Messages = {
     dangerDetail: 'Raderar kontot, statistiken och historiken. Ingen väg tillbaka.',
     confirmDelete: 'Bekräfta raderingen',
     cancel: 'Avbryt',
+    photoLabel: 'Byt profilbild',
+    photoBadge: 'foto',
+    pseudoLabel: 'Ditt namn',
+    removePhoto: 'Ta bort fotot, behåll den ritade avataren',
+    avatarGroup: 'Din avatar',
+    avatarNamed: (emoji) => `Avatar ${emoji}`,
+    saveAccount: 'Spara mitt konto',
+    linkedTo: 'Kontot är kopplat till',
+    linkedDetail: 'Dina partier följer med dig på alla enheter.',
+    noEmail:
+      'Utan e-post lever det här kontot bara i den här webbläsaren. En magisk länk — inget lösenord — gör det åtkomligt överallt.',
+    emailPlaceholder: 'du@exempel.se',
+    emailLabel: 'Din e-postadress',
+    send: 'Skicka',
+    linkSent: 'Länken är skickad! Öppna din inkorg på den här enheten.',
+    redZone: 'Röd zon',
+    deleteWarning: 'Att radera kontot raderar även historik och statistik. Det går inte att ångra.',
+    confirmDeleteFinal: 'Bekräfta permanent radering',
+    keepMyAccount: 'Nej, jag behåller mitt konto',
   },
 
   history: {
@@ -311,6 +346,99 @@ export const sv: Messages = {
     emptyDetail: 'Dina partier dyker upp här så snart ett tar slut.',
     players: (n) => `${n} spelare`,
     youRanked: (rank) => (rank === 1 ? 'Vinst' : `${rank}:a plats`),
+    backShort: '← Tillbaka',
+    yourGames: 'Dina partier',
+    tileGames: 'partier',
+    tileWins: 'vinster',
+    tileZaps: (won, called) => `lyckade utrop (${won}/${called})`,
+    loading: 'Laddar…',
+    none: 'Inget avslutat parti ännu. Din första vinst väntar på dig.',
+    won: '🏆 Vinst',
+    ranked: (rank, total) => `${rank}:a av ${total}`,
+    home: 'Tillbaka till start',
+  },
+
+  card: {
+    suits: { S: 'spader', H: 'hjärter', D: 'ruter', C: 'klöver' },
+    ranks: { 1: 'Ess', 11: 'Knekt', 12: 'Dam', 13: 'Kung' },
+    joker: 'Joker, 0 poäng',
+    named: (rank, suit, value) => `${rank} i ${suit}, ${value} poäng`,
+  },
+
+  rules: {
+    back: '← Tillbaka',
+    title: 'Så spelar man',
+    subtitle: '2 till 6 spelare, 20 till 40 minuter.',
+    sections: [
+      {
+        title: 'Målet',
+        body: [
+          'Till skillnad från bridge eller whist handlar det inte om att ta stick. Det handlar om att ha den svagaste handen, så att du kan ropa **ZapZap** före alla andra.',
+          'Den första som når 100 poäng åker ut. Man spelar tills en enda står kvar.',
+        ],
+      },
+      {
+        title: 'Vad korten är värda',
+        body: [
+          'Ess: 1 poäng. 2 till 10: sitt värde. Knekt, Dam, Kung: 10 poäng. Joker: 0.',
+          '~Värdet spelar bara roll vid räkningen. Det säger ingenting om vad du får lägga ner — där är det valören som gäller. En Kung och en Dam är båda värda 10, men de bildar inget par.',
+        ],
+      },
+      {
+        title: 'Given',
+        body: [
+          'Varje omgång väljer givaren hur många kort som ska delas ut, mellan 3 och 7 — **lika många till alla, sig själv inräknad**. Given går vidare åt vänster, så alla får den makten i tur och ordning.',
+          '~Kort giv, och omgången blir en kapplöpning nedåt. Lång giv, och det finns utrymme att bygga stegar och släppa stort på en gång — men mycket att svälja om någon ropar.',
+        ],
+      },
+      {
+        title: 'Din tur: två handlingar',
+        body: [
+          '**1. Kasta.** Ett ensamt kort, en uppsättning (par, tretal, fyrtal) eller en stege på minst 3 kort i samma färg. Esset är lågt: A-2-3 är en stege, D-K-A inte. En kombination per tur.',
+          '**2. Dra exakt ett kort.** Från talongen, blint, eller från förra turens kastade kort. På en stege bara kortet i början eller slutet. På en uppsättning vilket som helst.',
+          '~Du drar alltid, även om du just tömt handen. Det går alltså aldrig att avsluta en tur utan kort — och en hand utan kombination blir aldrig kortare.',
+        ],
+      },
+      {
+        title: 'Utropet',
+        body: [
+          'I början av din tur, innan du kastar, om din hand är värd 5 poäng eller mindre: du får ropa. Alla visar sina kort.',
+          '**Ingen under dig?** Du får 0, alla andra får summan av sin hand.',
+          '**Någon lika bra eller bättre?** Du får 30 poäng. De som slår dig får 0, resten sin hand.',
+          '!Lika utfall gynnar alltid motropet, aldrig den som ropar. Att ropa på exakt 5 är en riktig chansning.',
+        ],
+      },
+      {
+        title: 'Studsen',
+        body: [
+          'Om din poäng hamnar på **exakt** 50 faller den tillbaka till 25. Hamnar den på exakt 100 faller den till 50 och du åker inte ut.',
+          '~Det är vad som får fastnade partier att leva upp igen — och ibland siktar någon just på den räddande poängsumman.',
+        ],
+      },
+      {
+        title: 'Några vanor',
+        body: [
+          '-Gör dig av med klädda kort först. Tre klädda är 30 poäng om någon ropar.',
+          '-Dra blint som standard. Att ta från kasthögen berättar för hela bordet vad du bygger.',
+          '-Räkna de andras kort. Den som lägger tre kort per tur och drar ett tillbaka sjunker snabbt: ropa inte på 5 mot honom.',
+          '-Spara aldrig en kombination till senare. Ett kungapar är 20 poäng som sover.',
+          '-När du ger: ge kort giv om du leder.',
+        ],
+      },
+      {
+        title: 'Bra att veta',
+        body: [
+          '~Appen låter dig aldrig göra ett otillåtet drag: inget utrop utanför din tur, ingen ogiltig kombination, alltså ingen av bordsspelets straffpoäng för slarv. Om en omgång kör fast — det händer när ingen längre kan para ihop sina kort — tar den slut av sig själv efter en lång stund: alla räknar sin hand, utan straff.',
+        ],
+      },
+    ],
+  },
+
+  verify: {
+    checking: 'Kontrollerar länken…',
+    invalid: 'Ogiltig eller utgången länk',
+    invalidDetail: 'En magisk länk lever bara femton minuter. Be om en ny från din profil.',
+    home: 'Tillbaka till start',
   },
 
   app: {
@@ -345,6 +473,8 @@ export const sv: Messages = {
     OFFLINE: 'Ingen anslutning till servern.',
     TIMEOUT: 'Servern svarar inte.',
     TOO_MANY_ACCOUNTS: 'Många konton har just skapats från din anslutning. Försök om en minut.',
+    ACCOUNT_FAILED: 'Kontot kunde inte skapas.',
+    MAIL_FAILED: 'Sändningen misslyckades. Försök igen senare.',
   },
 };
 

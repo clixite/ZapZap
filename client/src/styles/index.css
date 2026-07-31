@@ -78,6 +78,16 @@
   --color-suit-black: #1c1b26;
   --color-success: #2fbf8f;
   --color-danger: #f4635a;
+  /*
+   * Le même rouge, mais assez sombre pour porter du blanc.
+   *
+   * `--color-danger` est calibré pour être lu **en texte sur fond sombre** :
+   * clair, saturé, très visible. En aplat sous un libellé blanc, il ne donne
+   * que 3,1:1 — sous le seuil AA de 4,5:1 des WCAG, sur les boutons qui
+   * comptent le plus : quitter la partie, supprimer son compte, armer une
+   * annonce. Cette variante monte à 5,5:1 sans rien perdre de l'alarme.
+   */
+  --color-danger-solid: #c62f26;
 
   /*
    * Une seule famille pour tout : les titres en 700/800 très resserrés, le
@@ -167,18 +177,42 @@ a[role='button'] {
 }
 
 /* « C'est ton tour » : pulsation lente, jamais clignotante */
+/*
+ * La lueur du tour — et sa couleur, désormais paramétrable.
+ *
+ * L'animation codait `volt-400` en dur. Appliquée au bandeau de pause (ambre)
+ * et à la pastille de danger (rouge), elle les cerclait donc d'une pulsation
+ * **cyan** : deux couleurs qui se contredisent sur le même élément. La teinte
+ * vient maintenant d'une variable que la classe utilitaire fixe, ce qui permet
+ * d'avoir une alerte rouge qui pulse en rouge.
+ */
 @keyframes zz-glow {
   0%,
   100% {
     box-shadow:
-      0 0 0 1.5px var(--color-volt-400),
-      0 0 0 rgb(63 217 245 / 0);
+      0 0 0 1.5px var(--zz-glow-ring, var(--color-volt-400)),
+      0 0 0 transparent;
   }
   50% {
     box-shadow:
-      0 0 0 1.5px var(--color-volt-300),
-      0 0 18px 2px rgb(63 217 245 / 0.5);
+      0 0 0 1.5px var(--zz-glow-ring, var(--color-volt-300)),
+      0 0 18px 2px var(--zz-glow-halo, rgb(63 217 245 / 0.5));
   }
+}
+
+/**
+ * Une secousse courte : le geste qui dit non.
+ *
+ * Un coup refusé n'affichait qu'un texte. Or c'est le mouvement qu'on lit en
+ * premier — la main qui tressaille dit « non » avant que l'œil n'ait trouvé le
+ * message, et c'est ce qui empêche de retoucher la même carte trois fois.
+ */
+@keyframes zz-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
 }
 
 /* L'annonce : un éclat bref, ambre, qui ne se confond avec rien d'autre */
@@ -290,6 +324,24 @@ a[role='button'] {
   animation: zz-glow 2s ease-in-out infinite;
 }
 
+/**
+ * L'alerte : même pulsation, en rouge, et plus courte.
+ *
+ * Sert à la pastille « cet adversaire peut annoncer au prochain tour ». Elle ne
+ * doit surtout pas emprunter le signal « c'est à toi » : au moment de piocher,
+ * jusqu'à cinq éléments pulsaient la même lueur cyan et le signal ne signalait
+ * plus rien.
+ */
+.zz-alert {
+  --zz-glow-ring: var(--color-danger);
+  --zz-glow-halo: rgb(244 99 90 / 0.55);
+  animation: zz-glow 1.4s ease-in-out infinite;
+}
+
+.zz-shake {
+  animation: zz-shake 0.26s ease-out;
+}
+
 .zz-zap {
   animation: zz-zap 0.4s var(--ease-spring) both;
 }
@@ -348,6 +400,36 @@ a[role='button'] {
 }
 
 /* Accessibilité : on coupe tout mouvement non essentiel */
+/*
+ * Les confettis de la victoire.
+ *
+ * Uniquement `transform` et `opacity` : ce sont les deux seules propriétés que
+ * le compositeur anime sans repasser par la mise en page, donc quarante
+ * morceaux ne coûtent rien même sur un téléphone d'entrée de gamme.
+ */
+@keyframes zz-confetti-fall {
+  0% {
+    transform: translate3d(0, -12vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(0, 108vh, 0) rotate(var(--zz-spin, 360deg));
+    opacity: 0;
+  }
+}
+
+.zz-confetti-piece {
+  animation-name: zz-confetti-fall;
+  animation-timing-function: cubic-bezier(0.25, 0.6, 0.5, 1);
+  animation-fill-mode: both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -355,5 +437,15 @@ a[role='button'] {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /*
+   * La règle générale ci-dessus raccourcit les animations ; elle ne peut pas
+   * supprimer un effet dont l'existence même est le mouvement. Quarante
+   * particules figées en haut de l'écran ne seraient pas une version calme de
+   * la fête — juste des points en travers du classement. On les retire.
+   */
+  .zz-confetti {
+    display: none;
   }
 }

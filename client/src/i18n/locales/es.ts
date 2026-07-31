@@ -80,8 +80,14 @@ export const es: Messages = {
     firstOut: 'Con la primera eliminación',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'SMS', share: 'Compartir…', copy: 'Copiar enlace', copied: 'Copiado ✓' },
-
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'SMS',
+    share: 'Compartir…',
+    copy: 'Copiar enlace',
+    copied: 'Copiado ✓',
+    text: (code, url) => `Únete a mi partida de ZapZap ⚡ Código ${code} — ${url}`,
+  },
   table: {
     connecting: 'Conectando con la mesa…',
     backHome: 'Volver al inicio',
@@ -152,6 +158,9 @@ export const es: Messages = {
   theme: {
     cardBack: 'Dorso de carta',
     cardBackDetail: 'Es lo que más miras. Cada uno elige el suyo.',
+    fourColours: 'Baraja de cuatro colores',
+    fourColoursDetail:
+      'Picas en negro, tréboles en verde, corazones en rojo, diamantes en azul — la baraja de cuatro colores, para quien no distingue el rojo del negro.',
     names: {
       storm: 'Tormenta',
       volt: 'Rayo',
@@ -250,6 +259,13 @@ export const es: Messages = {
     rematch: 'Revancha',
     home: 'Volver al inicio',
     share: 'Compartir el resultado',
+    shared: 'Compartido',
+    cardTitle: (rounds) => `Partida terminada — ${rounds} ronda${rounds > 1 ? 's' : ''}`,
+    cardText: (url) => `Acabamos de terminar una partida de ZapZap ⚡ ${url}`,
+    roundsPlayed: (n) => `${n} ronda${n > 1 ? 's' : ''} jugada${n > 1 ? 's' : ''}`,
+    you: 'tú',
+    points: (n) => `${n} pt`,
+    outSuffix: ' · eliminado',
   },
 
   passed: {
@@ -304,6 +320,25 @@ export const es: Messages = {
     dangerDetail: 'Borra la cuenta, las estadísticas y el historial. Sin vuelta atrás.',
     confirmDelete: 'Confirmar el borrado',
     cancel: 'Cancelar',
+    photoLabel: 'Cambiar la foto de perfil',
+    photoBadge: 'foto',
+    pseudoLabel: 'Tu nombre',
+    removePhoto: 'Quitar la foto y quedarme con el avatar dibujado',
+    avatarGroup: 'Tu avatar',
+    avatarNamed: (emoji) => `Avatar ${emoji}`,
+    saveAccount: 'Guardar mi cuenta',
+    linkedTo: 'Cuenta vinculada a',
+    linkedDetail: 'Tus partidas te siguen en todos tus dispositivos.',
+    noEmail:
+      'Sin correo, esta cuenta solo vive en este navegador. Un enlace mágico — sin contraseña — la hace recuperable en cualquier sitio.',
+    emailPlaceholder: 'tu@ejemplo.es',
+    emailLabel: 'Tu dirección de correo',
+    send: 'Enviar',
+    linkSent: '¡Enlace enviado! Abre tu correo en este dispositivo.',
+    redZone: 'Zona roja',
+    deleteWarning: 'Borrar la cuenta también borra el historial y las estadísticas. No tiene vuelta atrás.',
+    confirmDeleteFinal: 'Confirmar el borrado definitivo',
+    keepMyAccount: 'No, me quedo con mi cuenta',
   },
 
   history: {
@@ -313,6 +348,99 @@ export const es: Messages = {
     emptyDetail: 'Tus partidas aparecerán aquí en cuanto acabe una.',
     players: (n) => `${n} jugadores`,
     youRanked: (rank) => (rank === 1 ? 'Victoria' : `${rank}.º puesto`),
+    backShort: '← Volver',
+    yourGames: 'Tus partidas',
+    tileGames: 'partidas',
+    tileWins: 'victorias',
+    tileZaps: (won, called) => `cantes ganados (${won}/${called})`,
+    loading: 'Cargando…',
+    none: 'Aún no hay ninguna partida terminada. Tu primera victoria te está esperando.',
+    won: '🏆 Victoria',
+    ranked: (rank, total) => `${rank}.º de ${total}`,
+    home: 'Volver al inicio',
+  },
+
+  card: {
+    suits: { S: 'picas', H: 'corazones', D: 'diamantes', C: 'tréboles' },
+    ranks: { 1: 'As', 11: 'Jota', 12: 'Reina', 13: 'Rey' },
+    joker: 'Comodín, 0 puntos',
+    named: (rank, suit, value) => `${rank} de ${suit}, ${value} punto${value > 1 ? 's' : ''}`,
+  },
+
+  rules: {
+    back: '← Volver',
+    title: 'Cómo se juega',
+    subtitle: 'De 2 a 6 jugadores, de 20 a 40 minutos.',
+    sections: [
+      {
+        title: 'El objetivo',
+        body: [
+          'A diferencia del tute o del whist, aquí no se buscan bazas. Se busca tener la mano más floja, para poder cantar **ZapZap** antes que los demás.',
+          'El primer jugador que llega a 100 puntos queda eliminado. Se juega hasta que solo quede uno.',
+        ],
+      },
+      {
+        title: 'Cuánto valen las cartas',
+        body: [
+          'As: 1 punto. Del 2 al 10: su valor. Jota, Reina, Rey: 10 puntos. Comodín: 0.',
+          '~Ese valor solo cuenta al puntuar. No influye en lo que puedes bajar — ahí lo que manda es el rango. Un Rey y una Reina valen 10 los dos, pero no forman pareja.',
+        ],
+      },
+      {
+        title: 'El reparto',
+        body: [
+          'En cada ronda, quien reparte elige cuántas cartas dar, entre 3 y 7 — **el mismo número para todos, él incluido**. El reparto gira hacia la izquierda, así que cada uno ejerce ese poder a su turno.',
+          '~Corta, la ronda es una carrera a ver quién baja antes. Larga, hay margen para construir escaleras y soltar mucho de golpe — pero también mucho que tragar si alguien canta.',
+        ],
+      },
+      {
+        title: 'Tu turno: dos acciones',
+        body: [
+          '**1. Descarta.** Una carta suelta, un grupo (pareja, trío, póker) o una escalera de al menos 3 cartas del mismo palo. El As es bajo: A-2-3 es escalera, Q-K-A no. Una sola combinación por turno.',
+          '**2. Roba exactamente una carta.** Del mazo, a ciegas, o del descarte del turno anterior. En una escalera, solo la carta de cabeza o de cola. En un grupo, cualquiera.',
+          '~Siempre robas, aunque acabes de vaciar la mano. Es imposible terminar un turno sin cartas — y una mano sin combinación nunca se acorta.',
+        ],
+      },
+      {
+        title: 'El canto',
+        body: [
+          'Al empezar tu turno, antes de descartar, si tu mano vale 5 puntos o menos: puedes cantar. Todo el mundo enseña.',
+          '**¿Nadie por debajo?** Tú marcas 0, cada cual marca el total de su mano.',
+          '**¿Alguien iguala o mejora?** Tú te llevas 30 puntos. Quienes te ganan marcan 0, el resto su mano.',
+          '!El empate siempre favorece a quien contraataca, nunca a quien canta. Cantar con 5 justos es una apuesta de verdad.',
+        ],
+      },
+      {
+        title: 'El rebote',
+        body: [
+          'Si tu marcador cae **exactamente** en 50, baja a 25. Si cae exactamente en 100, baja a 50 y no quedas eliminado.',
+          '~Es lo que reanima las partidas que se atascan — y a veces alguien busca justo los puntos que le salvan.',
+        ],
+      },
+      {
+        title: 'Algunos hábitos',
+        body: [
+          '-Suelta las figuras primero. Tres figuras son 30 puntos si alguien canta.',
+          '-Roba a ciegas por defecto. Coger del descarte le cuenta a toda la mesa lo que estás construyendo.',
+          '-Cuenta las cartas de los demás. Quien baja tres cartas por turno y solo roba una, baja rápido: no cantes con 5 contra él.',
+          '-Nunca guardes una combinación para después. Una pareja de Reyes son 20 puntos durmiendo.',
+          '-Cuando repartas, reparte corto si vas por delante.',
+        ],
+      },
+      {
+        title: 'Conviene saber',
+        body: [
+          '~La aplicación nunca te deja hacer una jugada ilegal: ni cantar fuera de turno, ni combinaciones inválidas, así que ninguna de las penalizaciones por torpeza del juego de mesa. Si una ronda se atasca — pasa cuando ya nadie puede casar sus cartas — termina sola al cabo de un buen rato: cada cual cuenta su mano, sin penalización.',
+        ],
+      },
+    ],
+  },
+
+  verify: {
+    checking: 'Comprobando el enlace…',
+    invalid: 'Enlace no válido o caducado',
+    invalidDetail: 'Un enlace mágico solo vive quince minutos. Pide otro desde tu perfil.',
+    home: 'Volver al inicio',
   },
 
   app: {
@@ -347,6 +475,8 @@ export const es: Messages = {
     OFFLINE: 'Sin conexión con el servidor.',
     TIMEOUT: 'El servidor no responde.',
     TOO_MANY_ACCOUNTS: 'Se acaban de crear muchas cuentas desde tu conexión. Inténtalo dentro de un minuto.',
+    ACCOUNT_FAILED: 'No se ha podido crear la cuenta.',
+    MAIL_FAILED: 'El envío ha fallado. Inténtalo más tarde.',
   },
 };
 

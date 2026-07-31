@@ -80,8 +80,14 @@ export const ro: Messages = {
     firstOut: 'La prima eliminare',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'SMS', share: 'Distribuie…', copy: 'Copiază linkul', copied: 'Copiat ✓' },
-
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'SMS',
+    share: 'Distribuie…',
+    copy: 'Copiază linkul',
+    copied: 'Copiat ✓',
+    text: (code, url) => `Vino la partida mea de ZapZap ⚡ Cod ${code} — ${url}`,
+  },
   table: {
     connecting: 'Se conectează la masă…',
     backHome: 'Înapoi la început',
@@ -151,6 +157,9 @@ export const ro: Messages = {
   theme: {
     cardBack: 'Spatele cărții',
     cardBackDetail: 'La asta te uiți cel mai mult. Fiecare îl alege pe al lui.',
+    fourColours: 'Pachet în patru culori',
+    fourColoursDetail:
+      'Pică negru, treflă verde, inimă roșie, romb albastru — pachetul în patru culori, pentru cine nu deosebește roșul de negru.',
     names: { storm: 'Furtună', volt: 'Fulger', flash: 'Trăsnet', ink: 'Cerneală', paper: 'Hârtie' },
   },
 
@@ -246,6 +255,13 @@ export const ro: Messages = {
     rematch: 'Revanșă',
     home: 'Înapoi la început',
     share: 'Distribuie rezultatul',
+    shared: 'Distribuit',
+    cardTitle: (rounds) => `Partidă încheiată — ${rounds} rund${rounds > 1 ? 'e' : 'ă'}`,
+    cardText: (url) => `Tocmai am terminat o partidă de ZapZap ⚡ ${url}`,
+    roundsPlayed: (n) => `${n} rund${n > 1 ? 'e jucate' : 'ă jucată'}`,
+    you: 'tu',
+    points: (n) => `${n} p`,
+    outSuffix: ' · eliminat',
   },
 
   passed: {
@@ -300,6 +316,25 @@ export const ro: Messages = {
     dangerDetail: 'Șterge contul, statisticile și istoricul. Fără întoarcere.',
     confirmDelete: 'Confirmă ștergerea',
     cancel: 'Anulează',
+    photoLabel: 'Schimbă poza de profil',
+    photoBadge: 'poză',
+    pseudoLabel: 'Numele tău',
+    removePhoto: 'Scoate poza, păstrează avatarul desenat',
+    avatarGroup: 'Avatarul tău',
+    avatarNamed: (emoji) => `Avatar ${emoji}`,
+    saveAccount: 'Salvează-mi contul',
+    linkedTo: 'Cont legat de',
+    linkedDetail: 'Partidele tale te urmează pe toate dispozitivele.',
+    noEmail:
+      'Fără e-mail, contul acesta trăiește doar în browserul acesta. Un link magic — fără parolă — îl face recuperabil oriunde.',
+    emailPlaceholder: 'tu@exemplu.ro',
+    emailLabel: 'Adresa ta de e-mail',
+    send: 'Trimite',
+    linkSent: 'Link trimis! Deschide-ți e-mailul pe dispozitivul acesta.',
+    redZone: 'Zonă roșie',
+    deleteWarning: 'Ștergerea contului șterge și istoricul și statisticile. Fără cale de întoarcere.',
+    confirmDeleteFinal: 'Confirmă ștergerea definitivă',
+    keepMyAccount: 'Nu, îmi păstrez contul',
   },
 
   history: {
@@ -309,6 +344,99 @@ export const ro: Messages = {
     emptyDetail: 'Partidele tale apar aici de îndată ce una se termină.',
     players: (n) => `${n} jucători`,
     youRanked: (rank) => (rank === 1 ? 'Victorie' : `locul ${rank}`),
+    backShort: '← Înapoi',
+    yourGames: 'Partidele tale',
+    tileGames: 'partide',
+    tileWins: 'victorii',
+    tileZaps: (won, called) => `anunțuri reușite (${won}/${called})`,
+    loading: 'Se încarcă…',
+    none: 'Încă nicio partidă încheiată. Prima victorie te așteaptă.',
+    won: '🏆 Victorie',
+    ranked: (rank, total) => `${rank} din ${total}`,
+    home: 'Înapoi la început',
+  },
+
+  card: {
+    suits: { S: 'pică', H: 'inimă roșie', D: 'romb', C: 'treflă' },
+    ranks: { 1: 'As', 11: 'Valet', 12: 'Damă', 13: 'Rege' },
+    joker: 'Joker, 0 puncte',
+    named: (rank, suit, value) => `${rank} de ${suit}, ${value} punct${value > 1 ? 'e' : ''}`,
+  },
+
+  rules: {
+    back: '← Înapoi',
+    title: 'Cum se joacă',
+    subtitle: 'De la 2 la 6 jucători, 20–40 de minute.',
+    sections: [
+      {
+        title: 'Scopul',
+        body: [
+          'Spre deosebire de bridge sau whist, nu urmărești levate. Urmărești să ai mâna cea mai slabă, ca să poți anunța **ZapZap** înaintea celorlalți.',
+          'Primul jucător care ajunge la 100 de puncte este eliminat. Se joacă până rămâne unul singur.',
+        ],
+      },
+      {
+        title: 'Cât valorează cărțile',
+        body: [
+          'As: 1 punct. De la 2 la 10: valoarea lor. Valet, Damă, Rege: 10 puncte. Joker: 0.',
+          '~Valoarea contează doar la numărătoare. Nu influențează ce poți pune jos — acolo contează rangul. Un Rege și o Damă valorează amândoi 10, dar nu fac pereche.',
+        ],
+      },
+      {
+        title: 'Împărțirea',
+        body: [
+          'În fiecare rundă, cel care împarte alege câte cărți dă, între 3 și 7 — **același număr pentru toți, el inclus**. Împărțirea se mută spre stânga, așa că fiecare exercită puterea asta pe rând.',
+          '~Scurt, runda e o cursă a cine coboară primul. Lung, ai loc să construiești chinte și să scapi mult dintr-odată — dar și mult de înghițit dacă anunță cineva.',
+        ],
+      },
+      {
+        title: 'Rândul tău: două acțiuni',
+        body: [
+          '**1. Aruncă.** O carte singură, un set (pereche, trei sau patru la fel) sau o chintă de cel puțin 3 cărți de aceeași culoare. Asul e mic: A-2-3 e chintă, D-R-A nu. O singură combinație pe tură.',
+          '**2. Trage exact o carte.** Din talon, pe nevăzute, sau din aruncarea turei precedente. Dintr-o chintă, doar cartea de la un capăt. Dintr-un set, oricare.',
+          '~Tragi întotdeauna, chiar dacă tocmai ți-ai golit mâna. E deci imposibil să închei o tură fără cărți — iar o mână fără combinație nu se scurtează niciodată.',
+        ],
+      },
+      {
+        title: 'Anunțul',
+        body: [
+          'La începutul turei tale, înainte să arunci, dacă mâna ta valorează 5 puncte sau mai puțin: poți anunța. Toată lumea își arată cărțile.',
+          '**Nimeni sub tine?** Tu marchezi 0, fiecare marchează totalul mâinii lui.',
+          '**Cineva la fel sau mai bine?** Iei 30 de puncte. Cei care te bat marchează 0, restul mâna lor.',
+          '!Egalitatea favorizează întotdeauna contraatacul, niciodată pe cel care anunță. Să anunți la exact 5 e un pariu adevărat.',
+        ],
+      },
+      {
+        title: 'Ricoșeul',
+        body: [
+          'Dacă scorul tău cade **exact** pe 50, coboară înapoi la 25. Dacă pică exact pe 100, coboară la 50 și nu ești eliminat.',
+          '~Asta relansează partidele care se împotmolesc — și uneori cineva chiar țintește exact numărul de puncte care îl salvează.',
+        ],
+      },
+      {
+        title: 'Câteva obiceiuri',
+        body: [
+          '-Scapă întâi de figuri. Trei figuri înseamnă 30 de puncte dacă anunță cineva.',
+          '-Trage pe nevăzute din start. Să iei din aruncare spune întregii mese ce construiești.',
+          '-Numără cărțile celorlalți. Cine pune trei cărți pe tură și trage una singură coboară repede: nu anunța la 5 împotriva lui.',
+          '-Nu păstra niciodată o combinație pentru mai târziu. O pereche de Regi înseamnă 20 de puncte care dorm.',
+          '-Când împarți, împarte scurt dacă ești în frunte.',
+        ],
+      },
+      {
+        title: 'Bine de știut',
+        body: [
+          '~Aplicația nu te lasă niciodată să faci o mutare nepermisă: niciun anunț în afara rândului, nicio combinație invalidă, deci niciuna dintre penalizările pentru neatenție din jocul la masă. Dacă o rundă se blochează — se întâmplă când nimeni nu-și mai poate potrivi cărțile — se încheie singură după mult timp: fiecare își numără mâna, fără penalizare.',
+        ],
+      },
+    ],
+  },
+
+  verify: {
+    checking: 'Se verifică linkul…',
+    invalid: 'Link invalid sau expirat',
+    invalidDetail: 'Un link magic trăiește doar cincisprezece minute. Cere altul din profilul tău.',
+    home: 'Înapoi la început',
   },
 
   app: {
@@ -343,6 +471,8 @@ export const ro: Messages = {
     OFFLINE: 'Nicio conexiune la server.',
     TIMEOUT: 'Serverul nu răspunde.',
     TOO_MANY_ACCOUNTS: 'Tocmai s-au creat multe conturi de pe conexiunea ta. Încearcă peste un minut.',
+    ACCOUNT_FAILED: 'Contul nu a putut fi creat.',
+    MAIL_FAILED: 'Trimiterea a eșuat. Încearcă mai târziu.',
   },
 };
 

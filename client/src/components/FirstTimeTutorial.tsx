@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useModal } from '../hooks/useModal';
 import { useT } from '../i18n';
 import { CardFace } from './CardFace';
 
@@ -43,6 +44,12 @@ export function markTutorialSeen(): void {
 export function FirstTimeTutorial({ onClose }: { onClose: () => void }) {
   const t = useT();
   const [step, setStep] = useState(0);
+  // Échap passe le tutoriel — et le marque vu : le rouvrir de force à chaque
+  // partie parce qu'on l'a fermé au clavier serait le pire des deux mondes.
+  const panel = useModal<HTMLDivElement>(() => {
+    markTutorialSeen();
+    onClose();
+  });
 
   const steps = [
     {
@@ -95,6 +102,7 @@ export function FirstTimeTutorial({ onClose }: { onClose: () => void }) {
       // `fixed` et non `absolute` : le tutoriel couvre l'écran entier, main
       // comprise. Assombrir le tapis en laissant la main éclairée donnerait
       // envie de la toucher pendant qu'on explique comment y jouer.
+      ref={panel}
       className="fixed inset-0 z-50 flex flex-col justify-end bg-storm-950/85"
       role="dialog"
       aria-modal="true"

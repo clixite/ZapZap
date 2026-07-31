@@ -125,7 +125,7 @@ export function Profile() {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            aria-label="Changer la photo de profil"
+            aria-label={t.profile.photoLabel}
             className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-storm-700 text-3xl"
           >
             {user.photo ? (
@@ -134,7 +134,7 @@ export function Profile() {
               <span className="flex h-full w-full items-center justify-center">{avatar}</span>
             )}
             <span className="absolute inset-x-0 bottom-0 bg-storm-950/70 py-0.5 text-center text-[9px] text-paper-100">
-              photo
+              {t.profile.photoBadge}
             </span>
           </button>
           <input
@@ -149,7 +149,7 @@ export function Profile() {
             value={pseudo}
             onChange={(e) => setPseudo(e.target.value)}
             maxLength={20}
-            aria-label="Votre pseudo"
+            aria-label={t.profile.pseudoLabel}
             className="min-w-0 flex-1 rounded-xl bg-storm-800 px-4 py-3 text-lg"
           />
         </div>
@@ -160,18 +160,18 @@ export function Profile() {
             onClick={() => void uploadPhoto(null).then((u) => u && setUser(u))}
             className="self-start text-xs text-paper-300 underline underline-offset-2"
           >
-            Retirer la photo, garder l’avatar dessiné
+            {t.profile.removePhoto}
           </button>
         )}
 
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Votre avatar">
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t.profile.avatarGroup}>
           {AVATAR_CHOICES.map((choice) => (
             <button
               key={choice}
               type="button"
               role="radio"
               aria-checked={avatar === choice}
-              aria-label={`Avatar ${choice}`}
+              aria-label={t.profile.avatarNamed(choice)}
               onClick={() => setAvatar(choice)}
               className={`flex h-11 w-11 items-center justify-center rounded-full text-xl transition-transform ${
                 avatar === choice ? 'bg-volt-500 scale-110' : 'bg-storm-800'
@@ -187,31 +187,30 @@ export function Profile() {
           onClick={() => void save()}
           className="rounded-xl bg-volt-500 py-3 font-display font-bold text-storm-950"
         >
-          {saved ? 'Enregistré ✓' : 'Enregistrer'}
+          {saved ? t.profile.saved : t.profile.save}
         </button>
       </section>
 
       {(canMail !== false || user.email) && (
       <section className="flex flex-col gap-2 rounded-2xl bg-storm-800/70 p-4">
-        <h2 className="font-display text-lg font-bold">Sauvegarder mon compte</h2>
+        <h2 className="font-display text-lg font-bold">{t.profile.saveAccount}</h2>
         {user.email ? (
           <p className="text-sm text-paper-300">
-            Compte rattaché à <strong className="text-paper-100">{user.email}</strong>. Vos parties vous
-            suivent sur tous vos appareils.
+            {t.profile.linkedTo} <strong className="text-paper-100">{user.email}</strong>.{' '}
+            {t.profile.linkedDetail}
           </p>
         ) : (
           <>
             <p className="text-sm text-paper-300">
-              Sans e-mail, ce compte vit dans ce navigateur. Un lien magique — pas de mot de passe — le rend
-              récupérable partout.
+              {t.profile.noEmail}
             </p>
             <div className="flex gap-2">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="vous@exemple.be"
-                aria-label="Votre adresse e-mail"
+                placeholder={t.profile.emailPlaceholder}
+                aria-label={t.profile.emailLabel}
                 className="min-w-0 flex-1 rounded-xl bg-storm-900 px-4 py-3"
               />
               <button
@@ -220,11 +219,11 @@ export function Profile() {
                 disabled={mailState === 'sending' || !email.trim()}
                 className="shrink-0 rounded-xl bg-volt-500 px-4 font-display font-bold text-storm-950 disabled:opacity-40"
               >
-                Envoyer
+                {t.profile.send}
               </button>
             </div>
             {mailState === 'sent' && (
-              <p className="text-sm text-success">Lien envoyé ! Ouvrez votre boîte mail sur cet appareil.</p>
+              <p className="text-sm text-success">{t.profile.linkSent}</p>
             )}
             {mailState !== 'idle' && mailState !== 'sending' && mailState !== 'sent' && (
               <p className="text-sm text-danger">{mailState}</p>
@@ -235,18 +234,18 @@ export function Profile() {
       )}
 
       <section className="flex flex-col gap-2 rounded-2xl border border-danger/40 p-4">
-        <h2 className="font-display text-lg font-bold text-danger">Zone rouge</h2>
+        <h2 className="font-display text-lg font-bold text-danger">{t.profile.redZone}</h2>
         <p className="text-sm text-paper-300">
-          Supprimer le compte efface aussi l’historique et les statistiques. C’est définitif.
+          {t.profile.deleteWarning}
         </p>
         <button
           type="button"
           onClick={() => void destroy()}
           className={`rounded-xl py-3 font-display font-bold ${
-            confirmDelete ? 'bg-danger text-white' : 'bg-storm-800 text-danger'
+            confirmDelete ? 'bg-danger-solid text-white' : 'bg-storm-800 text-danger'
           }`}
         >
-          {confirmDelete ? 'Confirmer la suppression définitive' : 'Supprimer mon compte'}
+          {confirmDelete ? t.profile.confirmDeleteFinal : t.profile.danger}
         </button>
         {confirmDelete && (
           <button
@@ -254,7 +253,7 @@ export function Profile() {
             onClick={() => setConfirmDelete(false)}
             className="text-sm text-paper-300 underline underline-offset-2"
           >
-            Non, je garde mon compte
+            {t.profile.keepMyAccount}
           </button>
         )}
       </section>

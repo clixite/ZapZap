@@ -112,10 +112,12 @@ export function Table() {
 
   // On ne demande à s'asseoir qu'une fois la connexion établie : au chargement
   // direct de l'écran, la session est encore en train de se rétablir, et une
-  // demande partie trop tôt n'aboutit nulle part.
+  // demande partie trop tôt n'aboutit nulle part. Et on demande la table que
+  // l'URL nomme : sur `!view`, passer d'une partie à l'autre gardait la
+  // première à l'écran, puisqu'une vue était déjà là.
   useEffect(() => {
-    if (connected && code && !view && denied !== code) void join(code);
-  }, [connected, code, view, join, denied]);
+    if (connected && code && view?.code !== code && denied !== code) void join(code);
+  }, [connected, code, view?.code, join, denied]);
 
   // Retiré de la table, ou table close : on repart de l'accueil plutôt que de
   // rester devant un tapis qui ne se remplira plus.
@@ -162,6 +164,18 @@ export function Table() {
       vibrate('nudge');
     }
   }, [pendingIsMe]);
+
+  /*
+   * Le coup d'envoi : une fois, à la toute première donne de la partie.
+   *
+   * Le son existait dans la banque et n'était joué nulle part. C'est pourtant le
+   * moment qui manquait le plus : on passait du salon au tapis sans que rien ne
+   * marque que la partie venait de commencer.
+   */
+  const firstDeal = view?.phase === 'dealing' && view.roundIndex === 0;
+  useEffect(() => {
+    if (firstDeal) play('gameStart');
+  }, [firstDeal]);
 
   // La distribution s'anime une fois par manche, au passage en jeu.
   const roundIndex = view?.round?.roundIndex;
@@ -428,7 +442,10 @@ export function Table() {
           <button
             type="button"
             onClick={() => void send('game:away', { away: false })}
-            className="zz-turn flex min-h-9 w-full items-center justify-center gap-2 rounded-t-2xl bg-flash-400 px-3 py-1.5 text-sm font-bold text-storm-950"
+            // Plein largeur et ambre vif : le bandeau est déjà maximalement
+            // visible, une pulsation par-dessus n'ajoutait qu'un signal de plus
+            // à un écran qui en comptait déjà cinq.
+            className="flex min-h-9 w-full items-center justify-center gap-2 rounded-t-2xl bg-flash-400 px-3 py-1.5 text-sm font-bold text-storm-950"
           >
             {t.table.pausedBanner} · <span className="underline">{t.table.resume}</span>
           </button>
@@ -449,11 +466,21 @@ export function Table() {
         />
       </div>
 
+      {/*
+        Le refus d'un coup doit s'entendre autant que se voir.
+
+        Un joueur qui pose une combinaison illégale regarde sa main, pas le bas
+        de l'écran : le bandeau apparaissait derrière son pouce et il retapait
+        le même coup. `role="alert"` le fait lire à voix haute par le lecteur
+        d'écran, la vibration d'échec le signale sans regarder, et la secousse
+        attire l'œil là où le message est.
+      */}
       {error && (
         <button
           type="button"
           onClick={() => setError(null)}
-          className="zz-fade-up fixed inset-x-4 bottom-24 z-50 rounded-xl bg-danger px-4 py-3 text-sm font-medium text-white shadow-lg"
+          role="alert"
+          className="zz-fade-up zz-shake fixed inset-x-4 bottom-24 z-50 rounded-xl bg-danger-solid px-4 py-3 text-sm font-medium text-white shadow-lg"
         >
           {error}
         </button>
@@ -538,7 +565,7 @@ function HandArea({
             disabled={busy}
             aria-live="polite"
             className={`zz-zap w-32 flex-none rounded-xl py-3 font-display text-base font-bold text-storm-950 transition-transform active:scale-[0.98] disabled:opacity-50 ${
-              zapArmed ? 'bg-danger text-white' : 'bg-flash-400'
+              zapArmed ? 'bg-danger-solid text-white' : 'bg-flash-400'
             }`}
           >
             {zapArmed ? (

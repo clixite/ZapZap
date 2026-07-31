@@ -80,8 +80,14 @@ export const cs: Messages = {
     firstOut: 'Prvním vyřazením',
   },
 
-  invite: { whatsapp: 'WhatsApp', sms: 'SMS', share: 'Sdílet…', copy: 'Kopírovat odkaz', copied: 'Zkopírováno ✓' },
-
+  invite: {
+    whatsapp: 'WhatsApp',
+    sms: 'SMS',
+    share: 'Sdílet…',
+    copy: 'Kopírovat odkaz',
+    copied: 'Zkopírováno ✓',
+    text: (code, url) => `Přidej se ke mně na ZapZap ⚡ Kód ${code} — ${url}`,
+  },
   table: {
     connecting: 'Připojování ke stolu…',
     backHome: 'Zpět na začátek',
@@ -151,6 +157,9 @@ export const cs: Messages = {
   theme: {
     cardBack: 'Rub karty',
     cardBackDetail: 'Na to koukáš nejdéle. Každý si volí svůj.',
+    fourColours: 'Čtyřbarevné karty',
+    fourColoursDetail:
+      'Piky černé, kříže zelené, srdce červené, káry modré — čtyřbarevný balíček pro ty, kdo nerozliší červenou od černé.',
     names: {
       storm: 'Bouře',
       volt: 'Blesk',
@@ -248,6 +257,13 @@ export const cs: Messages = {
     rematch: 'Odveta',
     home: 'Zpět na začátek',
     share: 'Sdílet výsledek',
+    shared: 'Sdíleno',
+    cardTitle: (rounds) => `Hra skončila — ${rounds} kol${rounds === 1 ? 'o' : rounds < 5 ? 'a' : ''}`,
+    cardText: (url) => `Právě jsme dohráli partii ZapZap ⚡ ${url}`,
+    roundsPlayed: (n) => `odehraná kola: ${n}`,
+    you: 'ty',
+    points: (n) => `${n} b`,
+    outSuffix: ' · vyřazen',
   },
 
   passed: {
@@ -302,6 +318,25 @@ export const cs: Messages = {
     dangerDetail: 'Smaže účet, statistiky i historii. Bez návratu.',
     confirmDelete: 'Potvrdit smazání',
     cancel: 'Zrušit',
+    photoLabel: 'Změnit profilovou fotku',
+    photoBadge: 'fotka',
+    pseudoLabel: 'Tvoje jméno',
+    removePhoto: 'Odebrat fotku, nechat kreslený avatar',
+    avatarGroup: 'Tvůj avatar',
+    avatarNamed: (emoji) => `Avatar ${emoji}`,
+    saveAccount: 'Uložit můj účet',
+    linkedTo: 'Účet je propojen s',
+    linkedDetail: 'Tvoje hry tě provázejí na všech zařízeních.',
+    noEmail:
+      'Bez e-mailu žije tenhle účet jen v tomhle prohlížeči. Kouzelný odkaz — žádné heslo — ho udělá obnovitelným kdekoli.',
+    emailPlaceholder: 'ty@priklad.cz',
+    emailLabel: 'Tvoje e-mailová adresa',
+    send: 'Odeslat',
+    linkSent: 'Odkaz odeslán! Otevři si schránku na tomhle zařízení.',
+    redZone: 'Červená zóna',
+    deleteWarning: 'Smazání účtu smaže i historii a statistiky. Bez možnosti návratu.',
+    confirmDeleteFinal: 'Potvrdit trvalé smazání',
+    keepMyAccount: 'Ne, účet si nechám',
   },
 
   history: {
@@ -311,6 +346,99 @@ export const cs: Messages = {
     emptyDetail: 'Tvoje partie se tu objeví, jakmile jedna skončí.',
     players: (n) => `hráčů: ${n}`,
     youRanked: (rank) => (rank === 1 ? 'Výhra' : `${rank}. místo`),
+    backShort: '← Zpět',
+    yourGames: 'Tvoje hry',
+    tileGames: 'her',
+    tileWins: 'výher',
+    tileZaps: (won, called) => `úspěšná hlášení (${won}/${called})`,
+    loading: 'Načítání…',
+    none: 'Zatím žádná dohraná hra. První výhra na tebe čeká.',
+    won: '🏆 Výhra',
+    ranked: (rank, total) => `${rank}. z ${total}`,
+    home: 'Zpět na úvod',
+  },
+
+  card: {
+    suits: { S: 'piky', H: 'srdce', D: 'káry', C: 'kříže' },
+    ranks: { 1: 'Eso', 11: 'Kluk', 12: 'Dáma', 13: 'Král' },
+    joker: 'Žolík, 0 bodů',
+    named: (rank, suit, value) => `${rank} ${suit}, ${value} bod${value === 1 ? '' : value < 5 ? 'y' : 'ů'}`,
+  },
+
+  rules: {
+    back: '← Zpět',
+    title: 'Jak se hraje',
+    subtitle: '2 až 6 hráčů, 20 až 40 minut.',
+    sections: [
+      {
+        title: 'Cíl hry',
+        body: [
+          'Na rozdíl od mariáše nebo whistu nejde o sbírání štychů. Jde o to mít nejslabší ruku, abys mohl ohlásit **ZapZap** dřív než ostatní.',
+          'První hráč, který dosáhne 100 bodů, vypadává. Hraje se, dokud nezůstane jediný.',
+        ],
+      },
+      {
+        title: 'Kolik karty platí',
+        body: [
+          'Eso: 1 bod. 2 až 10: svou hodnotu. Kluk, Dáma, Král: 10 bodů. Žolík: 0.',
+          '~Tahle hodnota se počítá jen při sčítání. Nemá vliv na to, co smíš vyložit — tam rozhoduje hodnota karty. Král a Dáma platí oba 10, ale pár netvoří.',
+        ],
+      },
+      {
+        title: 'Rozdání',
+        body: [
+          'Každé kolo si rozdávající volí, kolik karet rozdá, mezi 3 a 7 — **stejně všem, sobě včetně**. Rozdávání putuje doleva, takže tuhle moc dostane každý po řadě.',
+          '~Krátce a kolo je závod, kdo dřív sjede dolů. Dlouze a je z čeho stavět postupky a shodit hodně naráz — ale taky hodně spolknout, když někdo ohlásí.',
+        ],
+      },
+      {
+        title: 'Tvůj tah: dvě akce',
+        body: [
+          '**1. Odhoď.** Jednu kartu, skupinu (pár, trojici, čtveřici) nebo postupku aspoň 3 karet stejné barvy. Eso je nízké: A-2-3 je postupka, D-K-A ne. Jedna kombinace za tah.',
+          '**2. Lízni přesně jednu kartu.** Z balíčku naslepo, nebo z odhozu z minulého tahu. Z postupky jen kartu z kraje. Ze skupiny kteroukoli.',
+          '~Líznout musíš vždy, i když jsi právě vyprázdnil ruku. Tah tedy nikdy nekončí bez karet — a ruka bez kombinace se nikdy nezkrátí.',
+        ],
+      },
+      {
+        title: 'Hlášení',
+        body: [
+          'Na začátku svého tahu, před odhozem, pokud tvoje ruka platí 5 bodů nebo míň: můžeš ohlásit. Všichni odkryjí karty.',
+          '**Nikdo níž?** Zapisuješ si 0, každý ostatní součet své ruky.',
+          '**Někdo stejně nebo líp?** Bereš 30 bodů. Kdo tě porazil zapisuje 0, ostatní svou ruku.',
+          '!Remíza vždycky nahrává protihráči, nikdy hlásícímu. Ohlásit na rovných 5 je opravdová sázka.',
+        ],
+      },
+      {
+        title: 'Odraz',
+        body: [
+          'Když tvoje skóre dopadne **přesně** na 50, spadne zpátky na 25. Když dopadne přesně na 100, spadne na 50 a nevypadáváš.',
+          '~To rozhýbe hry, které se zaseknou — a občas někdo opravdu míří na to jedno zachraňující číslo.',
+        ],
+      },
+      {
+        title: 'Pár návyků',
+        body: [
+          '-Zbav se nejdřív obrázků. Tři obrázky jsou 30 bodů, když někdo ohlásí.',
+          '-Líznat naslepo je výchozí volba. Brát z odhozu prozradí celému stolu, co stavíš.',
+          '-Počítej karty ostatních. Kdo pokládá tři karty za tah a jednu si lízne, jde dolů rychle: proti němu na 5 nehlas.',
+          '-Nikdy si nešetři kombinaci na později. Pár králů je 20 spících bodů.',
+          '-Když rozdáváš, rozdávej krátce, pokud vedeš.',
+        ],
+      },
+      {
+        title: 'Dobré vědět',
+        body: [
+          '~Aplikace tě nikdy nenechá zahrát nedovolený tah: žádné hlášení mimo pořadí, žádná neplatná kombinace, tedy ani jedna z trestných pokut za nešikovnost ze stolní hry. Když se kolo zasekne — stává se to, když už nikdo nedokáže karty spárovat — skončí samo po dlouhé chvíli: každý si spočítá ruku, bez trestu.',
+        ],
+      },
+    ],
+  },
+
+  verify: {
+    checking: 'Ověřuji odkaz…',
+    invalid: 'Neplatný nebo vypršelý odkaz',
+    invalidDetail: 'Kouzelný odkaz žije jen patnáct minut. Vyžádej si nový ve svém profilu.',
+    home: 'Zpět na úvod',
   },
 
   app: {
@@ -345,6 +473,8 @@ export const cs: Messages = {
     OFFLINE: 'Žádné spojení se serverem.',
     TIMEOUT: 'Server neodpovídá.',
     TOO_MANY_ACCOUNTS: 'Z tvého připojení právě vzniklo hodně účtů. Zkus to za minutu.',
+    ACCOUNT_FAILED: 'Účet se nepodařilo vytvořit.',
+    MAIL_FAILED: 'Odeslání selhalo. Zkus to později.',
   },
 };
 

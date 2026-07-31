@@ -209,7 +209,7 @@ function Seat({
         <span
           className={`absolute -right-1 -bottom-1 flex min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold ${
             cards <= 2
-              ? 'zz-turn bg-danger text-white'
+              ? 'zz-alert bg-danger-solid text-white'
               : cards <= 4
                 ? 'bg-flash-400 text-storm-950'
                 : 'bg-volt-500 text-storm-950'

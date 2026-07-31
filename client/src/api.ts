@@ -1,4 +1,5 @@
 import type { ActiveGame, GameHistoryEntry, LeaderboardRow, PublicUser, UserStats } from '@zapzap/shared';
+import { t } from './i18n';
 
 const TOKEN_KEY = 'zapzap.token';
 const HISTORY_CACHE_KEY = 'zapzap.history-cache';
@@ -39,9 +40,9 @@ export async function createGuest(pseudo: string, avatar: string): Promise<{ tok
   // joueur peut se le prendre sans avoir rien fait de mal. Lui dire « réessayez »
   // sans dire quoi attendre, c'est le perdre — on nomme la cause et le délai.
   if (res.status === 429) {
-    throw new Error('Beaucoup de comptes viennent d’être créés depuis votre connexion. Réessayez dans une minute.');
+    throw new Error(t().errors.TOO_MANY_ACCOUNTS);
   }
-  if (!res.ok) throw new Error('Impossible de créer le compte');
+  if (!res.ok) throw new Error(t().errors.ACCOUNT_FAILED);
   return (await res.json()) as { token: string; user: PublicUser };
 }
 
@@ -178,7 +179,7 @@ export async function requestMagicLink(email: string): Promise<string | null> {
   });
   if (res.ok) return null;
   const body = (await res.json().catch(() => null)) as { message?: string } | null;
-  return body?.message ?? 'L’envoi a échoué. Réessayez plus tard.';
+  return body?.message ?? t().errors.MAIL_FAILED;
 }
 
 export async function verifyMagicLink(token: string): Promise<{ token: string; user: PublicUser } | null> {

@@ -274,17 +274,33 @@ function eliminateBusted(state: GameState, players: Player[]): void {
   const newlyOut = players.filter((p) => isEliminated(p.totalScore));
   if (newlyOut.length === 0) return;
   const rankAfter = players.length - newlyOut.length + 1;
-  for (const p of newlyOut) {
+
+  /*
+   * Quand tout le monde saute d'un coup, il faut quand même un vainqueur.
+   *
+   * Deux joueurs à 90 qui prennent 10 chacun sortaient ensemble avec le même
+   * rang 1 — et la partie créditait une victoire à chacun. Le départage naturel
+   * existe pourtant : le score total, le plus bas devant, puisque tout le jeu
+   * consiste à ne pas marquer.
+   */
+  const ordered =
+    newlyOut.length === players.length
+      ? [...newlyOut].sort((a, b) => a.totalScore - b.totalScore)
+      : newlyOut;
+
+  ordered.forEach((p, i) => {
     p.eliminated = true;
-    p.finishRank = rankAfter;
-  }
+    p.finishRank = newlyOut.length === players.length ? i + 1 : rankAfter;
+  });
 }
 
 /** La partie est-elle finie ? */
 function isGameOver(state: GameState): boolean {
   const alive = activePlayers(state);
   if (state.variants.endMode === 'first-out') {
-    return state.players.some((p) => p.eliminated);
+    // Un départ volontaire n'est pas « la première sortie » : quelqu'un qui
+    // ferme l'application au deuxième tour terminait la partie des cinq autres.
+    return state.players.some((p) => p.eliminated && !p.forfeited);
   }
   return alive.length <= 1;
 }
@@ -381,11 +397,31 @@ export function applyAction(prev: GameState, action: GameAction): EngineResult {
       p.eliminated = true;
       p.forfeited = true;
       p.away = false;
+
+      /*
+       * L'hôte qui part emporte la barre avec lui.
+       *
+       * En temps réel, seul l'hôte peut lancer la manche suivante. S'il quitte
+       * pendant la partie, les autres restaient bloqués sur l'écran de score,
+       * sans aucune issue, jusqu'à ce que la table expire — le blocage le plus
+       * facile à provoquer de tout le serveur. `REMOVE_PLAYER` transfère déjà
+       * l'hôte, mais il ne s'applique qu'au salon.
+       */
+      if (state.hostId === p.id) {
+        const heir =
+          activePlayers(state).find((other) => other.id !== p.id && !isBotId(other.id)) ??
+          activePlayers(state).find((other) => other.id !== p.id);
+        if (heir) state.hostId = heir.id;
+      }
       // Dernier du classement parmi ceux encore en lice au moment du départ.
       p.finishRank = activePlayers(state).length + 1;
 
       const round = state.round;
-      if (round) {
+      // Les cartes ne retournent au paquet que si une manche est en cours. En
+      // phase de décompte, `revealedHands` lit ces mains : les vider ferait
+      // apparaître une main vide en face d'un score non nul.
+      const inPlay = state.phase === 'playing' || state.phase === 'dealing';
+      if (round && inPlay) {
         const hand = round.hands[p.id] ?? [];
         if (hand.length > 0) round.discardPile.push(...hand);
         round.hands[p.id] = [];
@@ -406,9 +442,16 @@ export function applyAction(prev: GameState, action: GameAction): EngineResult {
         if (state.phase === 'dealing' && round.dealerSeat === p.seat) {
           round.dealerSeat = nextActiveSeat(state, p.seat);
         }
+        /*
+         * Le tour se clôt par `endTurn`, pas à la main.
+         *
+         * Avancer `currentSeat` sans passer par lui laissait `lastDiscard`
+         * intact : le joueur suivant pouvait ramasser dans une défausse vieille
+         * de deux tours — le seul cas du jeu où cela arrive — et le garde-fou
+         * anti-blocage se décalait d'un cran à chaque départ.
+         */
         if (state.phase === 'playing' && round.currentSeat === p.seat) {
-          round.currentSeat = nextActiveSeat(state, p.seat);
-          round.turnStep = 'discard';
+          endTurn(state);
         }
       }
       return { ok: true, state };
@@ -577,7 +620,11 @@ export function defaultDealChoice(): number {
 
 /** La carte la plus chère, posée seule : purger les figures ne dessert personne. */
 export function defaultDiscard(state: GameState, playerId: string): CardId[] {
-  const hand = state.round!.hands[playerId] ?? [];
+  const hand = state.round?.hands[playerId] ?? [];
+  // Main vide : `reduce` partirait d'un accumulateur `undefined` et lèverait
+  // une exception. C'est un chemin de secours, appelé depuis un minuteur —
+  // l'exception y tuerait le processus entier, pas seulement cette table.
+  if (hand.length === 0) return [];
   const worst = hand.reduce((max, c) => (cardValue(c) > cardValue(max) ? c : max), hand[0]);
   return [cardId(worst)];
 }
