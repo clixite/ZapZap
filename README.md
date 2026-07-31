@@ -60,6 +60,20 @@ npm run bench:bots
 GAMES=200 PLAYERS=6 npm run bench:bots
 ```
 
+**Parcours de bout en bout** — la suite Playwright est écrite comme une liste
+d'histoires utilisateur : inscription, accueil, salon, invitation par code et par
+lien, exclusion, deux tables ouvertes en même temps, un tour complet, reconnexion,
+règles, profil, manifeste. Chaque histoire est autonome — une qui casse n'emporte
+pas les suivantes, on obtient le bilan complet en une exécution.
+
+```bash
+npm run build -w client
+PORT=3111 DB_PATH=:memory: JWT_SECRET=dev npx tsx server/src/index.ts &
+BASE_URL=http://localhost:3111 npm run e2e
+BASE_URL=http://localhost:3111 FULL_GAME=1 npm run e2e   # + la partie jusqu'à la fin
+ONLY="salon" BASE_URL=http://localhost:3111 npm run e2e  # une seule histoire
+```
+
 ## Production
 
 ```bash

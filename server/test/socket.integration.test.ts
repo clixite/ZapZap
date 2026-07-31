@@ -214,6 +214,45 @@ describe('salon', () => {
   });
 });
 
+describe('plusieurs tables à la fois', () => {
+  it('agit sur la table qu’on regarde, pas sur la première venue', async () => {
+    // Non-régression. « Ma table » était résolue en cherchant une table dont le
+    // joueur était membre : avec une partie déjà en cours, créer la suivante
+    // donnait un salon inerte — ajouter un robot, régler ou démarrer partait
+    // sur l'ancienne table, sans que rien ne bouge à l'écran.
+    const alice = await join('alice');
+    const first = expectOk(await alice.emit<{ code: string }>('room:create'));
+    const second = expectOk(await alice.emit<{ code: string }>('room:create'));
+    expect(second.code).not.toBe(first.code);
+
+    expectOk(await alice.emit('room:addBot'));
+
+    expect(rooms.get(second.code)!.state.players).toHaveLength(2);
+    expect(rooms.get(first.code)!.state.players).toHaveLength(1);
+  });
+
+  it('démarre bien la partie qu’on vient de créer', async () => {
+    const alice = await join('alice');
+    const first = expectOk(await alice.emit<{ code: string }>('room:create'));
+    const second = expectOk(await alice.emit<{ code: string }>('room:create'));
+    expectOk(await alice.emit('room:addBot'));
+    expectOk(await alice.emit('game:start'));
+
+    expect(rooms.get(second.code)!.state.phase).not.toBe('lobby');
+    expect(rooms.get(first.code)!.state.phase).toBe('lobby');
+  });
+
+  it('revient sur une ancienne table quand on la rejoint par son code', async () => {
+    const alice = await join('alice');
+    const first = expectOk(await alice.emit<{ code: string }>('room:create'));
+    expectOk(await alice.emit('room:create'));
+    // On retourne explicitement à la première : c'est elle qui reçoit la suite.
+    expectOk(await alice.emit('room:join', { code: first.code }));
+    expectOk(await alice.emit('room:addBot'));
+    expect(rooms.get(first.code)!.state.players).toHaveLength(2);
+  });
+});
+
 describe('tables publiques', () => {
   it('n’expose pas les tables privées', async () => {
     const alice = await join('alice');
@@ -254,6 +293,30 @@ describe('tables publiques', () => {
     expect(second.code).toBe(first.code);
     const view = await bob.nextView((v) => v.players.length === 2);
     expect(view.players.map((p) => p.pseudo).sort()).toEqual(['alice', 'bob']);
+  });
+
+  it('rend sa place à qui attend déjà dans un salon', async () => {
+    const alice = await join('alice');
+    const { code } = expectOk(await alice.emit<{ code: string }>('room:create'));
+    const again = expectOk(await alice.emit<{ code: string; created: boolean }>('room:quickMatch'));
+    // Assise à attendre du monde, « partie rapide » ne l'envoie pas ailleurs :
+    // ce serait abandonner la table qu'elle vient d'ouvrir.
+    expect(again.code).toBe(code);
+    expect(again.created).toBe(false);
+  });
+
+  it('ouvre une nouvelle table même quand une partie est déjà en cours', async () => {
+    // « Partie rapide » veut dire « trouve-moi une table maintenant ». Renvoyer
+    // vers un jeu déjà commencé donnait l'impression d'un bouton mort — et les
+    // parties en cours ont leur propre liste à l'accueil.
+    const alice = await join('alice');
+    const running = expectOk(await alice.emit<{ code: string }>('room:create'));
+    expectOk(await alice.emit('room:addBot'));
+    expectOk(await alice.emit('game:start'));
+
+    const quick = expectOk(await alice.emit<{ code: string; created: boolean }>('room:quickMatch'));
+    expect(quick.code).not.toBe(running.code);
+    expect(quick.created).toBe(true);
   });
 
   it('ne propose plus une table dont la partie a commencé', async () => {
@@ -479,7 +542,10 @@ describe('limitation de débit', () => {
 
   it('borne la création de comptes par adresse', async () => {
     let refused = false;
-    for (let i = 0; i < 15; i++) {
+    // Le seau vaut trente jetons : une tablée entière derrière la même box doit
+    // passer. On dépasse largement pour vérifier qu'il finit quand même par se
+    // fermer — c'est la boucle automatisée qu'on arrête, pas la soirée.
+    for (let i = 0; i < 40; i++) {
       const res = await fetch(`${url}/api/guest`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
