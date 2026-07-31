@@ -41,7 +41,20 @@ async function deployerLog() {
   return services.flatMap((s) => (s.entries ?? []).map((e) => e.line));
 }
 
+const MARKER = 'ZAPZAP_DEPLOY_OK';
+const countMarkers = (lines) => lines.filter((l) => l.includes(MARKER)).length;
+
 console.log(`▸ Déploiement de la branche distante sur ${SITE}`);
+
+/*
+ * Le journal du conteneur survit à son redémarrage : chercher le marqueur de
+ * fin sans autre précaution le trouve immédiatement — celui du déploiement
+ * précédent. On compte donc les marqueurs AVANT, et on attend qu'il y en ait un
+ * de plus. Sans ce repère, le script annonçait la mise en ligne pendant que
+ * l'image se construisait encore, et rapportait l'ancienne version.
+ */
+const markersBefore = countMarkers(await deployerLog().catch(() => []));
+
 await api(`/docker/${PROJECT}/restart`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -58,12 +71,12 @@ console.log('▸ Construction en cours…');
 const started = Date.now();
 let done = false;
 
-// La construction prend une à deux minutes : on sonde le journal jusqu'au
-// marqueur de fin plutôt que de deviner un délai.
+// La construction prend une à deux minutes : on sonde le journal jusqu'à voir
+// un marqueur de plus qu'au départ, plutôt que de deviner un délai.
 for (let i = 0; i < 40 && !done; i++) {
   await new Promise((r) => setTimeout(r, 10_000));
   const lines = await deployerLog().catch(() => []);
-  done = lines.some((l) => l.includes('ZAPZAP_DEPLOY_OK'));
+  done = countMarkers(lines) > markersBefore;
   const last = lines.at(-1) ?? '';
   process.stdout.write(`  ${Math.round((Date.now() - started) / 1000)}s — ${last.slice(0, 90)}\n`);
 }
@@ -75,9 +88,17 @@ if (!done) {
 }
 
 console.log('▸ Vérification');
-await new Promise((r) => setTimeout(r, 4_000));
-const health = await fetch(`${SITE}/api/health`).then((r) => r.json());
-if (!health.ok) {
+
+// Le conteneur se remplace juste après le marqueur : le site est brièvement
+// injoignable. On patiente plutôt que de conclure sur cette fenêtre.
+let health = null;
+for (let i = 0; i < 20 && !health?.ok; i++) {
+  await new Promise((r) => setTimeout(r, 3_000));
+  health = await fetch(`${SITE}/api/health`)
+    .then((r) => r.json())
+    .catch(() => null);
+}
+if (!health?.ok) {
   console.error('✗ /api/health ne répond pas correctement.');
   process.exit(1);
 }
