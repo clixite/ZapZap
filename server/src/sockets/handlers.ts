@@ -4,6 +4,7 @@ import {
   cardId,
   DEAL_MAX,
   DEAL_MIN,
+  isBotId,
   isEmoteId,
   isGamePace,
   isVisibility,
@@ -280,7 +281,11 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
         if (!room) return fail('NOT_IN_ROOM');
         if (room.state.hostId !== userId) return fail('NOT_HOST');
         const playerId = (payload as { playerId?: unknown } | undefined)?.playerId;
-        if (typeof playerId !== 'string') return fail('INVALID_PAYLOAD');
+        // Un robot, et rien d'autre. Sans ce contrôle, « retirer un robot »
+        // acceptait n'importe quel identifiant : l'hôte pouvait exclure un
+        // humain par la porte de service, sans passer par `room:kick` ni par
+        // l'événement qui prévient l'intéressé.
+        if (typeof playerId !== 'string' || !isBotId(playerId)) return fail('INVALID_PAYLOAD');
         const result = room.removePlayer(playerId);
         return result.ok ? { ok: true } : fail(result.error);
       }),
@@ -304,14 +309,39 @@ export function registerHandlers({ io, rooms, users }: HandlerDeps): void {
       limited(ack, () => {
         const room = myRoom();
         if (!room) return fail('NOT_IN_ROOM');
-        if (room.state.hostId !== userId) return fail('NOT_HOST');
+        if (!room.isMember(userId)) return fail('NOT_IN_ROOM');
         if (room.state.phase !== 'game-over') return fail('BAD_PHASE');
 
-        // Une toute nouvelle table, avec l'hôte seul dedans. L'événement
+        /*
+         * La revanche n'appartient pas à l'hôte.
+         *
+         * Elle lui était réservée, et l'hôte est précisément celui qui ferme
+         * son onglet le premier quand la partie est finie : les quatre autres
+         * restaient devant un écran de fin avec un seul bouton, « retour à
+         * l'accueil », et devaient remonter une table et se réinviter à la
+         * main. C'est le moment où l'on perd une tablée entière.
+         *
+         * Deux qui cliquent en même temps ne font pas deux tables : la première
+         * demande retient le code sur l'ancienne table, la seconde le retrouve
+         * et rejoint. C'est ce qui rend l'ouverture sûre.
+         */
+        const existing = room.rematchCode ? rooms.get(room.rematchCode) : undefined;
+        if (existing && existing.state.phase === 'lobby') {
+          if (!existing.isMember(userId)) {
+            const joined = existing.apply({ type: 'ADD_PLAYER', player: profile() });
+            if (!joined.ok) return fail(joined.error);
+            existing.emitEvent({ type: 'player-joined', playerId: userId, pseudo: profile().pseudo });
+          }
+          focusOn(existing).attach(userId, socket);
+          return { ok: true, code: existing.code };
+        }
+
+        // Une toute nouvelle table, avec son ouvreur seul dedans. L'événement
         // `rematch` est diffusé à l'ancienne : chaque client encore connecté
         // rejoint la nouvelle de lui-même — c'est ce qui fait basculer toute
         // la tablée sans que personne n'ait à retaper un code.
         const next = rooms.create(profile());
+        room.rematchCode = next.code;
         room.emitEvent({ type: 'rematch', code: next.code });
         focusOn(next).attach(userId, socket);
         return { ok: true, code: next.code };

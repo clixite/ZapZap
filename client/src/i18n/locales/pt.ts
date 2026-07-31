@@ -233,6 +233,8 @@ export const pt: Messages = {
   },
 
   recap: {
+    callWon: 'Conseguiu!',
+    callLost: 'Contra-atacado!',
     youSucceeded: 'Anúncio conseguido!',
     youFailed: 'Anúncio falhado',
     beatenBy: (n, pseudo) =>

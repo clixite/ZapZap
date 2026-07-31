@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import type { Server, Socket } from 'socket.io';
 import {
   applyAction,
@@ -76,6 +77,15 @@ export class Room {
 
   updatedAt: number;
 
+  /**
+   * Le code de la table ouverte en revanche depuis celle-ci.
+   *
+   * Sert de verrou : la revanche est ouverte à tous les joueurs, et sans lui
+   * cinq clics simultanés ouvriraient cinq tables — la tablée se disperserait
+   * exactement au moment où elle cherche à rester ensemble.
+   */
+  rematchCode: string | null = null;
+
   constructor(
     private io: Server,
     code: string,
@@ -84,7 +94,17 @@ export class Room {
     private options: RoomOptions = {},
     restored?: GameState,
   ) {
-    this.state = restored ?? createGame(code, `${code}:${Date.now()}:${Math.random()}`, Date.now(), host);
+    /*
+     * La graine décide de toute la partie — elle doit être imprévisible.
+     *
+     * `Math.random()` porte au mieux 52 bits d'état, et sa sortie sur un moteur
+     * V8 se remonte à partir de quelques tirages observés. Or la graine, avec
+     * le code de table et l'horodatage — deux valeurs qu'un joueur connaît —
+     * détermine **toutes les mains de toute la partie**. Seize octets tirés du
+     * générateur cryptographique du système coûtent une microseconde et ferment
+     * la question définitivement.
+     */
+    this.state = restored ?? createGame(code, `${code}:${randomBytes(16).toString('hex')}`, Date.now(), host);
     this.updatedAt = Date.now();
     if (restored) {
       // Une partie ressuscitée déjà finie a déjà été comptée avant le

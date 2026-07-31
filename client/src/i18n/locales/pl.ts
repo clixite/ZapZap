@@ -232,6 +232,8 @@ export const pl: Messages = {
   },
 
   recap: {
+    callWon: 'Udane!',
+    callLost: 'Skontrowane!',
     youSucceeded: 'Ogłoszenie się udało!',
     youFailed: 'Ogłoszenie nietrafione',
     beatenBy: (n, pseudo) => `Graczy na równi lub niżej: ${n}. ${pseudo} bierze 30.`,

@@ -232,6 +232,8 @@ export const cs: Messages = {
   },
 
   recap: {
+    callWon: 'Vyšlo to!',
+    callLost: 'Kontrováno!',
     youSucceeded: 'Hláška vyšla!',
     youFailed: 'Hláška nevyšla',
     beatenBy: (n, pseudo) => `Hráčů na stejné úrovni nebo níž: ${n}. ${pseudo} bere 30.`,

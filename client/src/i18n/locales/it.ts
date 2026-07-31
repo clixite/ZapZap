@@ -233,6 +233,8 @@ export const it: Messages = {
   },
 
   recap: {
+    callWon: 'Riuscito!',
+    callLost: 'Contrato!',
     youSucceeded: 'Dichiarazione riuscita!',
     youFailed: 'Dichiarazione fallita',
     beatenBy: (n, pseudo) =>

@@ -83,7 +83,47 @@ export default defineConfig({
         importScripts: ['/push-sw.js'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
-        runtimeCaching: [],
+        /*
+         * Les douze traductions qu'on ne parle pas ne se téléchargent pas.
+         *
+         * Le préchargement embarquait les treize catalogues : cent quatre-vingts
+         * kilo-octets pour douze langues qu'un joueur donné n'ouvrira jamais,
+         * téléchargés à la première visite avant qu'il ait touché quoi que ce
+         * soit. Le français est dans le paquet principal — il est toujours là,
+         * même hors ligne, et il sert de secours. Les autres arrivent quand on
+         * les choisit, et restent en cache d'exécution ensuite : la deuxième
+         * ouverture en néerlandais est hors ligne comme les autres.
+         */
+        globIgnores: ['**/assets/{cs,da,de,en,es,fi,it,nl,pl,pt,ro,sv}-*.js'],
+        runtimeCaching: [
+          {
+            // Une traduction est immuable : son nom porte son empreinte.
+            urlPattern: /\/assets\/(cs|da|de|en|es|fi|it|nl|pl|pt|ro|sv)-[\w-]+\.js$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'zapzap-locales',
+              expiration: { maxEntries: 13, maxAgeSeconds: 60 * 60 * 24 * 90 },
+            },
+          },
+          {
+            /*
+             * Polices et sons : lourds, immuables, et absents du préchargement.
+             *
+             * Ils vivent dans `public/`, que le préchargement ne balaie pas.
+             * Résultat : la police repartait du réseau à chaque lancement — le
+             * texte s'affichait dans la police de secours puis sautait — et le
+             * son de lancement ne se jouait pas hors ligne. Ils ne changent
+             * jamais sans changer de nom : `CacheFirst` est exactement leur cas.
+             */
+            urlPattern: /\/(fonts|sounds)\/[^/]+$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'zapzap-media',
+              expiration: { maxEntries: 12, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
     }),
   ],

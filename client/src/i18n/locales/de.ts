@@ -233,6 +233,8 @@ export const de: Messages = {
   },
 
   recap: {
+    callWon: 'Geschafft!',
+    callLost: 'Gekontert!',
     youSucceeded: 'Ansage geglückt!',
     youFailed: 'Ansage danebengegangen',
     beatenBy: (n, pseudo) =>

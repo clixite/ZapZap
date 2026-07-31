@@ -232,6 +232,8 @@ export const sv: Messages = {
   },
 
   recap: {
+    callWon: 'Lyckades!',
+    callLost: 'Kontrad!',
     youSucceeded: 'Ropet höll!',
     youFailed: 'Ropet slogs',
     beatenBy: (n, pseudo) => `${n === 1 ? 'En spelare ligger' : `${n} spelare ligger`} lika eller lägre. ${pseudo} tar 30.`,

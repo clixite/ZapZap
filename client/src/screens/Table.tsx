@@ -14,6 +14,7 @@ import { PlayerSeats, orderedOpponents } from '../components/PlayerSeats';
 import { RoundRecap } from '../components/RoundRecap';
 import { TableCentre } from '../components/TableCentre';
 import { TableMenu } from '../components/TableMenu';
+import { ZapCallout } from '../components/ZapCallout';
 import { STATUS_H, useFeltLayout, type FeltLayout } from '../components/tableLayout';
 import { vibrate } from '../haptics';
 import { useWakeLock } from '../hooks/useWakeLock';
@@ -211,6 +212,8 @@ export function Table() {
 
   const hand = round?.myHand ?? [];
   const total = handValue(hand);
+  /** Le pseudo d'un joueur, ou trois points si la vue ne le connaît plus. */
+  const pseudoOf = (id: string) => view.players.find((p) => p.id === id)?.pseudo ?? '…';
 
   const toggle = (id: string) => {
     vibrate('tap');
@@ -260,8 +263,18 @@ export function Table() {
         // sans elle, la table n'était qu'une zone du dégradé général.
         className="relative min-h-0 flex-1 bg-[radial-gradient(ellipse_75%_60%_at_50%_42%,var(--color-storm-800),transparent_72%)] shadow-[inset_0_0_70px_rgba(0,0,0,0.3)]"
       >
-        {/* Le menu : la porte de sortie, et tout ce qui n'est pas un coup de jeu. */}
-        <div className="absolute top-1 left-1 z-20">
+        {/*
+          Le menu : la porte de sortie, et tout ce qui n'est pas un coup de jeu.
+
+          Décalé sous l'encoche. `viewport-fit=cover` fait monter la page
+          jusqu'au bord physique de l'écran ; le bas était protégé, le haut ne
+          l'était pas, et sur un iPhone à encoche ce bouton — la seule sortie de
+          la table — passait dessous. La marge basse existante lui répond.
+        */}
+        <div
+          className="absolute left-1 z-20"
+          style={{ top: 'max(0.25rem, env(safe-area-inset-top))' }}
+        >
           <button
             type="button"
             onClick={() => setShowMenu(true)}
@@ -271,6 +284,16 @@ export function Table() {
             <IconBack />
           </button>
         </div>
+
+        {/*
+          L'annonce, en grand, sur le tapis.
+
+          Elle s'affiche par-dessus le feutre et non par-dessus la main : le
+          joueur doit pouvoir regarder ses cartes pendant qu'on lui dit que la
+          manche s'arrête. C'est aussi ce qui la distingue du tutoriel et du
+          menu, qui eux couvrent tout parce qu'ils attendent un geste.
+        */}
+        <ZapCallout event={lastEvent} nameOf={pseudoOf} />
 
         {showTutorial && view.phase !== 'game-over' && (
           <FirstTimeTutorial onClose={() => setShowTutorial(false)} />

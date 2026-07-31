@@ -25,6 +25,16 @@ const PRESET_CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const launchOptions = existsSync(PRESET_CHROME) ? { executablePath: PRESET_CHROME } : {};
 
 const OUT = new URL('../client/public/icons/', import.meta.url);
+/*
+ * L'icône de soumission ne part pas avec le site.
+ *
+ * Le 1024 sans transparence est demandé par l'App Store, une fois, au dépôt.
+ * Rangé dans `client/public`, il était copié dans le paquet déployé et servi
+ * publiquement — 352 Ko sur le disque de production, dans l'image Docker et
+ * dans chaque sauvegarde, pour un fichier qu'aucun navigateur ne demande
+ * jamais. Sa place est dans le dossier du magasin.
+ */
+const STORE_OUT = new URL('../store/', import.meta.url);
 
 const STORM_950 = '#110c2e';
 const STORM_800 = '#2a2069';
@@ -60,6 +70,7 @@ function markup(size, { maskable = false, transparent = false } = {}) {
 }
 
 mkdirSync(OUT, { recursive: true });
+mkdirSync(STORE_OUT, { recursive: true });
 
 const browser = await chromium.launch(launchOptions);
 const page = await browser.newPage();
@@ -71,16 +82,16 @@ const targets = [
   { file: 'apple-touch-icon.png', size: 180 },
   // L'App Store exige 1024 sans transparence ni coins arrondis : il applique
   // son propre masque, et une icône déjà arrondie ressortirait doublement.
-  { file: 'icon-1024.png', size: 1024, square: true },
+  { file: 'icon-1024.png', size: 1024, square: true, store: true },
 ];
 
-for (const { file, size, maskable, square } of targets) {
+for (const { file, size, maskable, square, store } of targets) {
   await page.setViewportSize({ width: size, height: size });
   await page.setContent(markup(size, { maskable }));
   if (square) {
     await page.addStyleTag({ content: '.plate{border-radius:0 !important}' });
   }
-  await page.screenshot({ path: new URL(file, OUT).pathname, omitBackground: false });
+  await page.screenshot({ path: new URL(file, store ? STORE_OUT : OUT).pathname, omitBackground: false });
   console.log(`${file} — ${size}×${size}`);
 }
 

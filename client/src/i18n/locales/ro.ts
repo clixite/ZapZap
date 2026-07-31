@@ -230,6 +230,8 @@ export const ro: Messages = {
   },
 
   recap: {
+    callWon: 'Reușit!',
+    callLost: 'Contrat!',
     youSucceeded: 'Anunțul a ținut!',
     youFailed: 'Anunț ratat',
     beatenBy: (n, pseudo) => `${n} jucători sunt la egalitate sau mai jos. ${pseudo} ia 30.`,

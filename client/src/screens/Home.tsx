@@ -54,10 +54,38 @@ export function Home() {
       if (alive && ack.ok) setTables(ack.tables);
     };
     void refresh();
-    const timer = setInterval(refresh, 5_000);
+    /*
+     * On ne sonde que quand l'écran est devant les yeux.
+     *
+     * L'intervalle tournait sans condition : application en arrière-plan,
+     * téléphone dans la poche, écran éteint — une requête toutes les cinq
+     * secondes, indéfiniment. Sur une session laissée ouverte une journée, cela
+     * fait quinze mille appels pour une liste que personne ne regarde, et
+     * autant de radio réveillée sur la batterie du joueur.
+     *
+     * Au retour au premier plan on rafraîchit tout de suite : la liste doit
+     * être à jour au moment précis où on la regarde, pas cinq secondes après.
+     */
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const start = () => {
+      if (timer === null) timer = setInterval(refresh, 5_000);
+    };
+    const stop = () => {
+      if (timer !== null) clearInterval(timer);
+      timer = null;
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void refresh();
+        start();
+      } else stop();
+    };
+    onVisibility();
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
       alive = false;
-      clearInterval(timer);
+      stop();
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [user]);
 

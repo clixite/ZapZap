@@ -260,6 +260,8 @@ export const fr = {
 
   /* Décompte de manche -------------------------------------------- */
   recap: {
+    callWon: 'Réussi !',
+    callLost: 'Contré !',
     youSucceeded: 'Annonce réussie !',
     youFailed: 'Annonce ratée',
     beatenBy: (n: number, pseudo: string) =>

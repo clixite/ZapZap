@@ -111,16 +111,19 @@ export function GameOver() {
       </button>
 
       <div className="mt-auto flex flex-col gap-2">
-        {view.hostId === view.you && (
-          <button
-            type="button"
-            onClick={() => void send('room:rematch')}
-            disabled={busy}
-            className="rounded-xl bg-flash-400 py-3.5 font-display text-lg font-bold text-storm-950 disabled:opacity-50"
-          >
-            {t.gameOver.rematch}
-          </button>
-        )}
+        {/*
+          À tout le monde, pas au seul hôte : c'est lui qui ferme son onglet en
+          premier, et les autres restaient alors sans aucun moyen de rejouer
+          ensemble. Le serveur garantit qu'il n'en sort qu'une seule table.
+        */}
+        <button
+          type="button"
+          onClick={() => void send('room:rematch')}
+          disabled={busy}
+          className="rounded-xl bg-flash-400 py-3.5 font-display text-lg font-bold text-storm-950 disabled:opacity-50"
+        >
+          {t.gameOver.rematch}
+        </button>
         <button
           type="button"
           onClick={() => {

@@ -232,6 +232,8 @@ export const da: Messages = {
   },
 
   recap: {
+    callWon: 'Lykkedes!',
+    callLost: 'Modmeldt!',
     youSucceeded: 'Meldingen holdt!',
     youFailed: 'Meldingen blev slået',
     beatenBy: (n, pseudo) => `${n === 1 ? 'Én spiller ligger' : `${n} spillere ligger`} lige eller lavere. ${pseudo} tager 30.`,

@@ -754,20 +754,35 @@ describe('revanche', () => {
     expect(view.players.map((p) => p.pseudo).sort()).toEqual(['alice', 'bob']);
   });
 
-  it('est réservée à l’hôte, et à une partie finie', async () => {
+  it('ne se demande que d’une partie finie', async () => {
     const alice = await join('alice');
     const { code } = expectOk(await alice.emit<{ code: string }>('room:create'));
-    const bob = await join('bob');
-    expectOk(await bob.emit('room:join', { code }));
 
     const early = await alice.emit('room:rematch');
     expect(early.ok).toBe(false);
     if (!early.ok) expect(early.error.code).toBe('BAD_PHASE');
+  });
 
+  it('est ouverte à tous, et n’ouvre qu’une seule table', async () => {
+    // L'hôte est celui qui ferme son onglet en premier : réserver la revanche
+    // à lui, c'était laisser les autres sans aucun moyen de rejouer ensemble.
+    const alice = await join('alice');
+    const { code } = expectOk(await alice.emit<{ code: string }>('room:create'));
+    const bob = await join('bob');
+    expectOk(await bob.emit('room:join', { code }));
     rooms.get(code)!.state.phase = 'game-over';
-    const notHost = await bob.emit('room:rematch');
-    expect(notHost.ok).toBe(false);
-    if (!notHost.ok) expect(notHost.error.code).toBe('NOT_HOST');
+
+    const first = expectOk(await bob.emit<{ code: string }>('room:rematch'));
+    expect(first.code).not.toBe(code);
+
+    // Alice arrive après : elle rejoint la table de Bob, elle n'en ouvre pas
+    // une seconde — sinon la tablée se disperse au moment où elle se retrouve.
+    const second = expectOk(await alice.emit<{ code: string }>('room:rematch'));
+    expect(second.code).toBe(first.code);
+
+    const view = await alice.nextView((v) => v.code === first.code && v.players.length === 2);
+    expect(view.phase).toBe('lobby');
+    expect(view.players.map((p) => p.pseudo).sort()).toEqual(['alice', 'bob']);
   });
 });
 

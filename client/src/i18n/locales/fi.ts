@@ -232,6 +232,8 @@ export const fi: Messages = {
   },
 
   recap: {
+    callWon: 'Onnistui!',
+    callLost: 'Torjuttu!',
     youSucceeded: 'Huuto piti!',
     youFailed: 'Huuto kaatui',
     beatenBy: (n, pseudo) => `${n} pelaajaa on tasoissa tai alempana. ${pseudo} ottaa 30.`,
