@@ -3,19 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { play } from '../audio';
 import { IconShare } from '../components/icons';
 import { shareResult } from '../shareCard';
-import { useGame, useView } from '../store/game';
+import { useGame, useGameChannel, useView } from '../store/game';
 
 /** Le classement final. Le vainqueur est celui qui reste, pas celui qui marque. */
 export function GameOver() {
-  const listen = useGame((s) => s.listen);
-  const clear = useGame((s) => s.clear);
+    const clear = useGame((s) => s.clear);
   const send = useGame((s) => s.send);
   const busy = useGame((s) => s.busy);
   const view = useView();
   const navigate = useNavigate();
   const [shared, setShared] = useState(false);
 
-  useEffect(() => listen(), [listen]);
+  useGameChannel();
 
   // La revanche a basculé la table sur une nouvelle partie : la vue redevient
   // un salon, on suit — que l'on soit l'hôte qui a cliqué ou un invité qui a

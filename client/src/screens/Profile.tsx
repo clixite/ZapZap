@@ -17,6 +17,20 @@ export function Profile() {
   const setUser = useSession((s) => s.setUser);
   const [pseudo, setPseudo] = useState(user?.pseudo ?? '');
   const [avatar, setAvatar] = useState(user?.avatar ?? '⚡');
+  /*
+   * Le formulaire se remplit quand le compte arrive.
+   *
+   * Ouvrir `/profil` directement — depuis un signet, ou en rechargeant — rendait
+   * l'écran une première fois sans compte : les champs naissaient vides et le
+   * restaient, puisqu'un `useState` ne se réévalue pas. On voyait donc son
+   * profil avec un pseudo effacé, ce qui donne surtout envie de le retaper.
+   */
+  const known = useRef<string | null>(null);
+  if (user && known.current !== user.id) {
+    known.current = user.id;
+    if (user.pseudo !== pseudo) setPseudo(user.pseudo);
+    if (user.avatar !== avatar) setAvatar(user.avatar);
+  }
   const [saved, setSaved] = useState(false);
   const [email, setEmail] = useState('');
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | string>('idle');
