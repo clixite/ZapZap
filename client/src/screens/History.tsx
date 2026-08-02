@@ -55,7 +55,7 @@ export function History() {
   const zapRate = stats && stats.zapsCalled > 0 ? Math.round((100 * stats.zapsWon) / stats.zapsCalled) : null;
 
   return (
-    <div className="zz-safe mx-auto flex w-full max-w-md flex-col gap-5 px-5 py-8">
+    <div className="zz-safe mx-auto flex w-full max-w-md flex-col gap-5 pb-8">
       <header>
         <Link to="/" className="text-sm text-paper-300 underline underline-offset-4">
           {t.history.backShort}

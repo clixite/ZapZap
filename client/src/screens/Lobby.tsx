@@ -62,7 +62,7 @@ export function Lobby() {
     void send('room:setVariants', { variants: { ...view.variants, ...patch } });
 
   return (
-    <div className="zz-safe mx-auto flex min-h-full w-full max-w-md flex-col gap-5 px-5 py-6">
+    <div className="zz-safe mx-auto flex min-h-full w-full max-w-md flex-col gap-5 pb-6">
       {/*
         L'invitation en premier, et expliquée.
 

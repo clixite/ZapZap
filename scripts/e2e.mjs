@@ -283,6 +283,49 @@ story('changer de langue', async () => {
   await closePlayer(player);
 });
 
+/**
+ * Les marges des écrans, mesurées et non supposées.
+ *
+ * `zz-safe` protège le contenu de l'encoche. Sa première version posait
+ * `padding: env(...)` tel quel : déclarée après les utilitaires de Tailwind et
+ * à spécificité égale, elle **écrasait** `px-5` et remettait la marge à zéro
+ * sur tout écran sans encoche. Le texte des règles venait coller au bord — une
+ * classe censée protéger le contenu le collait au bord.
+ *
+ * Aucune des cent quarante vérifications ne l'a vu : elles lisent des rôles et
+ * des libellés, jamais une distance. Il a fallu une capture d'écran. Ceci est
+ * la mesure qui l'aurait dit.
+ */
+story('les écrans gardent leurs marges', async () => {
+  const player = await newPlayer('Marges');
+  const { page } = player;
+
+  for (const [chemin, nom] of [
+    ['/', 'accueil'],
+    ['/regles', 'règles'],
+    ['/profil', 'profil'],
+    ['/historique', 'historique'],
+  ]) {
+    await page.goto(chemin);
+    await page.waitForTimeout(600);
+    const gauche = await page.evaluate(() => {
+      /*
+       * On mesure le texte, pas le conteneur : c'est lui qui touchait le bord.
+       * Le plus à gauche de tous les blocs de texte visibles donne la marge
+       * réellement obtenue, quelle que soit la façon dont elle est produite.
+       */
+      const blocs = [...document.querySelectorAll('h1, h2, p, li')].filter((el) => {
+        const box = el.getBoundingClientRect();
+        return box.width > 0 && box.height > 0 && el.textContent.trim().length > 0;
+      });
+      return blocs.length === 0 ? 999 : Math.min(...blocs.map((el) => el.getBoundingClientRect().left));
+    });
+    check(gauche >= 12, `${nom} : le texte ne colle pas au bord gauche (${Math.round(gauche)} px)`);
+  }
+
+  await closePlayer(player);
+});
+
 story('accueil', async () => {
   const player = await newPlayer('Alix');
   const { page } = player;
