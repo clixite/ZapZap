@@ -590,12 +590,25 @@ story('cartes passées et réactions', async () => {
    * trouve **par-dessus quoi**. Il a fallu une capture d'écran pour s'en
    * apercevoir ; voici l'assertion qui l'aurait dit.
    */
-  const mainCachee = await page
-    .locator('[aria-label="Votre main"] [data-card]')
-    .first()
-    .isVisible()
-    .catch(() => false);
-  check(!mainCachee, 'le panneau couvre la main : il est modal pour l’œil comme pour le clavier');
+  const mainCouverte = await page.evaluate(() => {
+    const carte = document.querySelector('[aria-label="Votre main"] [data-card]');
+    if (!carte) return true;
+    const box = carte.getBoundingClientRect();
+    if (box.width === 0) return true;
+    /*
+     * `elementFromPoint`, et non `isVisible`.
+     *
+     * `isVisible` ne dit que « cet élément a une boîte et n'est pas masqué » —
+     * il ignore complètement ce qui se trouve **par-dessus**. Une carte cachée
+     * sous un voile opaque lui reste « visible », si bien que l'assertion
+     * échouait alors que le panneau couvrait parfaitement. On demande donc au
+     * navigateur ce qu'il y a réellement au point où se trouve la carte : si ce
+     * n'est ni elle ni un de ses parents, quelque chose la recouvre.
+     */
+    const dessus = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+    return dessus === null || !carte.contains(dessus);
+  });
+  check(mainCouverte, 'le panneau couvre la main : il est modal pour l’œil comme pour le clavier');
   await capture(page, 'cartes-passees');
 
   // Échap referme : la promesse d'`aria-modal` doit être tenue.
