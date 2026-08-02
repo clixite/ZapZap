@@ -1,7 +1,7 @@
 import { cardId, type Card, type DrawOption, type DiscardSlot } from '@zapzap/shared';
 import { useT } from '../i18n';
-import { CardBack, CardFace } from './CardFace';
-import type { FeltLayout } from './tableLayout';
+import { CardBack, CardFace, CardStack } from './CardFace';
+import { STACK_LIFT, type FeltLayout } from './tableLayout';
 
 /**
  * Le centre du tapis : la pioche et la défausse, côte à côte.
@@ -18,6 +18,13 @@ import type { FeltLayout } from './tableLayout';
 export interface TableCentreProps {
   layout: FeltLayout;
   stockCount: number;
+  /**
+   * Ce qui dort sous la défausse — enterré, plus ramassable.
+   *
+   * Sert uniquement à donner son épaisseur au tas : c'est un compte, déjà
+   * public, et il rend au tapis la matière qu'une carte seule ne donne pas.
+   */
+  discardPileCount: number;
   lastDiscard: DiscardSlot | null;
   /** Qui a posé ce qui est sur la défausse. `null` pour la carte de la donne. */
   author: { avatar: string; pseudo: string; isMe: boolean } | null;
@@ -39,6 +46,7 @@ export interface TableCentreProps {
 export function TableCentre({
   layout,
   stockCount,
+  discardPileCount,
   lastDiscard,
   author,
   origin,
@@ -68,6 +76,8 @@ export function TableCentre({
       <Pile
         x={layout.stock.x}
         y={layout.stock.y}
+        slotH={layout.cardH + STACK_LIFT}
+        showLabel={layout.showPileLabels}
         label={t.table.stock}
         caption={t.table.cardsLeft(stockCount)}
       >
@@ -78,13 +88,22 @@ export function TableCentre({
           aria-label={t.table.drawBlind(stockCount)}
           className={`block rounded-lg transition-transform ${canDraw ? 'zz-turn active:scale-95' : ''}`}
         >
-          <CardBack width={layout.cardW} />
+          {/*
+            L'épaisseur du talon est une information, pas une décoration : elle
+            dit combien de tours restent avant le remélange, et le remélange
+            remet à zéro tout le comptage de la manche.
+          */}
+          <CardStack width={layout.cardW} count={stockCount}>
+            <CardBack width={layout.cardW} />
+          </CardStack>
         </button>
       </Pile>
 
       <Pile
         x={layout.discard.x}
         y={layout.discard.y}
+        slotH={layout.cardH + STACK_LIFT}
+        showLabel={layout.showPileLabels}
         /*
          * L'étiquette dit *qui*, pas *quoi*.
          *
@@ -113,7 +132,22 @@ export function TableCentre({
               : t.table.cardsLeft(discardCards.length)
         }
       >
-        <span className="flex items-end" style={{ marginRight: spread }}>
+        <span className="relative flex items-end" style={{ marginRight: spread }}>
+          {/*
+            Ce qui dort dessous, en tranches.
+
+            Le tas de la défausse grossit toute la manche et n'en montrait
+            jamais rien : la table paraissait plate, et l'épaisseur — qui dit
+            d'un coup d'œil qu'on est en fin de manche — était perdue. Les
+            tranches sont en papier, pas en dos de carte : ces cartes-là sont
+            face visible, leur montrer des dos serait mentir sur ce qu'il y a
+            dessous.
+          */}
+          {discardPileCount > 0 && discardCards.length > 0 && (
+            <span className="pointer-events-none absolute bottom-0 left-0" aria-hidden="true">
+              <CardStack width={layout.cardW} count={discardPileCount} tone="paper" />
+            </span>
+          )}
           {discardCards.length === 0 ? (
             <EmptySlot width={layout.cardW} />
           ) : (
@@ -199,12 +233,26 @@ function EmptySlot({ width }: { width: number }) {
 function Pile({
   x,
   y,
+  slotH,
+  showLabel,
   label,
   caption,
   children,
 }: {
   x: number;
   y: number;
+  /** Voir `showPileLabels` : sur un feutre court, l'étiquette gêne plus qu'elle n'aide. */
+  showLabel: boolean;
+  /**
+   * Hauteur réservée au tas, épaisseur comprise.
+   *
+   * Les deux tas ne contiennent pas la même chose — le talon est épais dès la
+   * donne, la défausse s'épaissit en cours de manche — et sans emplacement de
+   * hauteur fixe, leurs étiquettes se retrouvaient à deux hauteurs
+   * différentes, ce qui se voit immédiatement. Le contenu est calé en bas de
+   * l'emplacement : c'est la table qui porte les cartes, pas l'inverse.
+   */
+  slotH: number;
   label: string;
   caption: string;
   children: React.ReactNode;
@@ -214,8 +262,16 @@ function Pile({
       className="absolute flex flex-col items-center gap-1"
       style={{ left: x, top: y, transform: 'translate(-50%, -50%)' }}
     >
-      <span className="max-w-24 truncate text-[11px] font-medium tracking-wide text-paper-100">{label}</span>
-      {children}
+      <span
+        className={`max-w-24 truncate text-[11px] font-medium tracking-wide text-paper-100 ${
+          showLabel ? '' : 'sr-only'
+        }`}
+      >
+        {label}
+      </span>
+      <span className="flex items-end justify-center" style={{ height: slotH }}>
+        {children}
+      </span>
       <span className="text-[11px] text-paper-300">{caption}</span>
     </div>
   );

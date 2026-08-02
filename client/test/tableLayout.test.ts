@@ -125,20 +125,37 @@ describe('centre : pioche et défausse', () => {
     });
   });
 
-  it('ne descend jamais sur la ligne d’état', () => {
+  /*
+   * Le tas entier, pas la seule carte.
+   *
+   * Ces deux contrôles ne mesuraient que `cardH`. Or un tas porte au-dessus son
+   * étiquette et au-dessous sa légende, plus le relief du talon : près de
+   * cinquante pixels que personne ne comptait. Sur un iPhone SE, la légende
+   * « 30 cartes » descendait donc sur la ligne d'état et le bandeau de tour
+   * coupait les cartes en deux — pendant que ces tests restaient au vert.
+   */
+  it('ne descend jamais sur la ligne d’état, étiquettes comprises', () => {
     everyCase((w, h, opp) => {
       const layout = computeLayout(w, h, opp);
-      const bottom = layout.stock.y + layout.cardH / 2;
+      const bottom = layout.stock.y + layout.pileH / 2;
       expect(bottom).toBeLessThanOrEqual(h - STATUS_H + 1);
     });
   });
 
-  it('ne remonte jamais sur les sièges', () => {
+  it('ne remonte jamais sur les sièges, étiquettes comprises', () => {
     everyCase((w, h, opp) => {
       const layout = computeLayout(w, h, opp);
-      const top = layout.stock.y - layout.cardH / 2;
+      const top = layout.stock.y - layout.pileH / 2;
       const seatsBottom = Math.max(0, ...layout.seats.map((s) => s.y + layout.seatH / 2));
       expect(top).toBeGreaterThanOrEqual(seatsBottom - 1);
+    });
+  });
+
+  it('publie une hauteur de tas cohérente avec la carte', () => {
+    everyCase((w, h, opp) => {
+      const layout = computeLayout(w, h, opp);
+      expect(layout.pileH).toBeGreaterThan(layout.cardH);
+      expect(Number.isFinite(layout.pileH)).toBe(true);
     });
   });
 

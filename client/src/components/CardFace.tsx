@@ -317,6 +317,95 @@ export function describeCard(card: Card): string {
  * de sa préférence locale, sans que la table en sache rien. Un dos ne porte
  * aucune information de jeu, il n'y a donc rien à synchroniser.
  */
+/**
+ * Un tas de cartes, dont l'épaisseur dit ce qu'il contient.
+ *
+ * La pioche était dessinée comme **une seule carte**. Trente cartes ou trois,
+ * le tapis avait exactement le même aspect — alors que sur une vraie table,
+ * l'épaisseur du talon est une information qu'on lit sans y penser : elle dit
+ * combien de tours il reste avant le remélange, et le remélange remet à zéro
+ * tout le comptage de la manche. C'est donc doublement une perte : le tapis
+ * paraissait plat, et il taisait quelque chose d'utile.
+ *
+ * L'épaisseur est **plafonnée**. Un talon de quarante cartes empilé au pixel
+ * près déborderait de son emplacement et écraserait la défausse ; six feuillets
+ * suffisent largement à faire lire « il en reste beaucoup », et la disparition
+ * des derniers feuillets se voit très bien quand le tas maigrit.
+ *
+ * Les feuillets du dessous sont purement décoratifs : ils ne portent ni motif
+ * ni éclair, seulement leur tranche. Dessiner six dos complets pour n'en voir
+ * que deux millimètres serait du travail de rendu jeté par la fenêtre, à chaque
+ * coup de chaque joueur.
+ */
+export function CardStack({
+  width,
+  count,
+  tone = 'back',
+  children,
+}: {
+  width: number;
+  count: number;
+  /**
+   * De quoi le tas est fait.
+   *
+   * `back` pour le talon, dont on ne voit que les dos. `paper` pour la
+   * défausse : ces cartes-là sont **face visible**, et leur montrer des dos
+   * serait mentir sur ce qu'il y a dessous.
+   */
+  tone?: 'back' | 'paper';
+  children?: React.ReactNode;
+}) {
+  const theme = CARD_BACK_STYLES[useCardBack()];
+  const layerStyle =
+    tone === 'paper'
+      ? { background: 'var(--color-paper-300)', border: '1px solid var(--color-paper-100)' }
+      : { background: theme.background, border: theme.border };
+
+  // Un feuillet par tranche de quatre cartes : le tas maigrit visiblement au
+  // fil de la manche sans clignoter à chaque pioche.
+  const layers = Math.max(0, Math.min(5, Math.ceil(count / 4) - 1));
+  const step = Math.max(1.5, width * 0.028);
+  /*
+   * Le tas **réserve** son épaisseur au lieu de déborder.
+   *
+   * Première version : les feuillets étaient posés en dehors de la boîte de la
+   * carte, vers le haut et la gauche. Résultat, ils passaient par-dessus
+   * l'étiquette « Pioche » juste au-dessus et la rendaient illisible. Un tas
+   * épais occupe plus de place qu'une carte — c'est vrai sur une table aussi,
+   * et la mise en page doit en tenir compte plutôt que de faire semblant.
+   */
+  const lift = layers * step;
+  const shift = lift * 0.6;
+
+  return (
+    <span
+      className="relative block"
+      style={{ width: width + shift, height: width * 1.5 + lift }}
+    >
+      {Array.from({ length: layers }, (_, i) => {
+        const depth = (layers - i) * step;
+        return (
+          <span
+            key={i}
+            className="absolute rounded-[7%/4.7%]"
+            style={{
+              left: shift - depth * 0.6,
+              top: lift - depth,
+              width,
+              height: width * 1.5,
+              ...layerStyle,
+              boxShadow: '0 1px 2px rgb(0 0 0 / 0.35)',
+            }}
+          />
+        );
+      })}
+      <span className="absolute" style={{ left: shift, top: lift, width, height: width * 1.5 }}>
+        {children}
+      </span>
+    </span>
+  );
+}
+
 export function CardBack({ width }: { width: number }) {
   const theme = CARD_BACK_STYLES[useCardBack()];
   return (

@@ -373,6 +373,7 @@ export function Table() {
           <TableCentre
             layout={layout}
             stockCount={round.stockCount}
+            discardPileCount={round.discardPileCount}
             lastDiscard={round.lastDiscard}
             author={authorOf(view, round.lastDiscard?.playerId)}
             origin={originOf(view, layout, round.lastDiscard?.playerId)}
