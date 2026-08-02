@@ -321,6 +321,14 @@ story('les écrans gardent leurs marges', async () => {
       return blocs.length === 0 ? 999 : Math.min(...blocs.map((el) => el.getBoundingClientRect().left));
     });
     check(gauche >= 12, `${nom} : le texte ne colle pas au bord gauche (${Math.round(gauche)} px)`);
+
+    // Et en haut : sur un téléphone à encoche, le titre doit respirer sous
+    // l'horloge, pas s'y accrocher.
+    const haut = await page.evaluate(() => {
+      const premier = document.querySelector('h1, h2, p');
+      return premier ? premier.getBoundingClientRect().top : 999;
+    });
+    check(haut >= 12, `${nom} : le premier titre respire en haut (${Math.round(haut)} px)`);
   }
 
   await closePlayer(player);

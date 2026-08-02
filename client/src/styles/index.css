@@ -165,7 +165,19 @@ body,
    * source, plus de conflit possible.
    */
   padding-inline: max(1.25rem, env(safe-area-inset-left), env(safe-area-inset-right));
-  padding-block-start: max(2rem, env(safe-area-inset-top));
+  /*
+   * L'encoche **plus** de l'air, pas l'encoche tout court.
+   *
+   * `env(safe-area-inset-top)` donne la hauteur de la zone occupée par
+   * l'horloge et l'île dynamique — c'est la limite du *dangereux*, pas le début
+   * du confortable. S'y arrêter colle le titre juste sous l'heure, ce qui se
+   * voit tout de suite sur un vrai téléphone : le contenu semble tomber de la
+   * barre d'état plutôt que commencer.
+   *
+   * On ajoute donc la respiration après l'encoche, et on garde un plancher pour
+   * les écrans qui n'en ont pas.
+   */
+  padding-block-start: max(2rem, calc(env(safe-area-inset-top) + 0.75rem));
 }
 
 body {
