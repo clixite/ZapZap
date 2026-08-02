@@ -286,9 +286,20 @@ export const pl: Messages = {
 
   passed: {
     title: 'Karty, które już przeszły',
-    detail: 'Wszystko, co wyłożono lub podniesiono od początku rundy.',
+    detail: 'Co stół widział od początku rundy.',
     none: 'Nic jeszcze nie przeszło.',
     close: 'Zamknij',
+    loading: 'Wczytywanie dziennika…',
+    reshuffled:
+      'Stos przetasowano: wcześniej odrzucone karty wróciły, liczenie zaczyna się od nowa.',
+    remaining: 'Co wciąż krąży',
+    remainingDetail:
+      'Według figury to, co nie jest pogrzebane: na ręce, w stosie lub wciąż do wzięcia.',
+    rankLeft: (left, total) => `${left} z ${total} wciąż w grze`,
+    known: 'Co wiemy o rękach',
+    knownDetail:
+      'Karty wzięte ze zrzutu, na oczach wszystkich, jeszcze nieodłożone.',
+    buried: (n) => `Pogrzebane — ${n} kart${n === 1 ? 'a' : n < 5 ? 'y' : ''}`,
   },
 
   feed: {

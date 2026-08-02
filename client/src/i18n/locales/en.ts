@@ -288,9 +288,20 @@ export const en: Messages = {
 
   passed: {
     title: 'Cards already played',
-    detail: 'Everything laid down or picked up since the round began.',
+    detail: 'What the table has seen go by since the round began.',
     none: 'Nothing has been played yet.',
     close: 'Close',
+    loading: 'Reading the log…',
+    reshuffled:
+      'The stock was reshuffled: cards discarded before are back in the deck, the counts start over.',
+    remaining: 'Still in play',
+    remainingDetail:
+      'Per rank, what is not buried: in a hand, in the stock, or still takeable.',
+    rankLeft: (left, total) => `${left} of ${total} still in play`,
+    known: 'What we know of the hands',
+    knownDetail:
+      'Cards taken from the discard, in full view, and not yet laid down again.',
+    buried: (n) => `Buried — ${n} card${n > 1 ? 's' : ''}`,
   },
 
   feed: {

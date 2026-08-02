@@ -286,9 +286,20 @@ export const da: Messages = {
 
   passed: {
     title: 'Kort der allerede er gået',
-    detail: 'Alt hvad der er lagt eller samlet op siden runden begyndte.',
+    detail: 'Hvad bordet har set passere siden rundens start.',
     none: 'Der er ikke gået noget endnu.',
     close: 'Luk',
+    loading: 'Læser loggen…',
+    reshuffled:
+      'Bunken er blandet om: kort smidt tidligere er tilbage, tællingen starter forfra.',
+    remaining: 'Stadig i spil',
+    remainingDetail:
+      'Per værdi det, der ikke er begravet: på hånden, i bunken, eller stadig til at tage.',
+    rankLeft: (left, total) => `${left} af ${total} stadig i spil`,
+    known: 'Hvad vi ved om hænderne',
+    knownDetail:
+      'Kort taget fra bunken, for alles øjne, og endnu ikke lagt ned igen.',
+    buried: (n) => `Begravet — ${n} kort`,
   },
 
   feed: {

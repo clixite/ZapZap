@@ -284,9 +284,20 @@ export const ro: Messages = {
 
   passed: {
     title: 'Cărți care au trecut deja',
-    detail: 'Tot ce s-a lăsat sau s-a ridicat de la începutul rundei.',
+    detail: 'Ce a văzut masa trecând de la începutul rundei.',
     none: 'Încă nu a trecut nimic.',
     close: 'Închide',
+    loading: 'Se citește jurnalul…',
+    reshuffled:
+      'Talonul a fost amestecat: cărțile aruncate înainte s-au întors, socotelile o iau de la capăt.',
+    remaining: 'Ce mai circulă',
+    remainingDetail:
+      'Pe valoare, ce nu e îngropat: în mână, în talon, sau încă de luat.',
+    rankLeft: (left, total) => `${left} din ${total} încă în joc`,
+    known: 'Ce știm despre mâini',
+    knownDetail:
+      'Cărți luate din descarte, sub ochii tuturor, și încă necoborâte.',
+    buried: (n) => `Îngropat — ${n} cărți`,
   },
 
   feed: {

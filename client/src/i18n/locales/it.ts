@@ -288,9 +288,20 @@ export const it: Messages = {
 
   passed: {
     title: 'Carte già passate',
-    detail: 'Tutto ciò che è stato calato o raccolto dall’inizio della mano.',
+    detail: 'Ciò che il tavolo ha visto passare dall’inizio della mano.',
     none: 'Non è ancora passato niente.',
     close: 'Chiudi',
+    loading: 'Lettura del registro…',
+    reshuffled:
+      'Il tallone è stato rimescolato: le carte scartate prima sono tornate, i conti ripartono.',
+    remaining: 'Ciò che è ancora in gioco',
+    remainingDetail:
+      'Per valore, ciò che non è sepolto: in mano, nel tallone, o ancora prendibile.',
+    rankLeft: (left, total) => `${left} su ${total} ancora in gioco`,
+    known: 'Ciò che sappiamo delle mani',
+    knownDetail:
+      'Carte prese dagli scarti, sotto gli occhi di tutti, e non ancora ricalate.',
+    buried: (n) => `Sepolto — ${n} cart${n > 1 ? 'e' : 'a'}`,
   },
 
   feed: {

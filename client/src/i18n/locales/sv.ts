@@ -286,9 +286,20 @@ export const sv: Messages = {
 
   passed: {
     title: 'Kort som redan passerat',
-    detail: 'Allt som lagts ner eller plockats upp sedan omgången började.',
+    detail: 'Vad bordet har sett passera sedan omgången började.',
     none: 'Inget har passerat än.',
     close: 'Stäng',
+    loading: 'Läser loggen…',
+    reshuffled:
+      'Talongen har blandats om: kort som kastats tidigare är tillbaka, räkningen börjar om.',
+    remaining: 'Fortfarande i spel',
+    remainingDetail:
+      'Per valör, det som inte är begravt: på hand, i talongen, eller fortfarande tagbart.',
+    rankLeft: (left, total) => `${left} av ${total} kvar i spel`,
+    known: 'Vad vi vet om händerna',
+    knownDetail:
+      'Kort tagna från kasthögen, i allas åsyn, och ännu inte lagda igen.',
+    buried: (n) => `Begravt — ${n} kort`,
   },
 
   feed: {

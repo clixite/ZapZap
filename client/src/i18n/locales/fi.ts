@@ -286,9 +286,20 @@ export const fi: Messages = {
 
   passed: {
     title: 'Jo menneet kortit',
-    detail: 'Kaikki laskettu ja poimittu kierroksen alusta lähtien.',
+    detail: 'Mitä pöytä on nähnyt kierroksen alusta asti.',
     none: 'Mitään ei ole vielä mennyt.',
     close: 'Sulje',
+    loading: 'Luetaan lokia…',
+    reshuffled:
+      'Pakka on sekoitettu uudelleen: aiemmin poistetut kortit palasivat, laskut alkavat alusta.',
+    remaining: 'Vielä pelissä',
+    remainingDetail:
+      'Arvoittain se, mitä ei ole haudattu: kädessä, pakassa tai yhä otettavissa.',
+    rankLeft: (left, total) => `${left} / ${total} vielä pelissä`,
+    known: 'Mitä tiedämme käsistä',
+    knownDetail:
+      'Poistopinosta kaikkien nähden otetut kortit, joita ei ole vielä laskettu.',
+    buried: (n) => `Haudattu — ${n} korttia`,
   },
 
   feed: {

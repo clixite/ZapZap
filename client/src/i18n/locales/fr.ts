@@ -320,9 +320,20 @@ export const fr = {
   /* Cartes passées -------------------------------------------------- */
   passed: {
     title: 'Cartes déjà passées',
-    detail: 'Tout ce qui a été posé ou ramassé depuis le début de la manche.',
+    detail: 'Ce que la table a vu passer depuis le début de la manche.',
     none: 'Rien n’est encore passé.',
     close: 'Fermer',
+    loading: 'Lecture du journal…',
+    reshuffled:
+      'La pioche a été remélangée : les cartes tombées avant sont revenues au talon, les comptes repartent.',
+    remaining: 'Ce qui court encore',
+    remainingDetail:
+      'Par rang, ce qui n’est pas enterré : en main, au talon, ou encore ramassable.',
+    rankLeft: (left: number, total: number) => `${left} sur ${total} encore en jeu`,
+    known: 'Ce qu’on sait des mains',
+    knownDetail:
+      'Cartes ramassées dans la défausse, sous les yeux de tous, et pas encore reposées.',
+    buried: (n: number) => `Enterré — ${n} carte${n > 1 ? 's' : ''}`,
   },
 
   /* Journal en direct ---------------------------------------------- */

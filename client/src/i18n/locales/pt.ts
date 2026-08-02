@@ -288,9 +288,20 @@ export const pt: Messages = {
 
   passed: {
     title: 'Cartas que já passaram',
-    detail: 'Tudo o que foi baixado ou apanhado desde o início da ronda.',
+    detail: 'O que a mesa viu passar desde o início da ronda.',
     none: 'Ainda não passou nada.',
     close: 'Fechar',
+    loading: 'A ler o registo…',
+    reshuffled:
+      'O baralho foi baralhado de novo: as cartas descartadas antes voltaram, as contas recomeçam.',
+    remaining: 'O que ainda anda por aí',
+    remainingDetail:
+      'Por valor, o que não está enterrado: na mão, no baralho, ou ainda por apanhar.',
+    rankLeft: (left, total) => `${left} de ${total} ainda em jogo`,
+    known: 'O que sabemos das mãos',
+    knownDetail:
+      'Cartas apanhadas do descarte, à vista de todos, e ainda não baixadas.',
+    buried: (n) => `Enterrado — ${n} carta${n > 1 ? 's' : ''}`,
   },
 
   feed: {

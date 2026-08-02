@@ -288,9 +288,20 @@ export const nl: Messages = {
 
   passed: {
     title: 'Kaarten die al langskwamen',
-    detail: 'Alles wat sinds het begin van de ronde is neergelegd of opgeraapt.',
+    detail: 'Wat de tafel sinds het begin van de ronde voorbij heeft zien komen.',
     none: 'Er is nog niets langsgekomen.',
     close: 'Sluiten',
+    loading: 'Logboek lezen…',
+    reshuffled:
+      'De stapel is geschud: eerder afgelegde kaarten zitten er weer in, het tellen begint opnieuw.',
+    remaining: 'Nog in het spel',
+    remainingDetail:
+      'Per waarde wat niet begraven is: in een hand, op de stapel, of nog te pakken.',
+    rankLeft: (left, total) => `${left} van ${total} nog in het spel`,
+    known: 'Wat we van de handen weten',
+    knownDetail:
+      'Kaarten die uit de aflegstapel zijn gepakt, in het volle zicht, en nog niet teruggelegd.',
+    buried: (n) => `Begraven — ${n} kaart${n > 1 ? 'en' : ''}`,
   },
 
   feed: {

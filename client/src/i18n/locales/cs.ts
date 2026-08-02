@@ -286,9 +286,20 @@ export const cs: Messages = {
 
   passed: {
     title: 'Karty, které už prošly',
-    detail: 'Všechno vyložené i sebrané od začátku kola.',
+    detail: 'Co stůl viděl od začátku kola.',
     none: 'Zatím nic neprošlo.',
     close: 'Zavřít',
+    loading: 'Načítání záznamu…',
+    reshuffled:
+      'Balíček byl zamíchán: dřív odhozené karty se vrátily, počty začínají znovu.',
+    remaining: 'Co ještě běhá',
+    remainingDetail:
+      'Podle hodnoty to, co není pohřbené: v ruce, v balíčku, nebo stále k vzetí.',
+    rankLeft: (left, total) => `${left} ze ${total} stále ve hře`,
+    known: 'Co víme o rukou',
+    knownDetail:
+      'Karty vzaté z odhazovacího stohu před očima všech a dosud nepoložené.',
+    buried: (n) => `Pohřbeno — ${n} karet`,
   },
 
   feed: {

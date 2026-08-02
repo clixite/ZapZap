@@ -563,12 +563,31 @@ story('cartes passées et réactions', async () => {
   await passDealing(page);
   await playOneTurn(page);
 
+  /*
+   * Le panneau de comptage, pas un journal.
+   *
+   * Il répond à la question qu'un joueur se pose vraiment — « il en reste
+   * combien ? » — plutôt que de dérouler les événements dans l'ordre. On
+   * vérifie donc la grille par rang, treize entrées de l'As au Roi, et non la
+   * présence d'un texte quelconque.
+   */
   await page.getByLabel('Voir les cartes déjà passées').click();
-  await page.waitForTimeout(400);
-  check(await eventuallyVisible(page.getByText(/passé|défauss/i).first()), 'le journal des cartes passées s’ouvre');
+  const memoire = page.getByRole('dialog', { name: /Cartes déjà passées/ });
+  check(await eventuallyVisible(memoire), 'le panneau des cartes passées s’ouvre');
+  check(
+    await eventuallyVisible(page.getByText('Ce qui court encore')),
+    'il annonce ce qui court encore, au lieu d’un journal à dérouler',
+  );
+  const rangs = await page.getByText(/sur 4 encore en jeu/).count();
+  check(rangs === 13, `la grille couvre les treize rangs, de l’As au Roi (${rangs})`);
   await capture(page, 'cartes-passees');
-  await page.keyboard.press('Escape').catch(() => {});
-  await page.getByRole('button', { name: /Fermer/ }).first().click().catch(() => {});
+
+  // Échap referme : la promesse d'`aria-modal` doit être tenue.
+  await page.keyboard.press('Escape');
+  check(
+    !(await memoire.isVisible().catch(() => false)),
+    'Échap referme le panneau, comme le promet aria-modal',
+  );
 
   await page.getByLabel('Envoyer une réaction').click();
   await page.waitForTimeout(300);

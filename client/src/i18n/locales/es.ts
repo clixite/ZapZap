@@ -288,9 +288,20 @@ export const es: Messages = {
 
   passed: {
     title: 'Cartas que ya han pasado',
-    detail: 'Todo lo bajado o recogido desde que empezó la ronda.',
+    detail: 'Lo que la mesa ha visto pasar desde el inicio de la ronda.',
     none: 'Todavía no ha pasado nada.',
     close: 'Cerrar',
+    loading: 'Leyendo el registro…',
+    reshuffled:
+      'El mazo se ha barajado de nuevo: las cartas descartadas antes han vuelto, la cuenta empieza otra vez.',
+    remaining: 'Lo que sigue vivo',
+    remainingDetail:
+      'Por valor, lo que no está enterrado: en mano, en el mazo, o aún cogible.',
+    rankLeft: (left, total) => `${left} de ${total} aún en juego`,
+    known: 'Lo que sabemos de las manos',
+    knownDetail:
+      'Cartas cogidas del descarte, a la vista de todos, y aún no bajadas.',
+    buried: (n) => `Enterrado — ${n} carta${n > 1 ? 's' : ''}`,
   },
 
   feed: {

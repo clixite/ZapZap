@@ -288,9 +288,20 @@ export const de: Messages = {
 
   passed: {
     title: 'Bereits gespielte Karten',
-    detail: 'Alles, was seit Rundenbeginn gelegt oder aufgenommen wurde.',
+    detail: 'Was der Tisch seit Rundenbeginn hat vorbeiziehen sehen.',
     none: 'Noch ist nichts gelaufen.',
     close: 'Schließen',
+    loading: 'Protokoll wird gelesen…',
+    reshuffled:
+      'Der Stapel wurde neu gemischt: zuvor abgelegte Karten sind zurück, die Zählung beginnt von vorn.',
+    remaining: 'Noch im Spiel',
+    remainingDetail:
+      'Nach Wert, was nicht begraben ist: auf der Hand, im Stapel, oder noch nehmbar.',
+    rankLeft: (left, total) => `${left} von ${total} noch im Spiel`,
+    known: 'Was wir von den Blättern wissen',
+    knownDetail:
+      'Karten, die vor aller Augen aus dem Ablagestapel genommen und noch nicht abgelegt wurden.',
+    buried: (n) => `Begraben — ${n} Karte${n > 1 ? 'n' : ''}`,
   },
 
   feed: {
