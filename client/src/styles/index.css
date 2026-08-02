@@ -106,10 +106,54 @@
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/*
+ * La hauteur, en unités qui suivent le navigateur.
+ *
+ * `100%` se résout contre le bloc conteneur initial, qui ne bouge pas quand la
+ * barre d'adresse de Safari ou de Chrome se rétracte au défilement. La page
+ * gardait donc la hauteur du navigateur « déployé » : sur la table, dont la
+ * main est calée en bas, les dernières cartes passaient sous la barre d'outils.
+ *
+ * `dvh` — *dynamic viewport height* — suit la hauteur réellement visible, à
+ * l'instant près. C'est l'unité faite pour ça, disponible partout depuis 2023,
+ * et `100%` reste en secours pour ce qui ne la connaîtrait pas.
+ */
 html,
 body,
 #root {
   height: 100%;
+  height: 100dvh;
+}
+
+/*
+ * Les marges de sécurité, une bonne fois pour toutes.
+ *
+ * `viewport-fit=cover` fait monter la page jusqu'au bord physique de l'écran —
+ * c'est ce qui donne le plein écran demandé, et c'est aussi ce qui glisse le
+ * titre sous l'encoche, l'horloge et l'île dynamique. Seule la table avait ses
+ * marges ; l'accueil, le salon, le profil, l'historique et les règles
+ * commençaient tous à zéro.
+ *
+ * Une seule classe, posée sur chaque écran qui défile. Le bas est traité
+ * séparément là où il compte — le panneau de la main, les feuilles modales —
+ * parce que ces éléments-là sont collés en bas et méritent leur propre calcul.
+ */
+/*
+ * L'encoche, exposée au JavaScript.
+ *
+ * `env()` ne vit qu'en CSS. La géométrie du tapis en a pourtant besoin : ses
+ * sièges sont placés en position absolue, et une `padding-top` ne déplacerait
+ * pas un élément positionné. On fait donc calculer la valeur par le navigateur
+ * ici, et `useFeltLayout` la relit.
+ */
+:root {
+  --zz-inset-top: env(safe-area-inset-top, 0px);
+}
+
+.zz-safe {
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 body {
@@ -149,6 +193,69 @@ input,
 textarea {
   user-select: text;
 }
+
+/*
+ * L'équilibre des titres, et le veuvage des paragraphes.
+ *
+ * `text-wrap: balance` répartit un titre sur ses lignes au lieu de laisser un
+ * mot seul en dernière ligne — « Mettez ZapZap sur votre écran / d'accueil »
+ * devient deux lignes de longueur voisine. Le navigateur s'en charge, et il ne
+ * le fait que sur les blocs courts, donc le coût est nul.
+ *
+ * `pretty` fait le même travail en plus discret sur le texte courant : il
+ * interdit seulement le mot orphelin sur la dernière ligne. Sur les écrans de
+ * règles et d'explication, qui sont faits de paragraphes, c'est la différence
+ * entre un texte composé et un texte déversé.
+ *
+ * Les deux dégradent en silence là où ils n'existent pas encore.
+ */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}
+
+/*
+ * Un pseudo sans espace ne doit pas élargir l'écran.
+ *
+ * Les noms sont choisis par les joueurs : rien n'empêche quarante caractères
+ * d'affilée. Sans point de coupe, le mot pousse son conteneur et fait défiler
+ * toute la page en travers — le défaut numéro un sur mobile, et celui qu'aucun
+ * test de mise en page ne voit venir puisqu'il dépend de la saisie.
+ */
+:where(h1, h2, h3, p, span, li) {
+  overflow-wrap: break-word;
+}
+
+/*
+ * La gouttière de défilement, réservée d'avance.
+ *
+ * Sans elle, l'apparition de la barre au premier dépassement rétrécit la zone
+ * utile et **décale tout le contenu** de quelques pixels. Sur un écran qui
+ * passe de court à long — l'accueil quand les parties en cours arrivent — le
+ * saut est visible.
+ */
+html {
+  scrollbar-gutter: stable;
+}
+
+/*
+ * Pas de transitions de vue ici, et c'est délibéré.
+ *
+ * `@view-transition { navigation: auto }` ne concerne que les navigations
+ * **entre documents**. ZapZap est une application à page unique : la règle
+ * aurait été un pur décor, jamais déclenchée. Les faire fonctionner suppose un
+ * routeur à chargeurs de données — une migration qui touche tout le routage
+ * pour un fondu de deux dixièmes de seconde entre deux écrans.
+ *
+ * Le rapport n'y est pas aujourd'hui. On préfère l'écrire que laisser croire à
+ * quelqu'un — y compris à nous-mêmes dans six mois — que c'est branché.
+ */
 
 /* Cible tactile confortable (≥44 px recommandé sur mobile) */
 button,

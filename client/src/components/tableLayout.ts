@@ -143,9 +143,24 @@ function seatHeight(avatar: number, withName: boolean): number {
  * d'écran plausibles dans un test unitaire, plutôt que de découvrir un
  * chevauchement sur un téléphone qu'on n'a pas sous la main.
  */
-export function computeLayout(width: number, height: number, opponents: number): FeltLayout {
+export function computeLayout(
+  width: number,
+  height: number,
+  opponents: number,
+  /*
+   * Ce que l'encoche mange en haut du feutre.
+   *
+   * `viewport-fit=cover` fait monter le tapis jusqu'au bord physique de
+   * l'écran. Les sièges partaient donc de `PAD`, soit huit pixels du haut — et
+   * sur un téléphone à encoche, le siège du milieu se retrouvait derrière
+   * l'horloge, sa pastille de cartes coupée. Un décalage plutôt qu'une marge
+   * CSS : un élément en position absolue se place par rapport à la boîte de
+   * remplissage, une `padding-top` ne l'aurait pas déplacé d'un pixel.
+   */
+  insetTop = 0,
+): FeltLayout {
   const usableW = Math.max(120, width - PAD * 2);
-  const usableH = Math.max(160, height - PAD * 2 - STATUS_H);
+  const usableH = Math.max(160, height - PAD * 2 - STATUS_H - insetTop);
   const n = Math.max(1, opponents);
 
   /*
@@ -177,7 +192,7 @@ export function computeLayout(width: number, height: number, opponents: number):
     // creuse le haut du tapis et fait lire une table plutôt qu'une barre.
     const arc = Math.min(usableH * 0.08, 22);
     // Sous les boutons quand on n'a pas pu les contourner.
-    const top = (seatsBelowCorners ? CORNER_H : PAD) + seatH / 2;
+    const top = insetTop + (seatsBelowCorners ? CORNER_H : PAD) + seatH / 2;
     for (let i = 0; i < opponents; i++) {
       const t = opponents === 1 ? 0.5 : i / (opponents - 1);
       const x = seatBandX + slotW / 2 + t * (seatBandW - slotW);
@@ -188,7 +203,7 @@ export function computeLayout(width: number, height: number, opponents: number):
 
   // Ce qui reste entre le bas des sièges et la ligne d'état. Les sièges des
   // bords descendent de `arc` : on part du plus bas d'entre eux.
-  const seatsBottom = opponents > 0 ? Math.max(...seats.map((s) => s.y)) + seatH / 2 : PAD;
+  const seatsBottom = opponents > 0 ? Math.max(...seats.map((s) => s.y)) + seatH / 2 : insetTop + PAD;
   const centreBand = Math.max(60, height - STATUS_H - PAD - seatsBottom);
 
   /*
@@ -291,9 +306,23 @@ export function useFeltLayout(
   const [node, setNode] = useState<HTMLDivElement | null>(null);
   const [size, setSize] = useState({ width: 360, height: 420 });
 
+  const [insetTop, setInsetTop] = useState(0);
+
   useLayoutEffect(() => {
     if (!node) return;
-    const measure = () => setSize({ width: node.clientWidth, height: node.clientHeight });
+    const measure = () => {
+      setSize({ width: node.clientWidth, height: node.clientHeight });
+      /*
+       * L'encoche se lit sur le document, pas sur le feutre.
+       *
+       * `env()` n'est utilisable qu'en CSS ; on la fait donc calculer par le
+       * navigateur dans une variable, qu'on relit ici en pixels. Mesurée à
+       * chaque redimensionnement parce qu'elle change à la rotation — le creux
+       * passe du haut au côté.
+       */
+      const raw = getComputedStyle(document.documentElement).getPropertyValue('--zz-inset-top');
+      setInsetTop(Number.parseFloat(raw) || 0);
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(node);
@@ -303,8 +332,8 @@ export function useFeltLayout(
   // Mémoïsée : la géométrie ne dépend que de la taille et du nombre de joueurs,
   // alors que le composant se rend à chaque coup joué.
   const layout = useMemo(
-    () => computeLayout(size.width, size.height, opponents),
-    [size.width, size.height, opponents],
+    () => computeLayout(size.width, size.height, opponents, insetTop),
+    [size.width, size.height, opponents, insetTop],
   );
   return [setNode, layout];
 }

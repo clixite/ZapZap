@@ -50,7 +50,13 @@ export function TableMenu({ view, onClose, onPause, onMenu, onQuit }: TableMenuP
   return (
     <div
       ref={panel}
-      className="absolute inset-0 z-40 flex flex-col justify-end bg-storm-950/70"
+      /*
+        `fixed` et non `absolute` : le menu était borné au tapis, et la main
+        restait touchable sous le voile. Une feuille qui se dit modale doit
+        couvrir tout ce qu'elle prétend neutraliser — sans quoi on défausse une
+        carte en croyant fermer le menu.
+      */
+      className="fixed inset-0 z-40 flex flex-col justify-end bg-storm-950/70"
       role="dialog"
       aria-modal="true"
       aria-label={t.table.menu}

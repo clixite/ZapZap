@@ -29,7 +29,7 @@ export function SignIn({
 
   return (
     <form
-      className="mx-auto flex min-h-full w-full max-w-sm flex-col justify-center gap-5 px-6 py-10"
+      className="zz-safe mx-auto flex min-h-full w-full max-w-sm flex-col justify-center gap-5 px-6 py-10"
       onSubmit={async (e) => {
         e.preventDefault();
         if (!pseudo.trim()) return;

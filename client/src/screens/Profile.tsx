@@ -103,7 +103,7 @@ export function Profile() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-5 py-8">
+    <div className="zz-safe mx-auto flex w-full max-w-md flex-col gap-6 px-5 py-8">
       <header>
         <Link to="/" className="inline-flex min-h-11 items-center text-sm text-paper-300 underline underline-offset-4">
           {t.profile.back}

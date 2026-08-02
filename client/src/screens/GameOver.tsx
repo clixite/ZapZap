@@ -64,7 +64,7 @@ export function GameOver() {
   };
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-md flex-col gap-5 px-5 py-8">
+    <div className="zz-safe mx-auto flex min-h-full w-full max-w-md flex-col gap-5 px-5 py-8">
       {iWon && <Confetti />}
       <header className="text-center">
         <h1 className="zz-zap font-display text-3xl font-bold">

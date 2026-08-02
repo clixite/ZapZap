@@ -580,6 +580,22 @@ story('cartes passées et réactions', async () => {
   );
   const rangs = await page.getByText(/sur 4 encore en jeu/).count();
   check(rangs === 13, `la grille couvre les treize rangs, de l’As au Roi (${rangs})`);
+
+  /*
+   * Une fenêtre modale doit couvrir ce qu'elle prétend neutraliser.
+   *
+   * Le panneau était calé sur le tapis : la main restait visible et touchable
+   * dessous alors qu'il se déclare `aria-modal`. Aucune des vérifications ne le
+   * voyait — elles regardaient les rôles et les libellés, jamais ce qui se
+   * trouve **par-dessus quoi**. Il a fallu une capture d'écran pour s'en
+   * apercevoir ; voici l'assertion qui l'aurait dit.
+   */
+  const mainCachee = await page
+    .locator('[aria-label="Votre main"] [data-card]')
+    .first()
+    .isVisible()
+    .catch(() => false);
+  check(!mainCachee, 'le panneau couvre la main : il est modal pour l’œil comme pour le clavier');
   await capture(page, 'cartes-passees');
 
   // Échap referme : la promesse d'`aria-modal` doit être tenue.

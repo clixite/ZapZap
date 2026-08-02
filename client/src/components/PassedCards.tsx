@@ -70,7 +70,18 @@ export function PassedCards({ view, onClose }: { view: GameView; onClose: () => 
   return (
     <div
       ref={panel}
-      className="zz-fade-up absolute inset-0 z-30 flex flex-col bg-storm-950/95"
+      /*
+        Plein écran, et opaque.
+
+        Le panneau était calé sur le tapis (`absolute`), si bien qu'il laissait
+        la main visible et cliquable en dessous alors qu'il se déclare
+        `aria-modal` — une promesse tenue pour le clavier depuis `useModal`,
+        mais démentie par le doigt et par l'œil. Et à 95 % d'opacité, le feutre
+        transparaissait au travers : les libellés « Pioche », « 31 cartes » et
+        les pseudos des sièges se lisaient derrière la grille de comptage, qui
+        est justement l'écran où l'on vient chercher un chiffre précis.
+      */
+      className="zz-safe zz-fade-up fixed inset-0 z-50 flex flex-col bg-storm-950"
       role="dialog"
       aria-modal="true"
       aria-label={t.passed.title}
