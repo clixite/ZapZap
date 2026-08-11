@@ -186,7 +186,10 @@ async function passDealing(page) {
 
 /** Attend notre tour de défausser, puis joue une carte et pioche. */
 async function playOneTurn(page, timeout = 40_000) {
-  await page.getByText('À vous — posez vos cartes').waitFor({ timeout });
+  // Exact : voir la note de l'histoire « un tour complet ». En sous-chaîne,
+  // « À vous » attraperait aussi le bandeau de la pioche, et ce tour-ci
+  // essaierait de défausser alors qu'il faut piocher.
+  await page.getByText('À vous', { exact: true }).waitFor({ timeout });
   await page.locator('[aria-label="Votre main"] [data-card]').first().click();
   await page.getByRole('button', { name: 'Défausser' }).click();
   await page.getByText('À vous — piochez une carte').waitFor({ timeout: 15_000 });
@@ -1056,7 +1059,9 @@ story('partie complète jusqu’à la revanche', async () => {
       continue;
     }
 
-    if (await shown(page.getByText('À vous — posez vos cartes'))) {
+    // Exact, sans quoi la branche « défausser » attraperait aussi le bandeau
+    // de la pioche et le marathon tournerait en rond sur une main déjà posée.
+    if (await shown(page.getByText('À vous', { exact: true }))) {
       /*
        * Poser le plus gros ensemble possible, pas la première carte venue.
        *
