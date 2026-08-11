@@ -112,29 +112,6 @@ async function newContext() {
   return context;
 }
 
-async function newPlayer(pseudo) {
-  const context = await newContext();
-  const page = await context.newPage();
-  const errors = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/');
-  await page.getByLabel('Votre pseudo').fill(pseudo);
-  await page.getByRole('button', { name: 'C’est parti' }).click();
-  await page.getByRole('button', { name: /Jouer maintenant/ }).waitFor({ timeout: 15_000 });
-  return { context, page, errors, pseudo };
-}
-
-async function closePlayer(player) {
-  check(player.errors.length === 0, `${player.pseudo} : aucune erreur JavaScript${player.errors.length ? ` — ${player.errors.join(' | ')}` : ''}`);
-  await player.context.close();
-}
-
-/** Le code de la table où se trouve la page, lu dans l'URL. */
-function codeOf(page) {
-  return new URL(page.url()).pathname.split('/').pop();
-}
-
-/** Monte une table avec des robots et la lance. Rend la page et le code. */
 /*
  * Trente secondes, et non quinze, pour monter une table.
  *
@@ -152,6 +129,40 @@ function codeOf(page) {
  */
 const SETUP_TIMEOUT = 30_000;
 
+async function newPlayer(pseudo) {
+  const context = await newContext();
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/');
+  await page.getByLabel('Votre pseudo').fill(pseudo);
+  await page.getByRole('button', { name: 'C’est parti' }).click();
+  /*
+   * Même délai de mise en place qu'ailleurs.
+   *
+   * Ouvrir une session demande un contexte de navigateur, une inscription et
+   * l'établissement de la connexion temps réel. C'est la porte d'entrée de
+   * **toutes** les histoires : quand elle manque de patience, l'échec se
+   * déplace d'une histoire à l'autre d'une campagne à la suivante, ce qui est
+   * la signature d'un banc d'essai à bout de souffle et non d'un défaut du
+   * produit. Le diagnostic se fait une fois ; sinon on passe ses journées à
+   * enquêter sur l'histoire du jour.
+   */
+  await page.getByRole('button', { name: /Jouer maintenant/ }).waitFor({ timeout: SETUP_TIMEOUT });
+  return { context, page, errors, pseudo };
+}
+
+async function closePlayer(player) {
+  check(player.errors.length === 0, `${player.pseudo} : aucune erreur JavaScript${player.errors.length ? ` — ${player.errors.join(' | ')}` : ''}`);
+  await player.context.close();
+}
+
+/** Le code de la table où se trouve la page, lu dans l'URL. */
+function codeOf(page) {
+  return new URL(page.url()).pathname.split('/').pop();
+}
+
+/** Monte une table avec des robots et la lance. Rend la page et le code. */
 async function tableWithBots(pseudo, bots = 2) {
   const player = await newPlayer(pseudo);
   await player.page.getByRole('button', { name: /Créer une table/ }).click();
