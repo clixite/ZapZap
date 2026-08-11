@@ -135,17 +135,34 @@ function codeOf(page) {
 }
 
 /** Monte une table avec des robots et la lance. Rend la page et le code. */
+/*
+ * Trente secondes, et non quinze, pour monter une table.
+ *
+ * Ce n'est pas du confort : c'est la dernière histoire de la campagne — la
+ * partie complète — qui tombait ici, après quinze contextes de navigateur
+ * ouverts et refermés, sur une table à quatre. Jouée seule, elle passe de bout
+ * en bout ; jouée en fin de campagne, elle n'avait plus la patience de sa
+ * propre mise en place.
+ *
+ * Un test qui échoue par impatience n'apprend rien sur le produit : il fait
+ * exactement le contraire de ce qu'on lui demande, qui est de ne crier que
+ * lorsque quelque chose est cassé. Le délai vaut pour la mise en place seule ;
+ * les attentes qui portent sur le **jeu** gardent les leurs, parce que là, une
+ * lenteur serait un vrai symptôme.
+ */
+const SETUP_TIMEOUT = 30_000;
+
 async function tableWithBots(pseudo, bots = 2) {
   const player = await newPlayer(pseudo);
   await player.page.getByRole('button', { name: /Créer une table/ }).click();
-  await player.page.waitForURL(/\/salon\//, { timeout: 15_000 });
+  await player.page.waitForURL(/\/salon\//, { timeout: SETUP_TIMEOUT });
   const code = codeOf(player.page);
   for (let i = 0; i < bots; i++) {
     await player.page.getByRole('button', { name: '+ Ajouter un robot' }).click();
     await player.page.waitForTimeout(250);
   }
   await player.page.getByRole('button', { name: 'Commencer' }).click();
-  await player.page.waitForURL(/\/table\//, { timeout: 15_000 });
+  await player.page.waitForURL(/\/table\//, { timeout: SETUP_TIMEOUT });
   await dismissTutorial(player.page);
   return { player, code };
 }
