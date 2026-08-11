@@ -102,8 +102,33 @@ const browser = await chromium.launch(existsSync(PRESET_CHROME) ? { executablePa
  * premier rendu, sinon un navigateur configuré autrement ferait échouer chaque
  * assertion de texte pour une bonne raison — l'application est traduite.
  */
+/*
+ * Les contextes ouverts, pour qu'aucun ne survive à son histoire.
+ *
+ * Chaque histoire ferme les siens à la fin — mais seulement si elle va jusqu'à
+ * la fin. Celle qui s'interrompt en chemin laissait le sien vivant : un
+ * navigateur complet, sa page, sa connexion temps réel et son abonnement au
+ * salon, tenus ouverts pour le reste de la campagne.
+ *
+ * C'est ce qui rendait les échecs contagieux. Une seule histoire en échec en
+ * laissait un derrière elle, la suivante devenait plus lente, échouait à son
+ * tour et en laissait un deuxième. D'où le symptôme qui m'a mis sur une fausse
+ * piste pendant trois campagnes : l'échec changeait d'histoire à chaque
+ * exécution et se multipliait, ce qui ressemblait à une machine à bout de
+ * souffle. Allonger les délais l'a d'ailleurs **aggravé** — une histoire qui
+ * met deux fois plus de temps à renoncer garde son contexte deux fois plus
+ * longtemps.
+ *
+ * La machine n'y était pour rien : vingt-sept gigaoctets libres, treize de
+ * mémoire, le serveur à un pour cent de processeur. Le banc d'essai se
+ * sabotait tout seul.
+ */
+const openContexts = new Set();
+
 async function newContext() {
   const context = await browser.newContext({ ...phone, baseURL: BASE_URL, locale: 'fr-BE' });
+  openContexts.add(context);
+  context.once('close', () => openContexts.delete(context));
   // Seulement si rien n'est encore choisi : sinon ce script réécrirait « fr »
   // à chaque navigation et le changement de langue ne survivrait à rien.
   await context.addInitScript(() => {
@@ -1168,6 +1193,13 @@ for (const { name, fn } of stories) {
     await fn();
   } catch (error) {
     check(false, `l’histoire s’interrompt : ${String(error).split('\n')[0]}`);
+  } finally {
+    // Chaque histoire repart d'un navigateur vide, qu'elle ait abouti ou non.
+    // Sans ce ménage, un échec en contamine d'autres et le bilan ne dit plus
+    // rien de ce qui est réellement cassé.
+    const leaked = [...openContexts];
+    for (const context of leaked) await context.close().catch(() => {});
+    if (leaked.length > 0) log(`${leaked.length} contexte(s) laissé(s) ouvert(s) par l’histoire — refermé(s)`);
   }
 }
 await browser.close();
