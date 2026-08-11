@@ -191,11 +191,53 @@ describe('centre : pioche et défausse', () => {
   it('garde des cartes lisibles', () => {
     everyCase((w, h, opp, inset) => {
       const layout = computeLayout(w, h, opp, inset);
-      // En dessous de 40 px, le rang n'est plus lisible ; au-delà de 84, les
-      // deux tas mangent le tapis.
+      // En dessous de 40 px, le rang n'est plus lisible.
       expect(layout.cardW).toBeGreaterThanOrEqual(40);
-      expect(layout.cardW).toBeLessThanOrEqual(84);
       expect(layout.cardH).toBe(Math.round(layout.cardW * CARD_RATIO));
+    });
+  });
+
+  /*
+   * La borne haute portait un chiffre, pas une raison.
+   *
+   * Elle recopiait le plafond de la constante — « au-delà de 84, les deux tas
+   * mangent le tapis » — si bien qu'elle ne pouvait rien découvrir : elle
+   * répétait le code au lieu de le contredire. Baisser le plafond l'aurait
+   * laissée verte alors que les cartes seraient devenues minuscules.
+   *
+   * Ce qui compte vraiment, c'est que les deux tas tiennent côte à côte sans se
+   * toucher ni sortir du feutre. On le mesure, cette fois, au lieu de le
+   * supposer.
+   */
+  it('laisse les deux tas côte à côte dans le feutre', () => {
+    everyCase((w, h, opp, inset) => {
+      const layout = computeLayout(w, h, opp, inset);
+      const half = layout.cardW / 2;
+      expect(layout.stock.x - half).toBeGreaterThanOrEqual(0);
+      expect(layout.discard.x + half).toBeLessThanOrEqual(w);
+      // Un vrai intervalle entre les deux : sans lui, on vise la pioche et on
+      // ramasse la défausse.
+      expect(layout.discard.x - half).toBeGreaterThan(layout.stock.x + half);
+    });
+  });
+
+  /*
+   * Le cas qui a réellement débordé.
+   *
+   * Une carte seule tenait ; c'est la **paire** qui sortait de l'écran, parce
+   * que la défausse étale ses cartes et que rien dans la géométrie ne le
+   * comptait. Le test précédent, qui ne mesurait qu'une carte, passait au vert
+   * pendant que le tapis se décalait à l'écran.
+   *
+   * Deux cartes chevauchées à 32 % occupent 1,68 largeur de carte, centrées sur
+   * le point de la défausse.
+   */
+  it('garde une défausse de deux cartes dans le feutre', () => {
+    everyCase((w, h, opp, inset) => {
+      const layout = computeLayout(w, h, opp, inset);
+      const fanHalf = (layout.cardW * 1.68) / 2;
+      expect(layout.discard.x + fanHalf).toBeLessThanOrEqual(w);
+      expect(layout.discard.x - fanHalf).toBeGreaterThan(layout.stock.x - layout.cardW / 2);
     });
   });
 });

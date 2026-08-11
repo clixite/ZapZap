@@ -1,5 +1,6 @@
 import { cardId, type Card, type DrawOption, type DiscardSlot } from '@zapzap/shared';
 import { useT } from '../i18n';
+import { Avatar } from './Avatar';
 import { CardBack, CardFace, CardStack } from './CardFace';
 import { STACK_LIFT, type FeltLayout } from './tableLayout';
 
@@ -68,8 +69,31 @@ export function TableCentre({
    * on incline légèrement chaque carte : c'est le geste de quelqu'un qui pose
    * une combinaison sur la table, et l'œil compte les cartes sans effort.
    */
-  const spread = discardCards.length > 1 ? Math.round(layout.cardW * 0.32) : 0;
-  const stagger = Math.round(layout.cardW * 0.08);
+  /*
+   * L'éventail de la défausse se resserre plutôt que de sortir du tapis.
+   *
+   * La géométrie réserve la place d'une pose de deux cartes — le cas courant,
+   * la paire. Mais on pose aussi des suites, et une suite de cinq cartes
+   * étalées fait presque trois largeurs de carte : à taille pleine elle sortait
+   * du feutre par la droite, ce qui élargissait la page et décalait tout le
+   * tapis, bouton de sortie compris.
+   *
+   * On ne peut pas figer ce pire cas dans la géométrie : la défausse ne porte
+   * qu'une ou deux cartes pendant l'essentiel de la partie, et rapetisser en
+   * permanence pour une suite de cinq qui arrive une fois par manche serait
+   * payer tout le temps le prix d'un cas rare. La pose s'ajuste donc à sa
+   * propre largeur, au moment où elle est posée.
+   *
+   * `room` est le plus large bloc centré sur le point de la défausse qui tienne
+   * encore dans le feutre : c'est de part et d'autre de ce point que l'éventail
+   * s'ouvre, donc c'est le plus petit des deux côtés qui commande.
+   */
+  const fanUnits = 0.68 * Math.max(1, discardCards.length) + 0.32;
+  const room = Math.min(layout.discard.x, layout.width - layout.discard.x) * 2 - 8;
+  const fanW = Math.max(26, Math.min(layout.cardW, Math.floor(room / fanUnits)));
+
+  const spread = discardCards.length > 1 ? Math.round(fanW * 0.32) : 0;
+  const stagger = Math.round(fanW * 0.08);
 
   return (
     <>
@@ -120,7 +144,12 @@ export function TableCentre({
               ? t.table.turnedUp
               : author.isMe
                 ? t.table.youPlayed
-                : `${author.avatar} ${author.pseudo}`
+                : (
+                    <>
+                      <Avatar emoji={author.avatar} size={18} />
+                      <span className="truncate">{author.pseudo}</span>
+                    </>
+                  )
         }
         caption={
           discardCards.length === 0
@@ -145,11 +174,11 @@ export function TableCentre({
           */}
           {discardPileCount > 0 && discardCards.length > 0 && (
             <span className="pointer-events-none absolute bottom-0 left-0" aria-hidden="true">
-              <CardStack width={layout.cardW} count={discardPileCount} tone="paper" />
+              <CardStack width={fanW} count={discardPileCount} tone="paper" />
             </span>
           )}
           {discardCards.length === 0 ? (
-            <EmptySlot width={layout.cardW} />
+            <EmptySlot width={fanW} />
           ) : (
             discardCards.map((card, i) => (
               <span
@@ -177,7 +206,7 @@ export function TableCentre({
                 >
                   <DiscardCard
                     card={card}
-                    width={layout.cardW}
+                    width={fanW}
                     takeable={canDraw && takeable.has(cardId(card))}
                     onTake={() => onDrawDiscard(cardId(card))}
                     someTakeable={canDraw}
@@ -253,7 +282,14 @@ function Pile({
    * l'emplacement : c'est la table qui porte les cartes, pas l'inverse.
    */
   slotH: number;
-  label: string;
+  /*
+   * Un nœud, pas une chaîne : l'étiquette de la défausse porte l'avatar de
+   * celui qui vient de poser, et un émoji lâché dans une ligne de texte prend
+   * la hauteur que lui donne la police du système — la prise électrique
+   * s'affichait couchée et plus haute que la capitale d'à côté, si bien que le
+   * nom du joueur ne s'alignait sur rien. Il lui faut une boîte.
+   */
+  label: React.ReactNode;
   caption: string;
   children: React.ReactNode;
 }) {
@@ -262,8 +298,14 @@ function Pile({
       className="absolute flex flex-col items-center gap-1"
       style={{ left: x, top: y, transform: 'translate(-50%, -50%)' }}
     >
+      {/*
+        L'étiquette suit la carte : elle était plafonnée à 96 px quand la carte
+        en faisait 84, ce qui se tenait. La carte en fait maintenant jusqu'à
+        132, et un nom de six lettres se coupait sous un tas deux fois plus
+        large que lui.
+      */}
       <span
-        className={`max-w-24 truncate text-[11px] font-medium tracking-wide text-paper-100 ${
+        className={`flex max-w-36 items-center gap-1.5 truncate text-[11px] font-medium tracking-wide text-paper-100 ${
           showLabel ? '' : 'sr-only'
         }`}
       >

@@ -1,5 +1,6 @@
 import { useT } from '../i18n';
 import { vibrate } from '../haptics';
+import { IconBolt } from './icons';
 import {
   CARD_BACKS,
   CARD_BACK_STYLES,
@@ -67,7 +68,7 @@ export function CardBackPicker() {
                   className="absolute inset-0 flex items-center justify-center text-lg leading-none opacity-45"
                   style={{ color: style.glyph }}
                 >
-                  ⚡
+                  <IconBolt size={18} />
                 </span>
               </span>
             </button>

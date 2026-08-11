@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { ActiveGame, OpenTable } from '@zapzap/shared';
 import { fetchActiveGames } from '../api';
+import { IconBolt } from '../components/icons';
 import { InstallPrompt } from '../components/InstallPrompt';
 import { SignIn } from '../components/SignIn';
 import { useT } from '../i18n';
@@ -282,22 +283,44 @@ export function Home() {
         className="rounded-2xl bg-volt-500 px-4 py-4 text-left transition-transform active:scale-[0.98] disabled:opacity-50"
       >
         <span className="flex items-center gap-2 font-display text-2xl font-bold text-storm-950">
-          <span aria-hidden="true">⚡</span> {t.home.playNow}
+          {/*
+            L'éclair de la marque, dessiné.
+
+            C'était le caractère ⚡ — rendu par la police à émoji du système, donc
+            jaune vif sur un iPhone, bleu plat sur un Android, absent ailleurs.
+            Sur le bouton principal de l'écran d'accueil, la marque du jeu ne peut
+            pas dépendre de ce que le téléphone a décidé. `IconBolt` est le même
+            éclair partout, et il prend la couleur du texte à côté.
+          */}
+          <IconBolt size={26} className="-mt-0.5 inline-block align-middle" /> {t.home.playNow}
         </span>
         <span className="mt-0.5 block text-xs font-medium text-storm-800">
           {t.home.playNowDetail}
         </span>
       </button>
 
-      {/* 3. Entre amis — inviter et être invité, côte à côte. */}
-      <section className="flex flex-col gap-2 rounded-2xl bg-storm-900/70 p-3">
+      {/*
+        3. Entre amis — inviter et être invité, côte à côte.
+
+        Un seul niveau de surface.
+
+        Le groupe était une carte contenant deux cartes, chacune d'une teinte
+        différente — trois fonds empilés, trois rayons d'arrondi, et deux gris
+        distincts qui ne distinguaient rien puisque les deux blocs ont le même
+        rang. Une carte dans une carte ne hiérarchise pas, elle ajoute une boîte.
+
+        Le titre et l'espacement suffisent à faire le groupe, et les deux autres
+        sections de cet écran s'écrivent déjà comme ça : « Vos parties en cours »
+        et « La suite » n'ont jamais eu de conteneur. Celle-ci s'aligne dessus.
+      */}
+      <section className="flex flex-col gap-2">
         <h2 className="text-xs font-medium tracking-wide text-paper-300 uppercase">{t.home.withFriends}</h2>
 
         <button
           type="button"
           onClick={() => void go('room:create')}
           disabled={busy}
-          className="rounded-xl bg-storm-700 px-4 py-3 text-left transition-transform active:scale-[0.99] disabled:opacity-50"
+          className="rounded-xl bg-storm-800 px-4 py-3.5 text-left transition-transform active:scale-[0.99] disabled:opacity-50"
         >
           <span className="font-display text-base font-bold">{t.home.createTable}</span>
           <span className="mt-0.5 block text-xs text-paper-300">
@@ -306,7 +329,7 @@ export function Home() {
         </button>
 
         <form
-          className="flex flex-col gap-2 rounded-xl bg-storm-800 px-4 py-3"
+          className="flex flex-col gap-2 rounded-xl bg-storm-800 px-4 py-3.5"
           onSubmit={(e) => {
             e.preventDefault();
             if (code.trim()) void joinCode(code);

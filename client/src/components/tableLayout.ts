@@ -127,7 +127,26 @@ export const CARD_RATIO = 1.5;
  * lisibilité est vérifiée par ailleurs — voir « garde des cartes lisibles ».
  */
 const CARD_W_MIN = 34;
-const CARD_W_MAX = 84;
+/*
+ * Plafond de largeur de carte au centre.
+ *
+ * Il valait 84 px, et c'était **lui** qui creusait le tapis. Sur un téléphone
+ * courant, la bande centrale offre environ 148 px de large par tas : le plafond
+ * en jetait 43 %, et la place ainsi rendue ne servait à rien — elle devenait un
+ * vide de deux cents pixels entre la défausse et la main, exactement là où le
+ * regard tombe entre deux coups.
+ *
+ * Or ces deux tas ne sont pas un décor : choisir entre la pioche et la défausse
+ * est l'une des deux décisions de chaque tour, et le rang de la carte retournée
+ * commande la moitié du jeu. C'est la chose qu'on regarde le plus souvent sur
+ * cet écran ; elle doit prendre la place que l'écran lui laisse.
+ *
+ * Le plafond ne disparaît pas pour autant : sur une tablette, deux cartes
+ * grandes comme la main entière seraient grotesques. Il monte au niveau où la
+ * hauteur de la bande reprend la main sur un téléphone, et redevient la
+ * contrainte réelle.
+ */
+const CARD_W_MAX = 132;
 const AVATAR_MIN = 30;
 const AVATAR_MAX = 52;
 
@@ -227,7 +246,30 @@ export function computeLayout(
   const showPileLabels = centreBand >= 150;
   const labelsH = showPileLabels ? LABELS_H : LABELS_H / 2;
 
-  const byWidth = usableW / 2 - 34;
+  /*
+   * La largeur disponible se mesure sur la défausse **étalée**, pas sur une
+   * carte seule.
+   *
+   * `usableW / 2 - 34` ne réservait la place que d'une carte par tas. Or la
+   * défausse n'en montre presque jamais une : dès qu'un joueur pose une paire,
+   * elle en étale deux, décalées d'un tiers de carte. Tant que la carte
+   * plafonnait à 84 px la marge d'erreur absorbait le débordement ; à 132 px la
+   * seconde carte sortait de l'écran par la droite, et le navigateur élargissait
+   * la page — le tapis entier se retrouvait décalé, le bouton de sortie coupé au
+   * bord gauche.
+   *
+   * Le calcul part donc de la géométrie réelle : la défausse est centrée sur son
+   * point, son étalement s'ouvre des deux côtés, et sa moitié droite doit tenir
+   * entre ce point et le bord. En développant les positions du centre et de
+   * l'écart, la carte ne peut pas dépasser le tiers environ de la demi-largeur.
+   *
+   * Au-delà de deux cartes — une suite de trois, de cinq — c'est `TableCentre`
+   * qui resserre l'éventail : figer ici la pire main possible donnerait des
+   * cartes minuscules pendant les neuf dixièmes de la partie où la défausse n'en
+   * porte qu'une ou deux.
+   */
+  const FAN_UNITS_2 = 1.68; // deux cartes chevauchées à 32 %
+  const byWidth = (width / 2 - PAD / 2) / (FAN_UNITS_2 / 2 + 0.5 + 0.275);
   const byHeight = (centreBand * PILE_SHARE - labelsH - STACK_LIFT) / CARD_RATIO;
   const cardW = Math.round(Math.min(CARD_W_MAX, Math.max(CARD_W_MIN, Math.min(byWidth, byHeight))));
   const gap = Math.max(24, Math.round(cardW * 0.55));

@@ -112,7 +112,7 @@ export const pl: Messages = {
     yourDeal: 'Ty rozdajesz',
     theirDeal: (pseudo) => `${pseudo} wybiera rozdanie`,
     roundOver: 'Runda skończona',
-    yourTurnDiscard: 'Twoja kolej — wyłóż karty',
+    yourTurnDiscard: 'Twoja kolej',
     yourTurnDraw: 'Twoja kolej — dobierz jedną kartę',
     theirTurn: (pseudo) => `Kolej gracza ${pseudo}`,
     heDiscards: 'zrzuca',

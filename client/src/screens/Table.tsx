@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ELIMINATION_SCORE, EMOTES, handValue, type EmoteId, type GameView, type Player } from '@zapzap/shared';
 import { isMuted, play, setMuted } from '../audio';
+import { Avatar } from '../components/Avatar';
 import { MiniCards } from '../components/CardFace';
 import { DealPicker, DealWaiting } from '../components/DealPicker';
 import { FirstTimeTutorial, tutorialSeen } from '../components/FirstTimeTutorial';
@@ -499,8 +500,10 @@ export function Table() {
 
       {/* La main, toujours visible, coiffée du bandeau de tour */}
       <div
-        className="shrink-0 rounded-t-2xl bg-storm-800/80 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-        style={{ boxShadow: 'var(--shadow-panel)' }}
+        className={`shrink-0 rounded-t-2xl bg-storm-800/80 pb-[max(0.75rem,env(safe-area-inset-bottom))] ${
+          myTurn && !iAmAway ? 'zz-hand-live' : ''
+        }`}
+        style={myTurn && !iAmAway ? undefined : { boxShadow: 'var(--shadow-panel)' }}
       >
         {/*
           Ma propre pause passe avant tout le reste : tant qu'elle dure, savoir
@@ -518,7 +521,19 @@ export function Table() {
             {t.table.pausedBanner} · <span className="underline">{t.table.resume}</span>
           </button>
         ) : (
-          <TurnBanner view={view} myTurn={myTurn} pending={pending} />
+          /*
+            Le bandeau se tait quand l'écran le dit déjà.
+
+            Pendant ma propre donne, « À vous de donner » s'écrivait deux fois :
+            en titre du choix, au milieu du tapis, et de nouveau ici trois cents
+            pixels plus bas. Le bandeau existe pour nommer ce qu'on ne voit pas —
+            le tour d'un autre, l'étape en cours. Face à un écran qui ne parle
+            que de ça, il ne fait que répéter, et une interface qui se répète
+            apprend au joueur à ne plus la lire.
+          */
+          !(view.phase === 'dealing' && myTurn) && (
+            <TurnBanner view={view} myTurn={myTurn} pending={pending} />
+          )
         )}
         <HandArea
           view={view}
@@ -734,15 +749,20 @@ function TurnBanner({ view, myTurn, pending }: { view: GameView; myTurn: boolean
       aria-live="polite"
       // `relative z-10` : les cartes de la donne s'animent depuis le tapis et
       // passaient par-dessus le bandeau, illisible pendant une seconde.
+      /*
+        Le tour se dit ici, il s'éclaire ailleurs.
+
+        Plein cyan sur toute la largeur, ce bandeau écrasait le bouton
+        « Défausser » — le seul élément qu'on doive réellement toucher. Il porte
+        maintenant le texte en cyan sur le fond du panneau ; c'est le panneau
+        lui-même qui s'allume (`zz-hand-live`), ce qui désigne la zone d'action
+        au lieu de la concurrencer.
+      */
       className={`relative z-10 flex min-h-9 items-center justify-center gap-2 rounded-t-2xl px-3 py-1.5 text-sm font-bold transition-colors ${
-        myTurn ? 'zz-turn bg-volt-500 text-storm-950' : 'bg-storm-900/80 text-paper-100'
+        myTurn ? 'bg-storm-900/60 text-volt-300' : 'bg-storm-900/80 text-paper-100'
       }`}
     >
-      {!myTurn && pending && (
-        <span className="text-base leading-none" aria-hidden="true">
-          {pending.avatar}
-        </span>
-      )}
+      {!myTurn && pending && <Avatar emoji={pending.avatar} photo={pending.photo} size={20} tone="bare" />}
       <span className="truncate">{text}</span>
       {hint && <span className="shrink-0 text-xs font-medium text-paper-300">· {hint}</span>}
       {myPose && (

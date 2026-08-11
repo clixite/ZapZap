@@ -112,7 +112,7 @@ export const ro: Messages = {
     yourDeal: 'Tu împarți',
     theirDeal: (pseudo) => `${pseudo} alege împărțeala`,
     roundOver: 'Runda s-a încheiat',
-    yourTurnDiscard: 'E rândul tău — lasă-ți cărțile',
+    yourTurnDiscard: 'E rândul tău',
     yourTurnDraw: 'E rândul tău — trage o carte',
     theirTurn: (pseudo) => `Rândul lui ${pseudo}`,
     heDiscards: 'aruncă',

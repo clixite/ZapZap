@@ -112,7 +112,7 @@ export const it: Messages = {
     yourDeal: 'Tocca a te dare',
     theirDeal: (pseudo) => `${pseudo} sceglie la distribuzione`,
     roundOver: 'Mano finita',
-    yourTurnDiscard: 'Tocca a te — cala le tue carte',
+    yourTurnDiscard: 'Tocca a te',
     yourTurnDraw: 'Tocca a te — pesca una carta',
     theirTurn: (pseudo) => `Turno di ${pseudo}`,
     heDiscards: 'scarta',

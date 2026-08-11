@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { TransientEvent } from '@zapzap/shared';
 import { useT } from '../i18n';
+import { IconBolt } from './icons';
 
 /**
  * L'annonce, en plein écran, une seconde et demie.
@@ -56,7 +57,10 @@ export function ZapCallout({ event, nameOf }: { event: TransientEvent | null; na
       // couper ce qu'il est en train de lire.
       role="status"
     >
-      <span className="zz-zap font-display text-4xl font-bold text-flash-400 drop-shadow-lg">⚡ ZapZap !</span>
+      <span className="zz-zap flex items-center gap-2 font-display text-4xl font-bold text-flash-400 drop-shadow-lg">
+        <IconBolt size={34} />
+        {'ZapZap !'}
+      </span>
       <span className="text-lg font-medium text-paper-50">{call.pseudo}</span>
       {verdict && (
         <span

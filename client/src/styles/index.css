@@ -103,7 +103,17 @@
   --shadow-panel: 0 -1px 0 rgb(255 255 255 / 0.07), 0 -12px 32px -12px rgb(0 0 0 / 0.55);
 
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /*
+   * L'annonce décélère, elle ne rebondit pas.
+   *
+   * C'était un ressort — `cubic-bezier(0.34, 1.56, …)`, dont le 1.56 dépasse la
+   * valeur d'arrivée avant d'y revenir. Un objet réel ne fait pas ça : il ralentit
+   * et s'arrête. Le rebond est le tic d'une époque, et il désaccordait le seul
+   * geste du jeu qui doive être sérieux — annoncer, c'est risquer trente points.
+   * L'impact reste, il vient maintenant de l'amplitude du mouvement et non d'un
+   * ballottement à l'arrivée.
+   */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /*
@@ -456,6 +466,29 @@ a[role='button'] {
 }
 
 /**
+ * « C'est à vous » : c'est le panneau de la main qui s'allume, pas une pancarte.
+ *
+ * Le bandeau de tour se remplissait de cyan sur toute la largeur. Il devenait
+ * alors le bloc le plus fort de l'écran — plus fort que « Défausser », qui est
+ * pourtant la seule chose à toucher. Sur l'écran de la donne, le même cyan
+ * plein portait en plus un texte déjà écrit en titre trois cents pixels
+ * au-dessus : la couleur d'accent servait à répéter.
+ *
+ * Une couleur d'accent qui désigne sept éléments ne désigne plus rien. Ici elle
+ * n'en désigne qu'un : l'action possible maintenant. Le tour, lui, se signale
+ * comme dans les bons jeux de cartes — la zone où l'on va agir s'éclaire. Le
+ * liseré court le long du bord haut du panneau et sa lueur monte vers le tapis,
+ * là où le regard passe entre deux coups ; l'information est la même, elle ne
+ * coûte plus la hiérarchie de l'écran.
+ */
+.zz-hand-live {
+  box-shadow:
+    inset 0 2px 0 0 var(--color-volt-400),
+    0 -14px 30px -12px rgb(63 217 245 / 0.5),
+    var(--shadow-panel);
+}
+
+/**
  * L'alerte : même pulsation, en rouge, et plus courte.
  *
  * Sert à la pastille « cet adversaire peut annoncer au prochain tour ». Elle ne
@@ -474,7 +507,7 @@ a[role='button'] {
 }
 
 .zz-zap {
-  animation: zz-zap 0.4s var(--ease-spring) both;
+  animation: zz-zap 0.4s var(--ease-out-expo) both;
 }
 
 /*

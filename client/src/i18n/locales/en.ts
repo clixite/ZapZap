@@ -112,7 +112,7 @@ export const en: Messages = {
     yourDeal: 'Your deal',
     theirDeal: (pseudo) => `${pseudo} is choosing the deal`,
     roundOver: 'Round over',
-    yourTurnDiscard: 'Your turn — lay your cards down',
+    yourTurnDiscard: 'Your turn',
     yourTurnDraw: 'Your turn — draw one card',
     theirTurn: (pseudo) => `${pseudo}’s turn`,
     heDiscards: 'discarding',

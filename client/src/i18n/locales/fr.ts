@@ -135,7 +135,7 @@ export const fr = {
     yourDeal: 'À vous de donner',
     theirDeal: (pseudo: string) => `${pseudo} choisit la donne`,
     roundOver: 'Manche terminée',
-    yourTurnDiscard: 'À vous — posez vos cartes',
+    yourTurnDiscard: 'À vous',
     yourTurnDraw: 'À vous — piochez une carte',
     theirTurn: (pseudo: string) => `Au tour de ${pseudo}`,
     heDiscards: 'il défausse',

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { play } from '../audio';
 import { vibrate } from '../haptics';
 import { useT } from '../i18n';
+import { Avatar } from '../components/Avatar';
 import { Confetti } from '../components/Confetti';
 import { IconShare } from '../components/icons';
 import { shareResult } from '../shareCard';
@@ -86,9 +87,7 @@ export function GameOver() {
             <span className="w-6 shrink-0 text-center font-display text-lg font-bold text-paper-300">
               {player.finishRank ?? i + 1}
             </span>
-            <span className="text-xl" aria-hidden="true">
-              {player.avatar}
-            </span>
+            <Avatar emoji={player.avatar} photo={player.photo} size={30} />
             <span className="min-w-0 flex-1 truncate">
               {player.pseudo}
               {player.id === view.you && <span className="ml-1 text-xs text-paper-300">{t.gameOver.you}</span>}
@@ -120,7 +119,19 @@ export function GameOver() {
           type="button"
           onClick={() => void send('room:rematch')}
           disabled={busy}
-          className="rounded-xl bg-flash-400 py-3.5 font-display text-lg font-bold text-storm-950 disabled:opacity-50"
+          /*
+            Une seule action pleine, et c'est celle qu'on veut faire.
+
+            Les deux boutons étaient pleins — ambre pour la revanche, cyan pour
+            l'accueil — donc l'écran finissait sur deux actions principales et
+            aucune. L'ambre est en plus la couleur de l'annonce partout ailleurs
+            dans le jeu ; l'employer pour rejouer désaccordait le seul code
+            couleur que le joueur ait appris pendant la partie.
+
+            La revanche prend l'accent, le retour à l'accueil devient une sortie
+            discrète — ce qu'il est.
+          */
+          className="rounded-xl bg-volt-500 py-3.5 font-display text-lg font-bold text-storm-950 disabled:opacity-50"
         >
           {t.gameOver.rematch}
         </button>
@@ -130,7 +141,7 @@ export function GameOver() {
             clear();
             navigate('/');
           }}
-          className="rounded-xl bg-volt-500 py-3.5 font-display text-lg font-bold text-storm-950"
+          className="rounded-xl bg-storm-700 py-3.5 font-display text-lg font-bold text-paper-100"
         >
           {t.gameOver.home}
         </button>

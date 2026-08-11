@@ -112,7 +112,7 @@ export const cs: Messages = {
     yourDeal: 'Rozdáváš ty',
     theirDeal: (pseudo) => `${pseudo} volí rozdání`,
     roundOver: 'Kolo skončilo',
-    yourTurnDiscard: 'Jsi na řadě — vylož své karty',
+    yourTurnDiscard: 'Jsi na řadě',
     yourTurnDraw: 'Jsi na řadě — lízni jednu kartu',
     theirTurn: (pseudo) => `Na řadě je ${pseudo}`,
     heDiscards: 'odhazuje',

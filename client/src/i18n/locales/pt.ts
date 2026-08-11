@@ -112,7 +112,7 @@ export const pt: Messages = {
     yourDeal: 'É a si que cabe dar',
     theirDeal: (pseudo) => `${pseudo} escolhe a distribuição`,
     roundOver: 'Ronda terminada',
-    yourTurnDiscard: 'É a sua vez — baixe as suas cartas',
+    yourTurnDiscard: 'É a sua vez',
     yourTurnDraw: 'É a sua vez — tire uma carta',
     theirTurn: (pseudo) => `Vez de ${pseudo}`,
     heDiscards: 'descarta',

@@ -112,7 +112,7 @@ export const fi: Messages = {
     yourDeal: 'Sinä jaat',
     theirDeal: (pseudo) => `${pseudo} valitsee jaon`,
     roundOver: 'Kierros päättyi',
-    yourTurnDiscard: 'Sinun vuorosi — laske korttisi',
+    yourTurnDiscard: 'Sinun vuorosi',
     yourTurnDraw: 'Sinun vuorosi — nosta yksi kortti',
     theirTurn: (pseudo) => `Pelaajan ${pseudo} vuoro`,
     heDiscards: 'pudottaa',

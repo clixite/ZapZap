@@ -98,6 +98,23 @@ export function IconShare(props: IconProps) {
   );
 }
 
+/**
+ * La donne : deux cartes en éventail.
+ *
+ * L'attente du donneur portait un 🎴 — l'émoji « fleur sur carte à jouer », un
+ * hanafuda japonais qui n'a rien à voir avec un jeu de 52 cartes, rendu rouge
+ * vif sur un appareil et gris plat sur un autre. Dessinée, l'icône dit ce qui se
+ * passe et se tait sur le reste.
+ */
+export function IconDeal(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="9" y="5" width="11" height="15" rx="2" />
+      <path d="M13.5 4.2 5.9 6.6a2 2 0 0 0-1.3 2.5l3 9.6" />
+    </Svg>
+  );
+}
+
 /** L'éclair du jeu — marque, pas décor. */
 export function IconBolt({ size = 22, className }: IconProps) {
   return (

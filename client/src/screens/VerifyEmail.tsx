@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { verifyMagicLink } from '../api';
 import { useT } from '../i18n';
 import { useSession } from '../store/session';
+import { IconBolt } from '../components/icons';
 
 /**
  * L'atterrissage du lien magique.
@@ -43,9 +44,7 @@ export function VerifyEmail() {
     <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
       {state === 'pending' ? (
         <>
-          <span className="text-3xl" aria-hidden="true">
-            ⚡
-          </span>
+          <IconBolt size={30} className="text-volt-300" />
           <p className="text-paper-300">{t.verify.checking}</p>
         </>
       ) : (

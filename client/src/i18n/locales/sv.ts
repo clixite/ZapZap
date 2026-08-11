@@ -112,7 +112,7 @@ export const sv: Messages = {
     yourDeal: 'Du ger',
     theirDeal: (pseudo) => `${pseudo} väljer given`,
     roundOver: 'Omgången slut',
-    yourTurnDiscard: 'Din tur — lägg ner dina kort',
+    yourTurnDiscard: 'Din tur',
     yourTurnDraw: 'Din tur — dra ett kort',
     theirTurn: (pseudo) => `${pseudo}s tur`,
     heDiscards: 'kastar',

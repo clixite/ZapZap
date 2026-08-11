@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useT } from '../i18n';
 import { dismissInstall, promptInstall, useInstall } from '../install';
 import { vibrate } from '../haptics';
+import { IconBolt } from './icons';
 
 /**
  * « Mettez ZapZap sur votre écran d'accueil. »
@@ -60,9 +61,7 @@ export function InstallPrompt() {
 
   return (
     <section className="zz-fade-up flex items-start gap-3 rounded-2xl border border-volt-500/40 bg-storm-800/80 p-3">
-      <span className="text-2xl leading-none" aria-hidden="true">
-        ⚡
-      </span>
+      <IconBolt size={22} className="mt-0.5 shrink-0 text-volt-300" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{t.install.title}</p>
         <p className="mt-0.5 text-xs text-paper-300">

@@ -112,7 +112,7 @@ export const es: Messages = {
     yourDeal: 'Te toca repartir',
     theirDeal: (pseudo) => `${pseudo} elige el reparto`,
     roundOver: 'Ronda terminada',
-    yourTurnDiscard: 'Tu turno — baja tus cartas',
+    yourTurnDiscard: 'Tu turno',
     yourTurnDraw: 'Tu turno — roba una carta',
     theirTurn: (pseudo) => `Turno de ${pseudo}`,
     heDiscards: 'descarta',

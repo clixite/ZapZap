@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { MAX_PLAYERS, MIN_PLAYERS, isBotId, type ZapVariants } from '@zapzap/shared';
+import { Avatar } from '../components/Avatar';
 import { InviteButtons } from '../components/InviteButtons';
 import { useT } from '../i18n';
 import { useGame, useGameChannel, useView } from '../store/game';
@@ -85,9 +86,7 @@ export function Lobby() {
           to="/profil"
           className="flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-sm text-paper-300"
         >
-          <span className="text-lg" aria-hidden="true">
-            {user.avatar}
-          </span>
+          <Avatar emoji={user.avatar} photo={user.photo} size={24} />
           <span className="underline underline-offset-4">{t.lobby.profile}</span>
         </Link>
       </div>
@@ -115,9 +114,7 @@ export function Lobby() {
         </h2>
         {view.players.map((player) => (
           <div key={player.id} className="flex items-center gap-3 rounded-xl bg-storm-800 px-4 py-2.5">
-            <span className="text-xl" aria-hidden="true">
-              {player.avatar}
-            </span>
+            <Avatar emoji={player.avatar} photo={player.photo} size={30} />
             <span className="min-w-0 flex-1 truncate">
               {player.pseudo}
               {player.id === view.hostId && <span className="ml-1 text-xs text-flash-300">{t.lobby.host}</span>}

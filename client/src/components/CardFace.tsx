@@ -1,6 +1,7 @@
 import { cardId, cardValue, isJoker, type Card } from '@zapzap/shared';
 import { t } from '../i18n';
 import { CARD_BACK_STYLES, useCardBack } from '../store/theme';
+import { IconBolt } from './icons';
 
 const SUIT_GLYPH: Record<string, string> = { S: '♠', H: '♥', D: '♦', C: '♣', X: '⚡' };
 const RANK_LABEL: Record<number, string> = { 1: 'A', 11: 'V', 12: 'D', 13: 'R' };
@@ -139,9 +140,18 @@ function CardBody({ card, width, ink, glyph }: { card: Card; width: number; ink:
         <span className="font-display leading-none font-bold" style={{ fontSize: width * 0.56, color: ink }}>
           {RANK_LABEL[card.rank]}
         </span>
+        {/*
+          Le symbole d'appui de la figure.
+
+          À 30 % d'opacité il passait inaperçu tant que les cartes du centre
+          faisaient 84 px. Elles en font maintenant 132 : à cette taille, un
+          trèfle presque effacé sous un « V » énorme ne se lit plus comme un
+          appui mais comme un défaut d'affichage, et la figure paraît à moitié
+          imprimée. Il reprend le poids qui la tient.
+        */}
         <span
-          className="absolute leading-none opacity-30"
-          style={{ fontSize: width * 0.3, bottom: '4%', right: '6%' }}
+          className="absolute leading-none opacity-55"
+          style={{ fontSize: width * 0.34, bottom: '4%', right: '6%' }}
           aria-hidden="true"
         >
           {glyph}
@@ -152,7 +162,15 @@ function CardBody({ card, width, ink, glyph }: { card: Card; width: number; ink:
 
   const pips = PIP_LAYOUTS[card.rank] ?? PIP_LAYOUTS[1];
   // Les points se resserrent quand ils sont nombreux, sinon un 10 déborde.
-  const pipSize = width * (card.rank >= 9 ? 0.17 : card.rank >= 7 ? 0.2 : 0.24);
+  /*
+   * L'As porte un gros symbole, comme sur un vrai jeu.
+   *
+   * Il suivait le barème des petites valeurs : un trèfle de la taille de ceux
+   * d'un 2, seul au milieu d'une carte devenue grande. Sur un jeu de cartes,
+   * l'As a toujours eu son symbole agrandi — c'est ce qui le fait reconnaître à
+   * la volée, et dans ZapZap il vaut 1 point, donc c'est la carte qu'on cherche.
+   */
+  const pipSize = width * (card.rank === 1 ? 0.42 : card.rank >= 9 ? 0.17 : card.rank >= 7 ? 0.2 : 0.24);
 
   return (
     <span className="relative flex-1" aria-hidden="true">
@@ -221,7 +239,25 @@ export function CardFace({ card, width, selected, dimmed, onClick, label, disabl
     width,
     height,
     boxShadow: selected ? 'var(--shadow-card-lifted)' : 'var(--shadow-card)',
-    opacity: dimmed ? 0.4 : 1,
+    /*
+     * Éteinte veut dire « pas mariable avec ta sélection », pas « morte ».
+     *
+     * À 40 % d'opacité sur un feutre indigo, la carte virait au gris sale : son
+     * rang ne se lisait plus, et une carte qu'on ne peut plus lire est une carte
+     * dont on ne peut plus décider — alors qu'il suffit de désélectionner pour
+     * qu'elle redevienne jouable. L'écran disait « interdit » là où le jeu dit
+     * « pas avec celles-là ».
+     *
+     * Elle recule maintenant sans s'effacer : elle perd sa couleur et un peu de
+     * présence, garde son rang parfaitement lisible.
+     *
+     * Sans assombrissement : une carte blanche qu'on assombrit sur un feutre
+     * indigo ne devient pas discrète, elle devient grise — une autre carte,
+     * sale, et non la même en retrait. Seules la transparence et la couleur
+     * cèdent ; la valeur claire du carton, elle, tient.
+     */
+    opacity: dimmed ? 0.8 : 1,
+    filter: dimmed ? 'saturate(0.2)' : undefined,
     // Le liseré n'est pas une bordure de la carte : il l'entoure, pour qu'une
     // carte choisie se repère dans un éventail serré sans changer de gabarit.
     outline: selected ? '2.5px solid var(--color-volt-400)' : undefined,
@@ -428,7 +464,7 @@ export function CardBack({ width }: { width: number }) {
         className="absolute inset-0 flex items-center justify-center leading-none opacity-45"
         style={{ fontSize: width * 0.4, color: theme.glyph }}
       >
-        ⚡
+        <IconBolt size={width * 0.4} />
       </span>
     </span>
   );

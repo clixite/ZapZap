@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { LeaderboardRow } from '@zapzap/shared';
 import { fetchLeaderboard } from '../api';
 import { useT } from '../i18n';
+import { Avatar } from './Avatar';
 
 /**
  * Le classement entre gens qui jouent ensemble.
@@ -50,9 +51,9 @@ export function Leaderboard() {
             <span className="w-5 shrink-0 text-center font-display text-sm font-bold text-paper-300">
               {i + 1}
             </span>
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-storm-700 text-base">
-              {row.photo ? <img src={row.photo} alt="" className="h-8 w-8 object-cover" /> : row.avatar}
-            </span>
+            {/* Le classement portait déjà la bonne pastille : elle est devenue
+                le composant partagé, pour qu'elle ne dérive plus toute seule. */}
+            <Avatar emoji={row.avatar} photo={row.photo} size={32} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium">
                 {row.pseudo}

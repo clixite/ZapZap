@@ -1,5 +1,6 @@
 import { cardId, ELIMINATION_SCORE, handValue, type GameView } from '@zapzap/shared';
 import { useT } from '../i18n';
+import { Avatar } from './Avatar';
 import { CardFace } from './CardFace';
 
 /**
@@ -81,10 +82,13 @@ export function RoundRecap({ view, onNext, canAdvance, busy }: RoundRecapProps) 
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-sm font-medium">
-                    {player.avatar} {player.pseudo}
-                    {isCaller && <span className="ml-1 text-flash-300">{t.recap.announces}</span>}
-                    {beat && <span className="ml-1 text-success">{t.recap.counters}</span>}
+                  <span className="flex min-w-0 items-center gap-2 truncate text-sm font-medium">
+                    <Avatar emoji={player.avatar} photo={player.photo} size={22} />
+                    <span className="truncate">
+                      {player.pseudo}
+                      {isCaller && <span className="ml-1 text-flash-300">{t.recap.announces}</span>}
+                      {beat && <span className="ml-1 text-success">{t.recap.counters}</span>}
+                    </span>
                   </span>
                   <span className="shrink-0 text-sm tabular-nums">
                     <span className="text-paper-300">{t.recap.inHand(handValue(hand))}</span>{' '}

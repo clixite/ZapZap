@@ -112,7 +112,7 @@ export const da: Messages = {
     yourDeal: 'Du giver',
     theirDeal: (pseudo) => `${pseudo} vælger givningen`,
     roundOver: 'Runden er slut',
-    yourTurnDiscard: 'Din tur — læg dine kort',
+    yourTurnDiscard: 'Din tur',
     yourTurnDraw: 'Din tur — træk ét kort',
     theirTurn: (pseudo) => `${pseudo}s tur`,
     heDiscards: 'smider af',

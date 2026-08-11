@@ -112,7 +112,7 @@ export const nl: Messages = {
     yourDeal: 'Jij deelt',
     theirDeal: (pseudo) => `${pseudo} kiest de deal`,
     roundOver: 'Ronde afgelopen',
-    yourTurnDiscard: 'Jouw beurt — leg je kaarten neer',
+    yourTurnDiscard: 'Jouw beurt',
     yourTurnDraw: 'Jouw beurt — trek één kaart',
     theirTurn: (pseudo) => `Beurt van ${pseudo}`,
     heDiscards: 'legt af',
