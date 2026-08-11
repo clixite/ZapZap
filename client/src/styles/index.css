@@ -279,16 +279,25 @@ html {
 }
 
 /*
- * Pas de transitions de vue ici, et c'est délibéré.
+ * Pas de transitions de vue ici, et c'est délibéré — mais pas pour la raison
+ * qui était écrite.
  *
- * `@view-transition { navigation: auto }` ne concerne que les navigations
- * **entre documents**. ZapZap est une application à page unique : la règle
- * aurait été un pur décor, jamais déclenchée. Les faire fonctionner suppose un
- * routeur à chargeurs de données — une migration qui touche tout le routage
- * pour un fondu de deux dixièmes de seconde entre deux écrans.
+ * `@view-transition { navigation: auto }` ne concerne bien que les navigations
+ * **entre documents**, et ZapZap est une application à page unique : la règle
+ * CSS serait un décor jamais déclenché. En revanche, la suite disait qu'il
+ * faudrait migrer vers un routeur à chargeurs de données, et c'est faux.
+ * `document.startViewTransition()` s'appelle depuis n'importe où ; il suffit
+ * d'envelopper le changement d'état dans un `flushSync` pour que le navigateur
+ * photographie l'avant et l'après. Le routeur n'a rien à voir là-dedans.
  *
- * Le rapport n'y est pas aujourd'hui. On préfère l'écrire que laisser croire à
- * quelqu'un — y compris à nous-mêmes dans six mois — que c'est branché.
+ * La vraie raison de s'en passer est ailleurs : ZapZap n'a qu'un écran qui
+ * compte. On y entre une fois et on y reste vingt minutes ; les fondus se
+ * joueraient à l'entrée et à la sortie d'une partie, deux fois. Le mouvement
+ * qui manquait vraiment était **dans** la table — la carte piochée qui
+ * apparaissait sans venir de nulle part — et c'est là qu'il a été mis.
+ *
+ * On l'écrit pour que le prochain qui y pense parte d'un constat exact plutôt
+ * que d'un obstacle imaginaire.
  */
 
 /* Cible tactile confortable (≥44 px recommandé sur mobile) */
@@ -356,19 +365,63 @@ a[role='button'] {
   80% { transform: translateX(2px); }
 }
 
-/* L'annonce : un éclat bref, ambre, qui ne se confond avec rien d'autre */
+/*
+ * L'annonce : le seul moment que ce jeu ait mérité d'écrire.
+ *
+ * Une partie de ZapZap n'a qu'une scène. Descendre sous le seuil et annoncer,
+ * c'est parier trente points sur ce qu'on croit savoir des mains adverses : si
+ * personne ne suit, on marque zéro ; si quelqu'un égale, ne serait-ce qu'à
+ * égalité stricte, on encaisse. Tout le reste du tapis est une suite de gestes
+ * calmes qui préparent cette seconde-là.
+ *
+ * Elle avait un changement d'échelle — 0,9 à 1,06 à 1 — c'est-à-dire le
+ * mouvement par défaut de n'importe quelle boîte de dialogue de n'importe
+ * quelle application. Un mouvement qui ne dit rien du produit ne fait
+ * qu'occuper le temps pendant lequel l'écran change.
+ *
+ * Le geste vient donc de l'identité du jeu, qui est un orage : la lumière
+ * arrive avant le son. La lueur naît au centre en un dixième de seconde, se
+ * répand sur le feutre, et s'éteint pendant que le texte, lui, se pose. Une
+ * seule idée de matière — la lumière — portée d'un bout à l'autre, plutôt que
+ * trois effets empilés pour faire spectaculaire.
+ */
 @keyframes zz-zap {
   0% {
-    transform: scale(0.9);
+    transform: scale(0.82);
     opacity: 0;
+    filter: blur(6px);
   }
-  40% {
-    transform: scale(1.06);
+  30% {
+    transform: scale(1.05);
     opacity: 1;
+    filter: blur(0);
   }
   100% {
     transform: scale(1);
     opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/*
+ * L'éclair lui-même : une lueur qui se répand puis s'éteint.
+ *
+ * Portée par un pseudo-élément afin de ne rien coûter au texte, qui reste net
+ * et lisible pendant que la lumière passe derrière lui. `mix-blend-mode:
+ * screen` fait qu'elle éclaircit le feutre au lieu de le recouvrir — une
+ * lumière ajoute, elle ne peint pas.
+ */
+@keyframes zz-strike {
+  0% {
+    opacity: 0;
+    transform: scale(0.15);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
   }
 }
 
@@ -430,6 +483,34 @@ a[role='button'] {
   }
 }
 
+/**
+ * La carte qu'on vient de piocher, arrivant dans l'éventail.
+ *
+ * C'était le trou du langage : sur les deux actions de chaque tour, une seule
+ * avait un geste. La carte posée s'envolait vers le centre depuis le siège de
+ * son auteur ; la carte piochée, elle, apparaissait — au sens strict, elle
+ * était là à l'image suivante. Deux ou trois fois par tour, trente tours par
+ * partie : c'est le mouvement le plus fréquent du jeu, et il n'existait pas.
+ *
+ * Elle descend, parce que les deux tas sont au-dessus de la main : le geste
+ * refait le trajet que la carte vient de faire. Et elle arrive légèrement de
+ * biais, comme une carte prise entre deux doigts, plutôt qu'en glissant à plat.
+ *
+ * Portée par une enveloppe intérieure : la carte elle-même porte déjà la
+ * transformation de l'éventail — son angle et son creux — et une animation sur
+ * le même élément l'écraserait, aplatissant la main le temps du mouvement.
+ */
+@keyframes zz-draw-in {
+  from {
+    opacity: 0;
+    transform: translateY(-52px) scale(0.8) rotate(-9deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /** Le tas de pioche quand on y puise : un léger enfoncement. */
 @keyframes zz-press {
   50% {
@@ -451,6 +532,11 @@ a[role='button'] {
 
 .zz-deal-in {
   animation: zz-deal-in 0.38s var(--ease-out-quint) both;
+}
+
+.zz-draw-in {
+  display: block;
+  animation: zz-draw-in 0.3s var(--ease-out-expo) both;
 }
 
 .zz-press {
@@ -507,7 +593,42 @@ a[role='button'] {
 }
 
 .zz-zap {
-  animation: zz-zap 0.4s var(--ease-out-expo) both;
+  animation: zz-zap 0.44s var(--ease-out-expo) both;
+}
+
+/*
+ * Le conteneur de l'annonce porte l'éclair.
+ *
+ * `isolation: isolate` enferme le mélange : sans elle, `screen` irait chercher
+ * ce qu'il y a derrière le tapis — le fond de l'application — et la lueur
+ * baverait sur toute la page au lieu de rester sur le feutre.
+ *
+ * `pointer-events: none` sur la lueur : elle passe par-dessus le centre du
+ * tapis, et pendant sa demi-seconde de vie elle ne doit voler aucun geste.
+ */
+.zz-strike {
+  isolation: isolate;
+}
+
+.zz-strike::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 130vmin;
+  height: 130vmin;
+  margin: -65vmin 0 0 -65vmin;
+  pointer-events: none;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    circle,
+    rgb(255 211 77 / 0.85) 0%,
+    rgb(240 180 41 / 0.35) 28%,
+    rgb(63 217 245 / 0.12) 52%,
+    transparent 70%
+  );
+  animation: zz-strike 0.72s var(--ease-out-expo) both;
 }
 
 /*

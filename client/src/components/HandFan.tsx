@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import {
   cardId,
   classify,
@@ -53,6 +53,43 @@ export interface HandFanProps {
   dealing?: boolean;
 }
 
+/**
+ * Les cartes qui viennent d'entrer dans la main.
+ *
+ * Le composant ne reçoit qu'une main, jamais un événement « tu as pioché ceci » :
+ * la vue est un état, pas un journal. On compare donc la main à celle du rendu
+ * précédent, et tout identifiant qui n'y était pas est une arrivée.
+ *
+ * Trois précautions, chacune correspondant à un vrai cas :
+ *
+ *  - **Premier rendu** : toutes les cartes seraient « nouvelles » et la main
+ *    entière s'animerait en rouvrant l'application au milieu d'une manche. On
+ *    amorce donc la mémoire sans rien signaler.
+ *  - **Rangement de la main** : trier par couleur ou par rang change l'ordre,
+ *    pas les identifiants — la différence est vide, rien ne s'anime. C'est bien
+ *    ce qu'on veut : ranger ses cartes n'est pas les recevoir.
+ *  - **Re-rendus sans changement** : la table se rend à chaque coup de chaque
+ *    joueur. La mémoire n'est mise à jour que si la composition a bougé, sinon
+ *    la même arrivée se rejouerait indéfiniment.
+ */
+function useArrivals(ids: readonly string[]): ReadonlySet<string> {
+  const signature = ids.join('|');
+  const memory = useRef<{ signature: string; ids: Set<string> } | null>(null);
+  const arrivals = useRef<ReadonlySet<string>>(EMPTY);
+
+  if (memory.current === null) {
+    memory.current = { signature, ids: new Set(ids) };
+  } else if (memory.current.signature !== signature) {
+    const previous = memory.current.ids;
+    arrivals.current = new Set(ids.filter((id) => !previous.has(id)));
+    memory.current = { signature, ids: new Set(ids) };
+  }
+
+  return arrivals.current;
+}
+
+const EMPTY: ReadonlySet<string> = new Set();
+
 /** Angle total de l'éventail, ouvert progressivement avec le nombre de cartes. */
 function fanSpread(count: number): number {
   if (count <= 1) return 0;
@@ -73,6 +110,7 @@ export function HandFan({ hand: served, selected, onToggle, interactive, variant
   const order = useHandSort();
   const hand = useMemo(() => sortHandBy(served, order), [served, order]);
   const count = hand.length;
+  const arrivals = useArrivals(useMemo(() => hand.map(cardId), [hand]));
 
   // Largeur de carte : on part d'une taille confortable et on ne rétrécit que
   // si la main déborde vraiment, le chevauchement absorbant le reste.
@@ -209,6 +247,16 @@ export function HandFan({ hand: served, selected, onToggle, interactive, variant
                 animationDelay: dealing ? `${i * 70}ms` : undefined,
               }}
             >
+              {/*
+                L'arrivée vit sur une enveloppe, pas sur la carte.
+
+                La carte porte déjà la transformation de l'éventail — son angle
+                et son creux — appliquée par le parent. Animer le même élément
+                l'écraserait : la main s'aplatirait le temps du mouvement, puis
+                se rouvrirait d'un coup. Les deux transformations se composent
+                quand elles vivent à deux étages.
+              */}
+              <span className={arrivals.has(id) && !dealing ? 'zz-draw-in' : 'block'}>
               <CardFace
                 card={card}
                 width={cardW}
@@ -226,6 +274,7 @@ export function HandFan({ hand: served, selected, onToggle, interactive, variant
                 onClick={() => onToggle(id)}
                 disabled={!interactive}
               />
+              </span>
             </span>
           );
         })}

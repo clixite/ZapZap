@@ -569,8 +569,19 @@ story('un tour complet : qui joue, qui a posé quoi', async () => {
   const text = (await banner.textContent()) ?? '';
   check(/À vous|Au tour de/.test(text), `le bandeau de tour nomme le joueur attendu (« ${text.trim()} »)`);
 
-  await page.getByText('À vous — posez vos cartes').waitFor({ timeout: 40_000 });
-  check(true, 'notre tour arrive et le bandeau le dit en toutes lettres');
+  /*
+   * `exact` n'est pas un détail ici.
+   *
+   * Le bandeau disait « À vous — posez vos cartes », ce qui répétait mot pour
+   * mot l'instruction déjà affichée sous l'éventail ; il ne dit plus que « À
+   * vous », l'instruction restant là où se fait le geste. Mais une recherche de
+   * texte est une **sous-chaîne** par défaut : « À vous » tout court trouverait
+   * aussi « À vous — piochez une carte », et l'histoire ne saurait plus
+   * distinguer les deux étapes du tour — c'est-à-dire exactement ce qu'elle est
+   * là pour vérifier.
+   */
+  await page.getByText('À vous', { exact: true }).waitFor({ timeout: 40_000 });
+  check(true, 'notre tour arrive et le bandeau annonce l’étape de défausse');
   await capture(page, 'mon-tour');
 
   const before = await page.locator('[aria-label="Votre main"] [data-card]').count();

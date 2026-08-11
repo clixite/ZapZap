@@ -51,7 +51,7 @@ export function ZapCallout({ event, nameOf }: { event: TransientEvent | null; na
   return (
     <div
       key={call.key}
-      className="zz-fade-up pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-storm-950/55"
+      className="zz-fade-up zz-strike pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 overflow-hidden bg-storm-950/55"
       // `status` et non `alert` : c'est un compte rendu de ce qui vient de se
       // passer, pas une erreur à corriger. Le lecteur d'écran l'annonce sans
       // couper ce qu'il est en train de lire.
