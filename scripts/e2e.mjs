@@ -1192,7 +1192,23 @@ for (const { name, fn } of stories) {
   try {
     await fn();
   } catch (error) {
-    check(false, `l’histoire s’interrompt : ${String(error).split('\n')[0]}`);
+    /*
+     * Le message d'erreur doit nommer le sélecteur.
+     *
+     * On ne gardait que la première ligne — « TimeoutError: locator.waitFor:
+     * Timeout 30000ms exceeded. » — c'est-à-dire tout sauf ce qu'on a besoin de
+     * savoir : **ce qu'on attendait**. Playwright met le sélecteur et l'état
+     * visé sur les lignes suivantes, et les jeter transformait chaque échec en
+     * énigme. J'y ai perdu trois campagnes à formuler des hypothèses au lieu de
+     * lire la réponse.
+     */
+    const detail = String(error)
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('at ') && !line.startsWith('=========='))
+      .slice(0, 4)
+      .join(' · ');
+    check(false, `l’histoire s’interrompt : ${detail}`);
   } finally {
     // Chaque histoire repart d'un navigateur vide, qu'elle ait abouti ou non.
     // Sans ce ménage, un échec en contamine d'autres et le bilan ne dit plus
